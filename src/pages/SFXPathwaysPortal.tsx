@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
@@ -526,6 +528,11 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     education: string; brand: string; focus: string; goals: string[];
     attentionRequired: boolean;
   } | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [isSummarising, setIsSummarising] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef("");
 
   const scriptGuides = [
     {
@@ -632,18 +639,85 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     }
   ];
 
-  function mockGenerateAI() {
-    setAiSummary({
-      performance: "Gym consistency trending up; add defensive video review.",
-      lifestyle: "Sleep inconsistent; implement 10pm device cutoff.",
-      personal: "Confidence solid; encourage leadership moments at training.",
-      education: "Busy assessment period; create weekly plan Sunday night.",
-      brand: "Training content performing best; post 2x/week.",
-      focus: "Conditioning + defensive reads",
-      goals: ["4 gym sessions/week", "10pm device cutoff", "2 IG posts/week"],
-      attentionRequired: false,
-    });
-  }
+  const startRecording = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser. Try Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-AU";
+    finalTranscriptRef.current = transcript;
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscriptRef.current += t + " ";
+        } else {
+          interim += t;
+        }
+      }
+      setTranscript(finalTranscriptRef.current + interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error !== "no-speech") {
+        toast.error(`Microphone error: ${event.error}`);
+        setIsRecording(false);
+      }
+    };
+
+    recognition.onend = () => {
+      // Restart if still recording (browser stops after silence)
+      if (isRecording) {
+        try { recognition.start(); } catch {}
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsRecording(true);
+    toast.success("Recording started — speak into your microphone");
+  }, [transcript, isRecording]);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setTranscript(finalTranscriptRef.current);
+    toast.info("Recording stopped");
+  }, []);
+
+  const generateAISummary = useCallback(async () => {
+    const textToSummarise = transcript || notes;
+    if (!textToSummarise.trim()) {
+      toast.error("No transcript or notes to summarise");
+      return;
+    }
+    setIsSummarising(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarise-call", {
+        body: { transcript: textToSummarise, athleteName: athlete.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAiSummary(data.summary);
+      toast.success("Summary generated");
+    } catch (e: any) {
+      console.error("Summary error:", e);
+      toast.error(e.message || "Failed to generate summary");
+    } finally {
+      setIsSummarising(false);
+    }
+  }, [transcript, notes, athlete.name]);
 
   return (
     <div className="space-y-6 p-6">
@@ -852,15 +926,46 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       <Card>
         <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          {/* Voice Recording */}
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            {!isRecording ? (
+              <Button onClick={startRecording} variant="outline" className="gap-2">
+                <Mic className="h-4 w-4" /> Start Recording
+              </Button>
+            ) : (
+              <Button onClick={stopRecording} variant="destructive" className="gap-2">
+                <Square className="h-4 w-4" /> Stop Recording
+              </Button>
+            )}
+            {isRecording && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                Recording...
+              </div>
+            )}
+          </div>
+
+          {/* Transcript */}
+          {transcript && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Transcript</label>
+              <div className="p-3 rounded-md border bg-background text-sm max-h-[200px] overflow-y-auto whitespace-pre-wrap">
+                {transcript}
+              </div>
+            </div>
+          )}
+
+          {/* Manual notes */}
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Paste transcript here, or type notes live..."
-            className="min-h-[140px]"
+            placeholder="Or type notes manually..."
+            className="min-h-[100px]"
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={mockGenerateAI} className="gap-2">
-              <Sparkles className="h-4 w-4" /> Generate AI Summary (Mock)
+            <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
+              {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {isSummarising ? "Summarising..." : "Generate AI Summary"}
             </Button>
             <Button variant="secondary">Publish to Tracker</Button>
             <Button variant="secondary">Create Athlete Email</Button>
