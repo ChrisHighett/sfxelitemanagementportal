@@ -20,6 +20,7 @@ export type Database = {
           club: string | null
           club_contract_expiry: string | null
           created_at: string
+          date_of_birth: string | null
           email: string | null
           first_name: string
           id: string
@@ -35,6 +36,7 @@ export type Database = {
           club?: string | null
           club_contract_expiry?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           first_name: string
           id?: string
@@ -50,6 +52,7 @@ export type Database = {
           club?: string | null
           club_contract_expiry?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           first_name?: string
           id?: string
