@@ -132,7 +132,7 @@ export function useMonthlyReviews(athleteId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const reviews: MonthlyReview[] = (data || []).map((review) => ({
+      const reviews: MonthlyReview[] = (data || []).map((review: any) => ({
         athleteId: review.athlete_id,
         month: new Date(review.review_month).toISOString().slice(0, 7),
         wellbeingScore: review.wellbeing_score || 3,
@@ -144,6 +144,16 @@ export function useMonthlyReviews(athleteId?: string) {
         focus: review.focus_next_month || "—",
         goals: Array.isArray(review.goals) ? review.goals as string[] : [],
         attentionRequired: review.attention_required || false,
+        callDate: review.call_date || null,
+        callDuration: review.call_duration || null,
+        trainingHighlights: review.training_highlights || null,
+        areasForImprovement: review.areas_for_improvement || null,
+        footballGoal: review.football_goal || null,
+        personalGoal: review.personal_goal || null,
+        schoolLifeGoal: review.school_life_goal || null,
+        educationTopic: review.education_notes || null,
+        parentEngagementNotes: review.parent_engagement_notes || null,
+        followUpActions: review.follow_up_actions || null,
       }));
 
       return reviews;
