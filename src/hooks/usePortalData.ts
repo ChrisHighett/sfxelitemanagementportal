@@ -34,6 +34,16 @@ export interface MonthlyReview {
   focus: string;
   goals: string[];
   attentionRequired: boolean;
+  callDate: string | null;
+  callDuration: string | null;
+  trainingHighlights: string | null;
+  areasForImprovement: string | null;
+  footballGoal: string | null;
+  personalGoal: string | null;
+  schoolLifeGoal: string | null;
+  educationTopic: string | null;
+  parentEngagementNotes: string | null;
+  followUpActions: string | null;
 }
 
 export interface CommsLog {

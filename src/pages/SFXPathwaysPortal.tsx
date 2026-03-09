@@ -1398,49 +1398,94 @@ SFX Pathways`;
 
 function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const { data: commsData = [] } = useCommsLog(athlete.id);
   const [downloading, setDownloading] = useState(false);
+  const [goals, setGoals] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("goal_tracker")
+      .select("*")
+      .eq("athlete_id", athlete.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setGoals(data || []));
+  }, [athlete.id]);
 
   function handleDownload() {
     setDownloading(true);
     try {
-      // Profile sheet
-      const profileRows = [
-        { Field: "Name", Value: athlete.name },
-        { Field: "Club", Value: athlete.club },
-        { Field: "Position", Value: athlete.position },
-        { Field: "Stage", Value: athlete.stage },
-        { Field: "School", Value: athlete.school },
-        { Field: "Date of Birth", Value: athlete.dateOfBirth || "—" },
-        { Field: "Wellbeing Score", Value: athlete.wellbeingScore },
-        { Field: "Status", Value: athlete.status },
-        { Field: "Management Contract Expiry", Value: athlete.managementContractExpiry || "—" },
-        { Field: "Club Contract Expiry", Value: athlete.clubContractExpiry || "—" },
-      ];
-
-      // Monthly reviews sheet
-      const reviewRows = reviews.map((r) => ({
-        Month: r.month,
-        "Wellbeing Score": r.wellbeingScore,
-        Performance: r.performance,
-        Lifestyle: r.lifestyle,
-        Personal: r.personal,
-        Education: r.education,
-        Brand: r.brand,
-        "Focus Next Month": r.focus,
-        Goals: r.goals.join("; "),
-        "Attention Required": r.attentionRequired ? "Yes" : "No",
-      }));
-
       const wb = XLSX.utils.book_new();
-      const profileSheet = XLSX.utils.json_to_sheet(profileRows);
-      XLSX.utils.book_append_sheet(wb, profileSheet, "Profile");
 
-      if (reviewRows.length > 0) {
-        const reviewSheet = XLSX.utils.json_to_sheet(reviewRows);
-        XLSX.utils.book_append_sheet(wb, reviewSheet, "Monthly Reviews");
-      }
+      // Sheet 1: Athlete Profile
+      const profileData = [[
+        "Athlete ID", "Athlete Name", "Age", "Position", "Club / School",
+        "Start Date with Agency", "Parent/Guardian Name(s)", "Parent Contact", "Notes"
+      ], [
+        (athlete as any).athleteCode || "—", athlete.name, athlete.age,
+        athlete.position, `${athlete.club} / ${athlete.school}`,
+        "—", athlete.parentName, athlete.parentEmail, ""
+      ]];
+      const sheet1 = XLSX.utils.aoa_to_sheet(profileData);
+      XLSX.utils.book_append_sheet(wb, sheet1, "Athlete Profile");
 
-      const fileName = `Development_Tracker_${athlete.name.replace(/\s+/g, "_")}.xlsx`;
+      // Sheet 2: Monthly Reviews (tracker format)
+      const reviewHeaders = [
+        "Month / Year", "Athlete ID", "Phone Call Date", "Call Duration",
+        "Wellbeing Score", "Training Highlights", "Areas for Improvement",
+        "Football Goal", "Personal Goal", "School / Life Goal",
+        "Education Topic", "Parent Engagement Notes", "Follow-Up Actions"
+      ];
+      const reviewRows = reviews.map((r: any) => [
+        r.month, (athlete as any).athleteCode || "—",
+        r.callDate || "—", r.callDuration || "—",
+        r.wellbeingScore,
+        r.trainingHighlights || r.performance || "—",
+        r.areasForImprovement || "—",
+        r.footballGoal || "—",
+        r.personalGoal || r.personal || "—",
+        r.schoolLifeGoal || "—",
+        r.educationTopic || r.education || "—",
+        r.parentEngagementNotes || "—",
+        r.followUpActions || r.focus || "—",
+      ]);
+      const sheet2 = XLSX.utils.aoa_to_sheet([reviewHeaders, ...reviewRows]);
+      XLSX.utils.book_append_sheet(wb, sheet2, "Monthly Reviews");
+
+      // Sheet 3: Goal Tracker
+      const goalHeaders = ["Athlete ID", "Goal Type", "Goal Description", "Month Set", "Status", "Comments"];
+      const goalRows = goals.map((g: any) => [
+        (athlete as any).athleteCode || "—",
+        g.goal_type, g.goal_description, g.month_set, g.status, g.comments || ""
+      ]);
+      const sheet3 = XLSX.utils.aoa_to_sheet([goalHeaders, ...goalRows]);
+      XLSX.utils.book_append_sheet(wb, sheet3, "Goal Tracker");
+
+      // Sheet 4: Parent Communication Log
+      const commsHeaders = ["Athlete ID", "Parent Name", "Communication Type", "Date", "Summary", "Follow-Up Required"];
+      const commsRows = commsData
+        .filter((c) => c.recipient === "parent")
+        .map((c) => [
+          (athlete as any).athleteCode || "—",
+          athlete.parentName, "email", c.sentAt, c.body, "—"
+        ]);
+      const sheet4 = XLSX.utils.aoa_to_sheet([commsHeaders, ...commsRows]);
+      XLSX.utils.book_append_sheet(wb, sheet4, "Parent Comms");
+
+      // Sheet 5: Dashboard KPIs
+      const latestReview = reviews[0];
+      const achievedGoals = goals.filter((g: any) => g.status === "Achieved").length;
+      const totalGoals = goals.length || 1;
+      const kpiData = [
+        ["Metric", "Value"],
+        ["% Goals Achieved", Math.round((achievedGoals / totalGoals) * 100)],
+        ["Training Consistency", "—"],
+        ["Wellbeing Score", latestReview?.wellbeingScore || "—"],
+        ["Parent Engagement", commsData.filter((c) => c.recipient === "parent").length > 0 ? "High" : "Low"],
+      ];
+      const sheet5 = XLSX.utils.aoa_to_sheet(kpiData);
+      XLSX.utils.book_append_sheet(wb, sheet5, "Dashboard");
+
+      const fileName = `Athlete_Development_Tracker_${athlete.name.replace(/\s+/g, "_")}.xlsx`;
       XLSX.writeFile(wb, fileName);
       toast.success(`Tracker downloaded as ${fileName}`);
     } catch (e: any) {
@@ -1461,7 +1506,7 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          Download the full development tracker including athlete profile and {reviews.length} monthly review{reviews.length !== 1 ? "s" : ""} as an Excel spreadsheet.
+          Full 5-sheet tracker: Athlete Profile, Monthly Reviews, Goal Tracker, Parent Comms, and Dashboard KPIs ({reviews.length} review{reviews.length !== 1 ? "s" : ""}).
         </p>
       </CardContent>
     </Card>
