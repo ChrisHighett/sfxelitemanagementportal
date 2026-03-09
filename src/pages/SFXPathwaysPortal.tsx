@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
