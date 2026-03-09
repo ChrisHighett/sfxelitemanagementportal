@@ -891,7 +891,10 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     if (!aiSummary) return;
     setIsPublishing(true);
     try {
-      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01"; // first of current month
+      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01";
+      const callDuration = callStartTime
+        ? `${Math.round((Date.now() - callStartTime.getTime()) / 60000)}min`
+        : "—";
       const { error } = await supabase.from("monthly_reviews").upsert({
         athlete_id: athlete.id,
         review_month: reviewMonth,
@@ -903,10 +906,38 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
         focus_next_month: aiSummary.focus,
         goals: aiSummary.goals,
         attention_required: aiSummary.attentionRequired,
-        wellbeing_score: aiSummary.attentionRequired ? 2 : 4,
+        wellbeing_score: aiSummary.wellbeingScore ?? (aiSummary.attentionRequired ? 2 : 4),
         created_by: user?.id ?? null,
-      }, { onConflict: "athlete_id,review_month" });
+        call_date: new Date().toISOString().slice(0, 10),
+        call_duration: callDuration,
+        training_highlights: aiSummary.trainingHighlights,
+        areas_for_improvement: aiSummary.areasForImprovement,
+        football_goal: aiSummary.footballGoal,
+        personal_goal: aiSummary.personalGoal,
+        school_life_goal: aiSummary.schoolLifeGoal,
+        parent_engagement_notes: aiSummary.parentEngagementNotes,
+        follow_up_actions: aiSummary.followUpActions,
+      } as any, { onConflict: "athlete_id,review_month" });
       if (error) throw error;
+
+      // Also upsert goals into goal_tracker
+      const monthLabel = new Date().toLocaleDateString("en-AU", { month: "short", year: "2-digit" }).replace(" ", "-");
+      const goalEntries = [
+        { type: "Football", desc: aiSummary.footballGoal },
+        { type: "Personal", desc: aiSummary.personalGoal },
+        { type: "School/Life", desc: aiSummary.schoolLifeGoal },
+      ].filter((g) => g.desc && g.desc !== "Not discussed this call.");
+
+      for (const g of goalEntries) {
+        await supabase.from("goal_tracker").upsert({
+          athlete_id: athlete.id,
+          goal_type: g.type,
+          goal_description: g.desc,
+          month_set: monthLabel,
+          status: "In progress",
+        } as any, { onConflict: "id" });
+      }
+
       setIsPublished(true);
       toast.success("Summary published to Development Tracker");
     } catch (e: any) {
