@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Athlete {
   id: string;
+  athleteCode: string | null;
   name: string;
   age: number;
   dateOfBirth: string | null;
