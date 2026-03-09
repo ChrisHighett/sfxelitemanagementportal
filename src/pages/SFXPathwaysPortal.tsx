@@ -1371,6 +1371,34 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
 
   return (
     <div className="space-y-6 p-6">
+      {contractAlerts.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Contract Expiry Alerts</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {contractAlerts.map((alert, i) => (
+                <li key={i}>
+                  <span className="font-medium">{alert.name}</span> — {alert.type} contract expires <span className="font-medium">{alert.expiry}</span>
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      {birthdayAlerts.length > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Turning 17 Soon</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {birthdayAlerts.map((b, i) => (
+                <li key={i}><span className="font-medium">{b.name}</span> turns 17 on <span className="font-medium">{b.turnsOn}</span></li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Total Athletes</div><div className="mt-1 text-2xl font-semibold">{athletes.length}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Thriving</div><div className="mt-1 text-2xl font-semibold">{thriving}</div></CardContent></Card>
