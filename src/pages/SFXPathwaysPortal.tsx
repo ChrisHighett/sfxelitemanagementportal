@@ -754,9 +754,12 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
 export default function SFXPathwaysPortal() {
   const [role, setRole] = useState<Role>("agent");
   const [active, setActive] = useState("roster");
-  const [selectedAthleteId, setSelectedAthleteId] = useState("a1");
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
-  const athlete = useMemo(() => mockAthletes.find((a) => a.id === selectedAthleteId) ?? mockAthletes[0], [selectedAthleteId]);
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+
+  const currentAthleteId = selectedAthleteId || athletes[0]?.id;
+  const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
 
   function handleRoleChange(nextRole: Role) {
     setRole(nextRole);
@@ -764,16 +767,44 @@ export default function SFXPathwaysPortal() {
     setActive(first);
   }
 
+  if (athletesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!athlete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Athletes Found</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            There are no athletes in the system yet. Please add athletes to get started.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <Shell role={role} active={active} onNav={setActive}>
-      <TopBar role={role} setRole={handleRoleChange} selectedAthleteId={selectedAthleteId} setSelectedAthleteId={setSelectedAthleteId} />
+      <TopBar 
+        role={role} 
+        setRole={handleRoleChange} 
+        selectedAthleteId={currentAthleteId} 
+        setSelectedAthleteId={setSelectedAthleteId} 
+      />
 
       {role === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
       {role === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
       {role === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
       {role === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
 
-      {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={mockAthletes} />}
+      {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
