@@ -1231,11 +1231,89 @@ function AthleteTimeline({ athlete }: { athlete: Athlete }) {
   );
 }
 
+type CommandFilter = "all" | "calls_due_7" | "wellbeing_low" | "parent_followup" | "injury_setback" | "commercial_watch";
+
 function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
-  const dueThisWeek = athletes.filter((a) => a.status !== "Thriving" || a.wellbeingScore <= 3);
+  const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
+  const { data: allComms = [] } = useCommsLog();
+
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
   const attention = athletes.filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving").length;
   const highCommercial = athletes.filter((a) => a.commercialPotential === "High").length;
+
+  // Build last-contact map from comms_log
+  const lastContactMap = useMemo(() => {
+    const map: Record<string, Date> = {};
+    allComms.forEach((c) => {
+      const d = new Date(c.sentAt);
+      if (!map[c.athleteId] || d > map[c.athleteId]) {
+        map[c.athleteId] = d;
+      }
+    });
+    return map;
+  }, [allComms]);
+
+  const filteredAthletes = useMemo(() => {
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    let filtered: Athlete[];
+    switch (activeFilter) {
+      case "calls_due_7":
+        // Athletes sorted by longest time since last contact (most overdue first)
+        filtered = [...athletes].sort((a, b) => {
+          const aLast = lastContactMap[a.id]?.getTime() ?? 0;
+          const bLast = lastContactMap[b.id]?.getTime() ?? 0;
+          return aLast - bLast; // oldest contact first
+        });
+        break;
+      case "wellbeing_low":
+        filtered = athletes.filter((a) => a.wellbeingScore <= 3);
+        break;
+      case "parent_followup":
+        // Athletes where parent comms are older than 14 days or no comms at all
+        filtered = athletes.filter((a) => {
+          const parentComms = allComms.filter((c) => c.athleteId === a.id && c.recipient === "parent");
+          if (parentComms.length === 0) return true;
+          const lastParent = new Date(Math.max(...parentComms.map((c) => new Date(c.sentAt).getTime())));
+          return (now.getTime() - lastParent.getTime()) > 14 * 24 * 60 * 60 * 1000;
+        });
+        break;
+      case "injury_setback":
+        filtered = athletes.filter((a) => a.status === "Needs Support");
+        break;
+      case "commercial_watch":
+        filtered = athletes.filter((a) => a.commercialPotential === "High");
+        break;
+      default:
+        filtered = athletes.filter((a) => a.status !== "Thriving" || a.wellbeingScore <= 3);
+    }
+    return filtered;
+  }, [athletes, activeFilter, allComms, lastContactMap]);
+
+  const filters: { key: CommandFilter; label: string }[] = [
+    { key: "calls_due_7", label: "Calls due in 7 days" },
+    { key: "wellbeing_low", label: "Wellbeing ≤ 3" },
+    { key: "parent_followup", label: "Parent follow-up needed" },
+    { key: "injury_setback", label: "Injury / selection setback" },
+    { key: "commercial_watch", label: "Commercial watch list" },
+  ];
+
+  const filterTitle: Record<CommandFilter, string> = {
+    all: "Priority Actions This Week",
+    calls_due_7: "Calls Due in 7 Days",
+    wellbeing_low: "Athletes — Wellbeing ≤ 3",
+    parent_followup: "Parent Follow-up Needed",
+    injury_setback: "Injury / Selection Setback",
+    commercial_watch: "Commercial Watch List",
+  };
+
+  function daysSinceContact(athleteId: string) {
+    const last = lastContactMap[athleteId];
+    if (!last) return "No contact recorded";
+    const days = Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000));
+    return days === 0 ? "Today" : `${days} day${days !== 1 ? "s" : ""} ago`;
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -1247,33 +1325,53 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
-          <CardHeader><CardTitle className="text-base">Priority Actions This Week</CardTitle></CardHeader>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{filterTitle[activeFilter]}</CardTitle>
+              {activeFilter !== "all" && (
+                <Button variant="ghost" size="sm" onClick={() => setActiveFilter("all")} className="text-xs">
+                  ← Back to overview
+                </Button>
+              )}
+            </div>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {dueThisWeek.map((a) => (
+            {filteredAthletes.map((a) => (
               <div key={a.id} className="flex items-center justify-between rounded-xl border border-border p-3">
                 <div>
                   <div className="font-medium">{a.name}</div>
-                  <div className="text-xs text-muted-foreground">{a.club} • Wellbeing {a.wellbeingScore}/5 • Next call {a.nextCall}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {a.club} • Wellbeing {a.wellbeingScore}/5 • Last contact: {daysSinceContact(a.id)}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {statusBadge(a.status)}
+                  {activeFilter === "commercial_watch" && <Badge variant="secondary">{a.commercialPotential}</Badge>}
                   <Button variant="secondary" size="sm">Open</Button>
                 </div>
               </div>
             ))}
-            {dueThisWeek.length === 0 && <div className="text-sm text-muted-foreground">No urgent athlete flags this week.</div>}
+            {filteredAthletes.length === 0 && <div className="text-sm text-muted-foreground">No athletes match this filter.</div>}
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-base">Command Centre Filters</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div>• Calls due in 7 days</div>
-            <div>• Wellbeing ≤ 3</div>
-            <div>• Parent follow-up needed</div>
-            <div>• Injury / selection setback</div>
-            <div>• Commercial watch list</div>
-            <Separator />
-            <div className="text-xs text-muted-foreground">Production version can auto-generate a weekly action list.</div>
+          <CardContent className="space-y-1 text-sm">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setActiveFilter(f.key)}
+                className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
+                  activeFilter === f.key
+                    ? "bg-primary text-primary-foreground font-medium"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                • {f.label}
+              </button>
+            ))}
+            <Separator className="my-2" />
+            <div className="text-xs text-muted-foreground px-3">Click a filter to view priority actions.</div>
           </CardContent>
         </Card>
       </div>
