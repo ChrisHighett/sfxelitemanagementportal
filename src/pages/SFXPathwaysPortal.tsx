@@ -1012,13 +1012,123 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function Resources() {
+function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const latestReview = reviews[0];
+
+  return (
+    <Card className="md:col-span-2 lg:col-span-3">
+      <CardHeader>
+        <CardTitle className="text-base">🏉 Development Tracker — {athlete.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Profile snapshot */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Club</div>
+              <div className="mt-1 font-medium">{athlete.club}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Position</div>
+              <div className="mt-1 font-medium">{athlete.position}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Stage</div>
+              <div className="mt-1 font-medium">{athlete.stage}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Wellbeing</div>
+              <div className="mt-2">{scorePill(athlete.wellbeingScore)}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Separator />
+
+        {/* Latest review */}
+        {latestReview ? (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Latest Monthly Review — {latestReview.month}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardContent className="p-4 space-y-2 text-sm">
+                  <div><span className="font-medium">Performance:</span> {latestReview.performance}</div>
+                  <div><span className="font-medium">Lifestyle:</span> {latestReview.lifestyle}</div>
+                  <div><span className="font-medium">Personal:</span> {latestReview.personal}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 space-y-2 text-sm">
+                  <div><span className="font-medium">Education:</span> {latestReview.education}</div>
+                  <div><span className="font-medium">Brand:</span> {latestReview.brand}</div>
+                  <div><span className="font-medium">Focus Next Month:</span> {latestReview.focus}</div>
+                </CardContent>
+              </Card>
+            </div>
+            {latestReview.goals.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-base">Goals</CardTitle></CardHeader>
+                <CardContent>
+                  {latestReview.goals.map((g, idx) => (
+                    <div key={idx} className="flex items-start gap-2 py-1">
+                      <div className="mt-1.5 h-2 w-2 rounded-full bg-primary" />
+                      <span className="text-sm">{g}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No monthly reviews recorded yet.</p>
+        )}
+
+        {/* Review history */}
+        {reviews.length > 1 && (
+          <>
+            <Separator />
+            <Accordion type="single" collapsible>
+              <AccordionItem value="history">
+                <AccordionTrigger className="text-sm font-semibold">Previous Reviews ({reviews.length - 1})</AccordionTrigger>
+                <AccordionContent className="space-y-3 pt-2">
+                  {reviews.slice(1).map((r) => (
+                    <Card key={r.month}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">{r.month}</CardTitle>
+                          <span className="text-xs text-muted-foreground">Wellbeing {r.wellbeingScore}/5</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-1 text-sm">
+                        <div><span className="font-medium">Performance:</span> {r.performance}</div>
+                        <div><span className="font-medium">Focus:</span> {r.focus}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
   const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string }[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const isAgentOrAdmin = role === "agent" || role === "admin";
 
-  // Fetch resources on mount
   useEffect(() => {
     fetchResources();
   }, []);
@@ -1088,69 +1198,82 @@ function Resources() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
-      {categories.map((cat) => (
-        <Card key={cat} className="hover:shadow-sm transition">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">{cat}</CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              disabled={uploading === cat}
-              onClick={() => fileInputRefs.current[cat]?.click()}
-            >
-              {uploading === cat ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <FileText className="h-3.5 w-3.5" />
+    <div className="space-y-6 p-6">
+      {/* Development Tracker for athlete/parent — shows only their linked athlete */}
+      {athlete && (role === "athlete" || role === "parent") && (
+        <DevelopmentTracker athlete={athlete} />
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {categories.map((cat) => (
+          <Card key={cat} className="hover:shadow-sm transition">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base">{cat}</CardTitle>
+              {isAgentOrAdmin && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  disabled={uploading === cat}
+                  onClick={() => fileInputRefs.current[cat]?.click()}
+                >
+                  {uploading === cat ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5" />
+                  )}
+                  Upload
+                </Button>
               )}
-              Upload
-            </Button>
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.jpg,.png,.webp"
-              className="hidden"
-              ref={(el) => { fileInputRefs.current[cat] = el; }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  handleUpload(cat, file);
-                  e.target.value = "";
-                }
-              }}
-            />
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {(resources[cat] || []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">No files yet. Upload a PDF or document.</p>
-            ) : (
-              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                {(resources[cat] || []).map((res) => (
-                  <div key={res.id} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
-                    <a
-                      href={getPublicUrl(res.file_path)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate text-primary hover:underline flex-1"
-                    >
-                      {res.file_name}
-                    </a>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => handleDelete(res.id, res.file_path, cat)}
-                    >
-                      <span className="text-xs text-destructive">✕</span>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+              {isAgentOrAdmin && (
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.jpg,.png,.webp"
+                  className="hidden"
+                  ref={(el) => { fileInputRefs.current[cat] = el; }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleUpload(cat, file);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+              )}
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {(resources[cat] || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No files yet.</p>
+              ) : (
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                  {(resources[cat] || []).map((res) => (
+                    <div key={res.id} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
+                      <a
+                        href={getPublicUrl(res.file_path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-primary hover:underline flex-1"
+                      >
+                        {res.file_name}
+                      </a>
+                      {isAgentOrAdmin && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => handleDelete(res.id, res.file_path, cat)}
+                        >
+                          <span className="text-xs text-destructive">✕</span>
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1607,7 +1730,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
 
-      {active === "resources" && <Resources />}
+      {active === "resources" && <Resources athlete={athlete} role={role} />}
       {role === "admin" && active === "admin" && <AdminSecurity />}
 
       {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||

@@ -17,6 +17,7 @@ export type Database = {
       athletes: {
         Row: {
           assigned_agent_id: string | null
+          athlete_code: string | null
           club: string | null
           club_contract_expiry: string | null
           created_at: string
@@ -33,6 +34,7 @@ export type Database = {
         }
         Insert: {
           assigned_agent_id?: string | null
+          athlete_code?: string | null
           club?: string | null
           club_contract_expiry?: string | null
           created_at?: string
@@ -49,6 +51,7 @@ export type Database = {
         }
         Update: {
           assigned_agent_id?: string | null
+          athlete_code?: string | null
           club?: string | null
           club_contract_expiry?: string | null
           created_at?: string
@@ -168,6 +171,7 @@ export type Database = {
           created_by: string | null
           education_notes: string | null
           focus_next_month: string | null
+          goals: Json | null
           id: string
           lifestyle_notes: string | null
           performance_notes: string | null
@@ -184,6 +188,7 @@ export type Database = {
           created_by?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
+          goals?: Json | null
           id?: string
           lifestyle_notes?: string | null
           performance_notes?: string | null
@@ -200,6 +205,7 @@ export type Database = {
           created_by?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
+          goals?: Json | null
           id?: string
           lifestyle_notes?: string | null
           performance_notes?: string | null
@@ -367,6 +373,10 @@ export type Database = {
     }
     Functions: {
       current_user_role: { Args: never; Returns: string }
+      generate_athlete_code: {
+        Args: { first_name: string; last_name: string }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_approved_parent_or_athlete_for: {
