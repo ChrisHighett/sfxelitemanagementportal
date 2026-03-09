@@ -17,6 +17,8 @@ export interface Athlete {
   lastCall: string;
   nextCall: string;
   commercialPotential: "Low" | "Medium" | "High";
+  managementContractExpiry: string | null;
+  clubContractExpiry: string | null;
 }
 
 export interface MonthlyReview {
