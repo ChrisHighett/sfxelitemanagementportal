@@ -408,6 +408,15 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
 function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const { data: comms = [] } = useCommsLog(athlete.id);
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <div className="space-y-6 p-6">
+        <AdminAthleteManager initialAthleteId={athlete.id} onBack={() => setEditing(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -416,6 +425,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
           <div className="flex items-center justify-between">
             <CardTitle>Athlete Profile</CardTitle>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                ✏️ Edit Athlete
+              </Button>
               <Badge variant="secondary">{athlete.stage}</Badge>
               {statusBadge(athlete.status)}
             </div>
