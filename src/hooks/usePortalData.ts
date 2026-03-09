@@ -5,6 +5,7 @@ export interface Athlete {
   id: string;
   name: string;
   age: number;
+  dateOfBirth: string | null;
   club: string;
   school: string;
   position: string;
