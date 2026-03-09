@@ -926,15 +926,46 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       <Card>
         <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          {/* Voice Recording */}
+          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            {!isRecording ? (
+              <Button onClick={startRecording} variant="outline" className="gap-2">
+                <Mic className="h-4 w-4" /> Start Recording
+              </Button>
+            ) : (
+              <Button onClick={stopRecording} variant="destructive" className="gap-2">
+                <Square className="h-4 w-4" /> Stop Recording
+              </Button>
+            )}
+            {isRecording && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                Recording...
+              </div>
+            )}
+          </div>
+
+          {/* Transcript */}
+          {transcript && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Transcript</label>
+              <div className="p-3 rounded-md border bg-background text-sm max-h-[200px] overflow-y-auto whitespace-pre-wrap">
+                {transcript}
+              </div>
+            </div>
+          )}
+
+          {/* Manual notes */}
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Paste transcript here, or type notes live..."
-            className="min-h-[140px]"
+            placeholder="Or type notes manually..."
+            className="min-h-[100px]"
           />
           <div className="flex flex-wrap gap-2">
-            <Button onClick={mockGenerateAI} className="gap-2">
-              <Sparkles className="h-4 w-4" /> Generate AI Summary (Mock)
+            <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
+              {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {isSummarising ? "Summarising..." : "Generate AI Summary"}
             </Button>
             <Button variant="secondary">Publish to Tracker</Button>
             <Button variant="secondary">Create Athlete Email</Button>
