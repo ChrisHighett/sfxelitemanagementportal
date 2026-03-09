@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -555,6 +555,12 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioSaved, setAudioSaved] = useState(false);
+  const audioFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const scriptGuides = [
     {
@@ -751,6 +757,23 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     recognitionRef.current = recognition;
     isRecordingRef.current = true;
     setIsRecording(true);
+
+    // Start MediaRecorder for audio capture
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
+        audioChunksRef.current = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          setAudioUrl(URL.createObjectURL(blob));
+          stream.getTracks().forEach((t) => t.stop());
+        };
+        mediaRecorder.start(1000); // capture in 1s chunks
+        mediaRecorderRef.current = mediaRecorder;
+      })
+      .catch((err) => console.warn("MediaRecorder unavailable:", err));
+
     toast.success("Recording started — speak clearly into your microphone");
   }, [transcript]);
 
@@ -761,10 +784,51 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
     setIsRecording(false);
     setTranscript(finalTranscriptRef.current);
     toast.info("Recording stopped");
   }, []);
+
+  const uploadAudioToStorage = useCallback(async () => {
+    if (audioChunksRef.current.length === 0) {
+      toast.error("No audio recorded");
+      return;
+    }
+    setIsUploadingAudio(true);
+    try {
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const fileName = `${athlete.id}/${Date.now()}-call.webm`;
+      const { error } = await supabase.storage.from("call-audio").upload(fileName, blob, { contentType: "audio/webm" });
+      if (error) throw error;
+      setAudioSaved(true);
+      toast.success("Audio saved to call recordings");
+    } catch (e: any) {
+      console.error("Audio upload error:", e);
+      toast.error(e.message || "Failed to upload audio");
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  }, [athlete.id]);
+
+  const handleAudioFileUpload = useCallback(async (file: File) => {
+    setIsUploadingAudio(true);
+    try {
+      const fileName = `${athlete.id}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("call-audio").upload(fileName, file, { contentType: file.type });
+      if (error) throw error;
+      setAudioSaved(true);
+      toast.success(`"${file.name}" uploaded to call recordings`);
+    } catch (e: any) {
+      console.error("Audio file upload error:", e);
+      toast.error(e.message || "Failed to upload audio file");
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  }, [athlete.id]);
 
   const generateAISummary = useCallback(async () => {
     const textToSummarise = transcript || notes;
@@ -1101,7 +1165,7 @@ SFX Pathways`;
         <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {/* Voice Recording */}
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
             {!isRecording ? (
               <Button onClick={startRecording} variant="outline" className="gap-2">
                 <Mic className="h-4 w-4" /> Start Recording
@@ -1117,7 +1181,50 @@ SFX Pathways`;
                 Recording...
               </div>
             )}
+            <div className="ml-auto flex items-center gap-2">
+              <input
+                ref={audioFileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAudioFileUpload(file);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => audioFileInputRef.current?.click()}
+                disabled={isUploadingAudio}
+              >
+                <Upload className="h-4 w-4" /> Upload Audio
+              </Button>
+            </div>
           </div>
+
+          {/* Audio playback + save */}
+          {audioUrl && !audioSaved && (
+            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+              <audio controls src={audioUrl} className="h-8 flex-1" />
+              <Button
+                size="sm"
+                onClick={uploadAudioToStorage}
+                disabled={isUploadingAudio || audioSaved}
+                className="gap-2"
+              >
+                {isUploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {audioSaved ? "Saved ✓" : "Save Audio"}
+              </Button>
+            </div>
+          )}
+          {audioSaved && (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              ✅ Audio recording saved to call recordings
+            </div>
+          )}
 
           {/* Transcript */}
           {transcript && (
