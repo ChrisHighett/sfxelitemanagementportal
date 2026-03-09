@@ -763,6 +763,7 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     recognitionRef.current = recognition;
     isRecordingRef.current = true;
     setIsRecording(true);
+    setCallStartTime(new Date());
 
     // Start MediaRecorder for audio capture
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
