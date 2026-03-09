@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -531,6 +532,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
 }
 
 function CallCentre({ athlete }: { athlete: Athlete }) {
+  const { user } = useAuth();
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
@@ -544,6 +546,8 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSummarising, setIsSummarising] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [transcriptSaved, setTranscriptSaved] = useState(false);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
@@ -780,6 +784,33 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       setIsSummarising(false);
     }
   }, [transcript, notes, athlete.name]);
+
+  const saveTranscriptToCommsLog = useCallback(async () => {
+    const textToSave = transcript || notes;
+    if (!textToSave.trim()) {
+      toast.error("No transcript or notes to save");
+      return;
+    }
+    setIsSavingTranscript(true);
+    try {
+      const { error } = await supabase.from("comms_log").insert({
+        athlete_id: athlete.id,
+        subject: `Call Transcript — ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`,
+        body: textToSave,
+        recipient_type: "athlete",
+        sent_by: user?.id ?? null,
+      });
+      if (error) throw error;
+      setTranscriptSaved(true);
+      toast.success("Transcript saved to Comms Log");
+    } catch (e: any) {
+      console.error("Save transcript error:", e);
+      toast.error(e.message || "Failed to save transcript");
+    } finally {
+      setIsSavingTranscript(false);
+    }
+  }, [transcript, notes, athlete.id, user?.id]);
+
 
   return (
     <div className="space-y-6 p-6">
@@ -1025,6 +1056,15 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
             className="min-h-[100px]"
           />
           <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={saveTranscriptToCommsLog} 
+              variant="outline" 
+              className="gap-2" 
+              disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
+            >
+              {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {transcriptSaved ? "Saved ✓" : isSavingTranscript ? "Saving..." : "Save Transcript"}
+            </Button>
             <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isSummarising ? "Summarising..." : "Generate AI Summary"}
