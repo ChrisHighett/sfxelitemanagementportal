@@ -1454,7 +1454,7 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
       // Sheet 3: Goal Tracker
       const goalHeaders = ["Athlete ID", "Goal Type", "Goal Description", "Month Set", "Status", "Comments"];
       const goalRows = goals.map((g: any) => [
-        (athlete as any).athleteCode || "—",
+        athlete.athleteCode || "—",
         g.goal_type, g.goal_description, g.month_set, g.status, g.comments || ""
       ]);
       const sheet3 = XLSX.utils.aoa_to_sheet([goalHeaders, ...goalRows]);
