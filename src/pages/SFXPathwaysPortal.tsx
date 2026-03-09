@@ -548,6 +548,10 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const [isSummarising, setIsSummarising] = useState(false);
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const [transcriptSaved, setTranscriptSaved] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
+  const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
