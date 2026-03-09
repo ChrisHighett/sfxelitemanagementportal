@@ -1436,7 +1436,7 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
         "Education Topic", "Parent Engagement Notes", "Follow-Up Actions"
       ];
       const reviewRows = reviews.map((r: any) => [
-        r.month, (athlete as any).athleteCode || "—",
+        r.month, athlete.athleteCode || "—",
         r.callDate || "—", r.callDuration || "—",
         r.wellbeingScore,
         r.trainingHighlights || r.performance || "—",
