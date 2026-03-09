@@ -110,6 +110,8 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
   role: Role; setRole: (r: Role) => void;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
 }) {
+  const { data: athletes = [] } = useAthletes();
+
   return (
     <div className="border-b border-border bg-card px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -140,7 +142,7 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockAthletes.map((a) => (
+                  {athletes.map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>

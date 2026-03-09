@@ -1,0 +1,166 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Athlete {
+  id: string;
+  name: string;
+  age: number;
+  club: string;
+  school: string;
+  position: string;
+  stage: "Emerging" | "Elite" | "Pre-Pro";
+  assignedAgent: string;
+  parentName: string;
+  parentEmail: string;
+  wellbeingScore: number;
+  status: "Thriving" | "Monitoring" | "Needs Support";
+  lastCall: string;
+  nextCall: string;
+  commercialPotential: "Low" | "Medium" | "High";
+}
+
+export interface MonthlyReview {
+  athleteId: string;
+  month: string;
+  wellbeingScore: number;
+  performance: string;
+  lifestyle: string;
+  personal: string;
+  education: string;
+  brand: string;
+  focus: string;
+  goals: string[];
+  attentionRequired: boolean;
+}
+
+export interface CommsLog {
+  athleteId: string;
+  recipient: "athlete" | "parent";
+  subject: string;
+  body: string;
+  sentAt: string;
+}
+
+export function useAthletes() {
+  return useQuery({
+    queryKey: ["athletes"],
+    queryFn: async () => {
+      const { data: athletesData, error: athletesError } = await supabase
+        .from("athletes")
+        .select("*")
+        .order("first_name");
+
+      if (athletesError) throw athletesError;
+
+      const { data: guardiansData } = await supabase
+        .from("guardians")
+        .select("*");
+
+      const { data: reviewsData } = await supabase
+        .from("monthly_reviews")
+        .select("*")
+        .order("review_month", { ascending: false });
+
+      const athletes: Athlete[] = (athletesData || []).map((athlete) => {
+        const guardian = guardiansData?.find((g) => g.athlete_id === athlete.id);
+        const latestReview = reviewsData?.find((r) => r.athlete_id === athlete.id);
+
+        const wellbeingScore = latestReview?.wellbeing_score || 3;
+        let status: "Thriving" | "Monitoring" | "Needs Support";
+        if (wellbeingScore >= 4) status = "Thriving";
+        else if (wellbeingScore === 3) status = "Monitoring";
+        else status = "Needs Support";
+
+        return {
+          id: athlete.id,
+          name: `${athlete.first_name} ${athlete.last_name}`,
+          age: 17, // Could be calculated from DOB if we add that field
+          club: athlete.club || "—",
+          school: athlete.school || "—",
+          position: athlete.position || "—",
+          stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
+          assignedAgent: "Chris Highett", // Could come from a relationship table
+          parentName: guardian?.parent_name || "Guardian",
+          parentEmail: guardian?.parent_email || "guardian@example.com",
+          wellbeingScore,
+          status,
+          lastCall: "2026-03-04", // Could come from comms_log
+          nextCall: "2026-04-04", // Could be calculated
+          commercialPotential: "Medium", // Could be a field in athletes table
+        };
+      });
+
+      return athletes;
+    },
+  });
+}
+
+export function useMonthlyReviews(athleteId?: string) {
+  return useQuery({
+    queryKey: ["monthly_reviews", athleteId],
+    queryFn: async () => {
+      let query = supabase
+        .from("monthly_reviews")
+        .select("*")
+        .order("review_month", { ascending: false });
+
+      if (athleteId) {
+        query = query.eq("athlete_id", athleteId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const reviews: MonthlyReview[] = (data || []).map((review) => ({
+        athleteId: review.athlete_id,
+        month: new Date(review.review_month).toISOString().slice(0, 7),
+        wellbeingScore: review.wellbeing_score || 3,
+        performance: review.performance_notes || "—",
+        lifestyle: review.lifestyle_notes || "—",
+        personal: review.personal_notes || "—",
+        education: review.education_notes || "—",
+        brand: review.brand_notes || "—",
+        focus: review.focus_next_month || "—",
+        goals: [], // Could be stored as JSON array
+        attentionRequired: review.attention_required || false,
+      }));
+
+      return reviews;
+    },
+  });
+}
+
+export function useCommsLog(athleteId?: string) {
+  return useQuery({
+    queryKey: ["comms_log", athleteId],
+    queryFn: async () => {
+      let query = supabase
+        .from("comms_log")
+        .select("*")
+        .order("sent_at", { ascending: false });
+
+      if (athleteId) {
+        query = query.eq("athlete_id", athleteId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const comms: CommsLog[] = (data || []).map((comm) => ({
+        athleteId: comm.athlete_id,
+        recipient: comm.recipient_type as "athlete" | "parent",
+        subject: comm.subject,
+        body: comm.body,
+        sentAt: new Date(comm.sent_at).toLocaleString("en-AU", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+      return comms;
+    },
+  });
+}
