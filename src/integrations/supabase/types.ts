@@ -316,6 +316,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_role: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      is_agent: { Args: never; Returns: boolean }
+      is_approved_parent_or_athlete_for: {
+        Args: { athlete_uuid: string }
+        Returns: boolean
+      }
       user_has_athlete_access: {
         Args: { athlete_uuid: string; user_uuid: string }
         Returns: boolean
