@@ -543,7 +543,12 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     performance: string; lifestyle: string; personal: string;
     education: string; brand: string; focus: string; goals: string[];
     attentionRequired: boolean;
+    trainingHighlights: string; areasForImprovement: string;
+    footballGoal: string; personalGoal: string; schoolLifeGoal: string;
+    educationTopic: string; parentEngagementNotes: string;
+    followUpActions: string; wellbeingScore: number;
   } | null>(null);
+  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSummarising, setIsSummarising] = useState(false);
