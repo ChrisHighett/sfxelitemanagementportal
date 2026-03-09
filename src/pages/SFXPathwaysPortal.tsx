@@ -311,6 +311,24 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
     return alerts;
   }, [athletes]);
 
+  const birthdayAlerts = useMemo(() => {
+    const now = new Date();
+    const oneMonthOut = new Date(now);
+    oneMonthOut.setMonth(oneMonthOut.getMonth() + 1);
+    const results: { name: string; turnsOn: string }[] = [];
+    athletes.forEach((a) => {
+      if (!a.dateOfBirth) return;
+      const dob = new Date(a.dateOfBirth);
+      // Find their 17th birthday
+      const birthday17 = new Date(dob);
+      birthday17.setFullYear(dob.getFullYear() + 17);
+      if (birthday17 >= now && birthday17 <= oneMonthOut) {
+        results.push({ name: a.name, turnsOn: birthday17.toISOString().slice(0, 10) });
+      }
+    });
+    return results;
+  }, [athletes]);
+
   return (
     <div className="space-y-4 p-6">
       {contractAlerts.length > 0 && (
