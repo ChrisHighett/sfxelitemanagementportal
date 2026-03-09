@@ -816,7 +816,83 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   }, [transcript, notes, athlete.id, user?.id]);
 
 
-  return (
+  const publishToTracker = useCallback(async () => {
+    if (!aiSummary) return;
+    setIsPublishing(true);
+    try {
+      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01"; // first of current month
+      const { error } = await supabase.from("monthly_reviews").upsert({
+        athlete_id: athlete.id,
+        review_month: reviewMonth,
+        performance_notes: aiSummary.performance,
+        lifestyle_notes: aiSummary.lifestyle,
+        personal_notes: aiSummary.personal,
+        education_notes: aiSummary.education,
+        brand_notes: aiSummary.brand,
+        focus_next_month: aiSummary.focus,
+        goals: aiSummary.goals,
+        attention_required: aiSummary.attentionRequired,
+        wellbeing_score: aiSummary.attentionRequired ? 2 : 4,
+        created_by: user?.id ?? null,
+      }, { onConflict: "athlete_id,review_month" });
+      if (error) throw error;
+      setIsPublished(true);
+      toast.success("Summary published to Development Tracker");
+    } catch (e: any) {
+      console.error("Publish error:", e);
+      toast.error(e.message || "Failed to publish to tracker");
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [aiSummary, athlete.id, user?.id]);
+
+  const createAthleteEmail = useCallback(() => {
+    if (!aiSummary) return;
+    const draft = `Hi ${athlete.name.split(" ")[0]},
+
+Great chat today! Here's a quick recap of what we discussed:
+
+**Performance Focus:** ${aiSummary.performance}
+
+**Lifestyle:** ${aiSummary.lifestyle}
+
+**Goals for Next Month:**
+${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+
+**Primary Focus:** ${aiSummary.focus}
+
+Keep up the great work and reach out if you need anything before our next call.
+
+Cheers,
+SFX Pathways`;
+    setAthleteEmailDraft(draft);
+    toast.success("Athlete email draft created");
+  }, [aiSummary, athlete.name]);
+
+  const createParentEmail = useCallback(() => {
+    if (!aiSummary) return;
+    const draft = `Hi,
+
+I wanted to share a brief update following my call with ${athlete.name} today.
+
+**Performance:** ${aiSummary.performance}
+
+**Education:** ${aiSummary.education}
+
+**Wellbeing:** ${aiSummary.personal}
+
+**Goals for Next Month:**
+${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+
+${aiSummary.attentionRequired ? "⚠️ **Note:** There are some areas that may need extra attention. Please feel free to reach out if you'd like to discuss further." : "Everything is tracking well. Please don't hesitate to get in touch if you have any questions."}
+
+Kind regards,
+SFX Pathways`;
+    setParentEmailDraft(draft);
+    toast.success("Parent email draft created");
+  }, [aiSummary, athlete.name]);
+
+
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
