@@ -368,14 +368,17 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   );
 }
 
-export default function AdminAthleteManager() {
+export default function AdminAthleteManager({ initialAthleteId, onBack }: {
+  initialAthleteId?: string; onBack?: () => void;
+} = {}) {
   const { data: athletes = [], isLoading } = useAthletes();
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(initialAthleteId || null);
   const [addingNew, setAddingNew] = useState(false);
   const [search, setSearch] = useState("");
 
+  // If opened directly to an athlete (e.g. from agent profile view)
   if (selectedAthleteId) {
-    return <AthleteDetail athleteId={selectedAthleteId} onBack={() => setSelectedAthleteId(null)} />;
+    return <AthleteDetail athleteId={selectedAthleteId} onBack={onBack || (() => setSelectedAthleteId(null))} />;
   }
 
   const filtered = athletes.filter((a) =>
