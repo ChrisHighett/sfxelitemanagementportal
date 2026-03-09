@@ -546,6 +546,8 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSummarising, setIsSummarising] = useState(false);
+  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
+  const [transcriptSaved, setTranscriptSaved] = useState(false);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
