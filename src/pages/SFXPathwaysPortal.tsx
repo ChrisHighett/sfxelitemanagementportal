@@ -1582,12 +1582,84 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
       </div>
       <Card>
         <CardHeader><CardTitle className="text-base">Weekly Agent Workflow</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-5 text-sm">
-          <div><div className="font-medium">Monday</div><div className="text-muted-foreground">Review dashboard + book calls</div></div>
-          <div><div className="font-medium">Tuesday</div><div className="text-muted-foreground">Athlete calls + tracker updates</div></div>
-          <div><div className="font-medium">Wednesday</div><div className="text-muted-foreground">Parent updates + follow-ups</div></div>
-          <div><div className="font-medium">Thursday</div><div className="text-muted-foreground">Club/coach relationship touchpoints</div></div>
-          <div><div className="font-medium">Friday</div><div className="text-muted-foreground">Commercial review + next-week planning</div></div>
+        <CardContent className="space-y-0 text-sm">
+          {(() => {
+            // Derive priority actions from live data
+            const lowWellbeing = athletes.filter((a) => a.wellbeingScore <= 3);
+            const needsSupport = athletes.filter((a) => a.status === "Needs Support");
+            const overdueCalls = [...athletes].sort((a, b) => {
+              const aLast = lastContactMap[a.id]?.getTime() ?? 0;
+              const bLast = lastContactMap[b.id]?.getTime() ?? 0;
+              return aLast - bLast;
+            }).slice(0, 5);
+            const parentFollowups = athletes.filter((a) => {
+              const parentComms = allComms.filter((c) => c.athleteId === a.id && c.recipient === "parent");
+              if (parentComms.length === 0) return true;
+              const lastParent = new Date(Math.max(...parentComms.map((c) => new Date(c.sentAt).getTime())));
+              return (Date.now() - lastParent.getTime()) > 14 * 24 * 60 * 60 * 1000;
+            });
+            const highCommercialAthletes = athletes.filter((a) => a.commercialPotential === "High");
+
+            const days = [
+              {
+                day: "Monday",
+                focus: "Review dashboard + book calls",
+                actions: overdueCalls.length > 0
+                  ? overdueCalls.map((a) => `📞 ${a.name} — last contact: ${daysSinceContact(a.id)}`)
+                  : ["✅ All athletes contacted recently"],
+              },
+              {
+                day: "Tuesday",
+                focus: "Athlete calls + tracker updates",
+                actions: [
+                  ...lowWellbeing.map((a) => `⚠️ ${a.name} — wellbeing ${a.wellbeingScore}/5`),
+                  ...needsSupport.filter((a) => a.wellbeingScore > 3).map((a) => `🔴 ${a.name} — needs support`),
+                  ...(lowWellbeing.length === 0 && needsSupport.length === 0 ? ["✅ No urgent athlete concerns"] : []),
+                ],
+              },
+              {
+                day: "Wednesday",
+                focus: "Parent updates + follow-ups",
+                actions: parentFollowups.length > 0
+                  ? parentFollowups.map((a) => `📧 ${a.name}'s parent — follow-up overdue`)
+                  : ["✅ All parent comms up to date"],
+              },
+              {
+                day: "Thursday",
+                focus: "Club/coach touchpoints",
+                actions: [
+                  ...contractAlerts.map((c) => `🔔 ${c.name} — ${c.type} contract expires ${c.expiry}`),
+                  ...birthdayAlerts.map((b) => `🎂 ${b.name} turns 17 on ${b.turnsOn}`),
+                  ...(contractAlerts.length === 0 && birthdayAlerts.length === 0 ? ["✅ No contract or milestone alerts"] : []),
+                ],
+              },
+              {
+                day: "Friday",
+                focus: "Commercial review + planning",
+                actions: highCommercialAthletes.length > 0
+                  ? highCommercialAthletes.map((a) => `💎 ${a.name} — high commercial potential`)
+                  : ["✅ No commercial watch items"],
+              },
+            ];
+
+            return (
+              <div className="grid gap-4 md:grid-cols-5">
+                {days.map((d) => (
+                  <div key={d.day} className="space-y-2">
+                    <div className="font-medium">{d.day}</div>
+                    <div className="text-muted-foreground text-xs">{d.focus}</div>
+                    <div className="space-y-1 mt-1">
+                      {d.actions.map((action, i) => (
+                        <div key={i} className="text-xs rounded-md bg-muted/50 px-2 py-1.5 leading-snug">
+                          {action}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
