@@ -1421,7 +1421,7 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
         "Athlete ID", "Athlete Name", "Age", "Position", "Club / School",
         "Start Date with Agency", "Parent/Guardian Name(s)", "Parent Contact", "Notes"
       ], [
-        (athlete as any).athleteCode || "—", athlete.name, athlete.age,
+        athlete.athleteCode || "—", athlete.name, athlete.age,
         athlete.position, `${athlete.club} / ${athlete.school}`,
         "—", athlete.parentName, athlete.parentEmail, ""
       ]];
