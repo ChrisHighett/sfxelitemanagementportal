@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
+import { useUserRole } from "@/hooks/useUserRole";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
@@ -1035,11 +1036,21 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
 }
 
 export default function SFXPathwaysPortal() {
-  const [role, setRole] = useState<Role>("agent");
+  const { data: userRoleData, isLoading: roleLoading } = useUserRole();
+  const [role, setRole] = useState<Role | null>(null);
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+
+  // Set role from database once loaded
+  useEffect(() => {
+    if (userRoleData?.role && !role) {
+      setRole(userRoleData.role as Role);
+      const firstTab = NAV[userRoleData.role as Role]?.[0]?.key ?? "dash";
+      setActive(firstTab);
+    }
+  }, [userRoleData, role]);
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
   const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
@@ -1050,10 +1061,25 @@ export default function SFXPathwaysPortal() {
     setActive(first);
   }
 
-  if (athletesLoading) {
+  if (athletesLoading || roleLoading || !role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!userRoleData?.approved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Pending Approval</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            Your account is pending approval. Please contact an administrator.
+          </CardContent>
+        </Card>
       </div>
     );
   }
