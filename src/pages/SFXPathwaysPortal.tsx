@@ -346,6 +346,21 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
           </AlertDescription>
         </Alert>
       )}
+      {birthdayAlerts.length > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Turning 17 Soon</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {birthdayAlerts.map((alert, i) => (
+                <li key={i}>
+                  <span className="font-medium">{alert.name}</span> turns 17 on <span className="font-medium">{alert.turnsOn}</span>
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader><CardTitle>Roster Dashboard</CardTitle></CardHeader>
         <CardContent className="space-y-4">
