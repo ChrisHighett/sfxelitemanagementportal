@@ -289,8 +289,45 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
       .filter((a) => (onlyAttention ? (a.wellbeingScore <= 3 || a.status !== "Thriving") : true));
   }, [athletes, q, onlyAttention]);
 
+  const contractAlerts = useMemo(() => {
+    const now = new Date();
+    const oneMonthOut = new Date(now);
+    oneMonthOut.setMonth(oneMonthOut.getMonth() + 1);
+    const alerts: { name: string; type: string; expiry: string }[] = [];
+    athletes.forEach((a) => {
+      if (a.managementContractExpiry) {
+        const d = new Date(a.managementContractExpiry);
+        if (d <= oneMonthOut && d >= now) {
+          alerts.push({ name: a.name, type: "Management", expiry: a.managementContractExpiry });
+        }
+      }
+      if (a.clubContractExpiry) {
+        const d = new Date(a.clubContractExpiry);
+        if (d <= oneMonthOut && d >= now) {
+          alerts.push({ name: a.name, type: "Club", expiry: a.clubContractExpiry });
+        }
+      }
+    });
+    return alerts;
+  }, [athletes]);
+
   return (
     <div className="space-y-4 p-6">
+      {contractAlerts.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Contract Expiry Alerts</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {contractAlerts.map((alert, i) => (
+                <li key={i}>
+                  <span className="font-medium">{alert.name}</span> — {alert.type} contract expires <span className="font-medium">{alert.expiry}</span>
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
       <Card>
         <CardHeader><CardTitle>Roster Dashboard</CardTitle></CardHeader>
         <CardContent className="space-y-4">
