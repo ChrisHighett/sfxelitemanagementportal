@@ -528,6 +528,11 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     education: string; brand: string; focus: string; goals: string[];
     attentionRequired: boolean;
   } | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [isSummarising, setIsSummarising] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef("");
 
   const scriptGuides = [
     {
