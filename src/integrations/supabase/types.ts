@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       athletes: {
         Row: {
+          assigned_agent_id: string | null
           club: string | null
           created_at: string
           email: string | null
@@ -28,6 +29,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_agent_id?: string | null
           club?: string | null
           created_at?: string
           email?: string | null
@@ -40,6 +42,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_agent_id?: string | null
           club?: string | null
           created_at?: string
           email?: string | null
@@ -51,7 +54,15 @@ export type Database = {
           stage?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "athletes_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comms_log: {
         Row: {
