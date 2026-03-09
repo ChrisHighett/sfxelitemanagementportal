@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
@@ -450,15 +451,109 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     attentionRequired: boolean;
   } | null>(null);
 
-  const checklist = [
-    { k: "opener", t: "Warm opener + rapport" },
-    { k: "performance", t: "Performance (body, feedback, focus)" },
-    { k: "lifestyle", t: "Lifestyle (sleep, recovery, nutrition)" },
-    { k: "personal", t: "Personal development (confidence, leadership)" },
-    { k: "education", t: "Education (school load, planning)" },
-    { k: "brand", t: "Brand (posting, pillars, behaviour)" },
-    { k: "goals", t: "Set next-month goals" },
-    { k: "close", t: "Close: support + accountability" },
+  const scriptGuides = [
+    {
+      k: "opener",
+      title: "Warm Opener + Rapport",
+      duration: "2 minutes",
+      purpose: "Create comfort and trust before discussing development.",
+      script: `"Hey mate, good to catch up.\nHow's everything been going this week — footy, school, life?"`,
+      prompts: [
+        "How has training been since we last spoke?",
+        "How are you feeling physically?",
+        "How's school going at the moment?"
+      ],
+      responses: {
+        positive: `"That's great to hear mate."`,
+        challenge: `"That's pretty normal at this stage — we'll work through it."`
+      }
+    },
+    {
+      k: "performance",
+      title: "Performance",
+      duration: "4 minutes",
+      purpose: "Understand training and football development.",
+      questions: [
+        "What have you been most happy with in your game recently?",
+        "What's been the biggest challenge at training lately?",
+        "What feedback have the coaches been giving you?"
+      ],
+      followUp: `"If you could improve one thing in the next month, what would it be?"`,
+      focusAreas: ["conditioning", "defensive reads", "communication", "fitness levels", "consistency"],
+      portalFields: ["Performance Notes", "Coach Feedback", "Performance Focus"]
+    },
+    {
+      k: "lifestyle",
+      title: "Lifestyle",
+      duration: "3 minutes",
+      purpose: "Build habits that support performance.",
+      questions: [
+        "How has your sleep been lately?",
+        "Are you feeling recovered after training?",
+        "What's your eating like during the week?"
+      ],
+      keyHabits: ["sleep before 10:30pm", "hydration", "recovery routines"],
+      tone: `"At your age those little habits make a massive difference."`,
+      portalFields: ["Sleep", "Recovery", "Nutrition", "Lifestyle Score"]
+    },
+    {
+      k: "personal",
+      title: "Personal Development",
+      duration: "3 minutes",
+      purpose: "Help the athlete grow as a person.",
+      questions: [
+        "How are you feeling confidence-wise at the moment?",
+        "Are you enjoying being around the team?",
+        "Do you feel like you're speaking up more at training?"
+      ],
+      leadershipPrompt: `"The best players are often the best communicators."`,
+      portalFields: ["Confidence", "Leadership", "Mindset", "Personal Development Notes"]
+    },
+    {
+      k: "education",
+      title: "Education",
+      duration: "2 minutes",
+      purpose: "Ensure school remains stable.",
+      questions: [
+        "How's school going at the moment?",
+        "Any exams or big assignments coming up?",
+        "Are you managing the workload ok?"
+      ],
+      keyMessage: `"Footy is important but school still matters."`,
+      portalFields: ["School Progress", "Upcoming Pressure", "Education Notes"]
+    },
+    {
+      k: "brand",
+      title: "Brand & Social Media",
+      duration: "2 minutes",
+      purpose: "Develop responsible social behaviour.",
+      questions: [
+        "Have you posted anything recently?",
+        "What sort of content do you enjoy sharing?",
+        "Any negative experiences online?"
+      ],
+      teachingMoment: `"Everything you post builds your reputation."`,
+      brandPillars: ["training", "lifestyle", "personality", "community"],
+      portalFields: ["Social Activity", "Brand Pillars", "Behaviour Notes"]
+    },
+    {
+      k: "goals",
+      title: "Set Next-Month Goals",
+      duration: "3 minutes",
+      purpose: "Create clear direction.",
+      question: `"What are three things you'd like to improve before we talk next?"`,
+      examples: ["improve Bronco time", "improve sleep routine", "be more vocal at training"],
+      confirmation: `"Alright let's lock those in."`,
+      portalFields: ["Next Month Goals", "Primary Focus"]
+    },
+    {
+      k: "close",
+      title: "Close (Support + Accountability)",
+      duration: "1 minute",
+      purpose: "End the call with support.",
+      script: `"Mate you're doing well and you're on a really good path.\nKeep focusing on those goals and we'll check back in next month."`,
+      finalReassurance: `"And remember — if anything comes up before then just give me a call."`
+    }
   ];
 
   function mockGenerateAI() {
@@ -477,21 +572,207 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   return (
     <div className="space-y-6 p-6">
       <Card>
-        <CardHeader><CardTitle>Call Script Checklist</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {checklist.map((c) => (
-            <div key={c.k} className="flex items-center justify-between">
-              <span className="text-sm">{c.t}</span>
-              <Switch
-                checked={scriptChecked[c.k]}
-                onCheckedChange={(v) => setScriptChecked((s) => ({ ...s, [c.k]: v }))}
-              />
-            </div>
-          ))}
-          <Separator />
-          <p className="text-xs text-muted-foreground">Production: add audio upload + transcription + AI summary.</p>
+        <CardHeader>
+          <CardTitle>Call Script Guide</CardTitle>
+          <p className="text-sm text-muted-foreground">Expand each section to view detailed scripts and prompts</p>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            {scriptGuides.map((guide) => (
+              <AccordionItem key={guide.k} value={guide.k}>
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center justify-between flex-1 pr-4">
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={scriptChecked[guide.k]}
+                        onCheckedChange={(v) => {
+                          setScriptChecked((s) => ({ ...s, [guide.k]: v }));
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="text-left">
+                        <div className="font-medium">{guide.title}</div>
+                        <div className="text-xs text-muted-foreground">{guide.duration}</div>
+                      </div>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pt-3">
+                  <div className="rounded-lg bg-muted p-4 space-y-3">
+                    <div>
+                      <div className="text-xs font-medium text-muted-foreground uppercase">Purpose</div>
+                      <div className="text-sm mt-1">{guide.purpose}</div>
+                    </div>
+
+                    {guide.script && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Script</div>
+                        <div className="text-sm mt-1 whitespace-pre-line italic border-l-2 border-primary pl-3">{guide.script}</div>
+                      </div>
+                    )}
+
+                    {guide.prompts && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Follow-up Prompts</div>
+                        <ul className="text-sm mt-1 space-y-1">
+                          {guide.prompts.map((p, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{p}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {guide.responses && (
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <div>
+                          <div className="text-xs font-medium text-muted-foreground uppercase">If Positive</div>
+                          <div className="text-sm mt-1 italic">{guide.responses.positive}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium text-muted-foreground uppercase">If Challenge</div>
+                          <div className="text-sm mt-1 italic">{guide.responses.challenge}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {guide.questions && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Key Questions</div>
+                        <ul className="text-sm mt-1 space-y-1">
+                          {guide.questions.map((q, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{q}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {guide.followUp && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Follow Up</div>
+                        <div className="text-sm mt-1 italic border-l-2 border-primary pl-3">{guide.followUp}</div>
+                      </div>
+                    )}
+
+                    {guide.question && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Ask</div>
+                        <div className="text-sm mt-1 italic border-l-2 border-primary pl-3">{guide.question}</div>
+                      </div>
+                    )}
+
+                    {guide.focusAreas && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Example Focus Areas</div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {guide.focusAreas.map((area, idx) => (
+                            <Badge key={idx} variant="secondary">{area}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {guide.keyHabits && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Key Habits</div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {guide.keyHabits.map((habit, idx) => (
+                            <Badge key={idx} variant="secondary">{habit}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {guide.brandPillars && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Brand Pillars Examples</div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {guide.brandPillars.map((pillar, idx) => (
+                            <Badge key={idx} variant="secondary">{pillar}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {guide.examples && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Example Goals</div>
+                        <ul className="text-sm mt-1 space-y-1">
+                          {guide.examples.map((ex, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{ex}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {guide.tone && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Supportive Tone</div>
+                        <div className="text-sm mt-1 italic">{guide.tone}</div>
+                      </div>
+                    )}
+
+                    {guide.keyMessage && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Key Message</div>
+                        <div className="text-sm mt-1 italic">{guide.keyMessage}</div>
+                      </div>
+                    )}
+
+                    {guide.teachingMoment && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Teaching Moment</div>
+                        <div className="text-sm mt-1 italic">{guide.teachingMoment}</div>
+                      </div>
+                    )}
+
+                    {guide.leadershipPrompt && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Leadership Prompt</div>
+                        <div className="text-sm mt-1 italic">{guide.leadershipPrompt}</div>
+                      </div>
+                    )}
+
+                    {guide.confirmation && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Agent Confirmation</div>
+                        <div className="text-sm mt-1 italic">{guide.confirmation}</div>
+                      </div>
+                    )}
+
+                    {guide.finalReassurance && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Final Reassurance</div>
+                        <div className="text-sm mt-1 italic border-l-2 border-primary pl-3">{guide.finalReassurance}</div>
+                      </div>
+                    )}
+
+                    {guide.portalFields && (
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground uppercase">Portal Tracker Fields</div>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {guide.portalFields.map((field, idx) => (
+                            <Badge key={idx} variant="outline">{field}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
