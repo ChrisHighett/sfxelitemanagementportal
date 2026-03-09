@@ -132,7 +132,7 @@ export function useMonthlyReviews(athleteId?: string) {
         education: review.education_notes || "—",
         brand: review.brand_notes || "—",
         focus: review.focus_next_month || "—",
-        goals: [], // Could be stored as JSON array
+        goals: Array.isArray(review.goals) ? review.goals as string[] : [],
         attentionRequired: review.attention_required || false,
       }));
 
