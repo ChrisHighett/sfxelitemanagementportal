@@ -1036,11 +1036,21 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
 }
 
 export default function SFXPathwaysPortal() {
-  const [role, setRole] = useState<Role>("agent");
+  const { data: userRoleData, isLoading: roleLoading } = useUserRole();
+  const [role, setRole] = useState<Role | null>(null);
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
   const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+
+  // Set role from database once loaded
+  useEffect(() => {
+    if (userRoleData?.role && !role) {
+      setRole(userRoleData.role as Role);
+      const firstTab = NAV[userRoleData.role as Role]?.[0]?.key ?? "dash";
+      setActive(firstTab);
+    }
+  }, [userRoleData, role]);
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
   const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
