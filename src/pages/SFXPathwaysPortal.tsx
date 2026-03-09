@@ -1165,7 +1165,7 @@ SFX Pathways`;
         <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {/* Voice Recording */}
-          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
             {!isRecording ? (
               <Button onClick={startRecording} variant="outline" className="gap-2">
                 <Mic className="h-4 w-4" /> Start Recording
@@ -1181,7 +1181,50 @@ SFX Pathways`;
                 Recording...
               </div>
             )}
+            <div className="ml-auto flex items-center gap-2">
+              <input
+                ref={audioFileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAudioFileUpload(file);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => audioFileInputRef.current?.click()}
+                disabled={isUploadingAudio}
+              >
+                <Upload className="h-4 w-4" /> Upload Audio
+              </Button>
+            </div>
           </div>
+
+          {/* Audio playback + save */}
+          {audioUrl && !audioSaved && (
+            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+              <audio controls src={audioUrl} className="h-8 flex-1" />
+              <Button
+                size="sm"
+                onClick={uploadAudioToStorage}
+                disabled={isUploadingAudio || audioSaved}
+                className="gap-2"
+              >
+                {isUploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {audioSaved ? "Saved ✓" : "Save Audio"}
+              </Button>
+            </div>
+          )}
+          {audioSaved && (
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              ✅ Audio recording saved to call recordings
+            </div>
+          )}
 
           {/* Transcript */}
           {transcript && (
