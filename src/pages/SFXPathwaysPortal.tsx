@@ -639,20 +639,85 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     }
   ];
 
-  function mockGenerateAI() {
-    setAiSummary({
-      performance: "Gym consistency trending up; add defensive video review.",
-      lifestyle: "Sleep inconsistent; implement 10pm device cutoff.",
-      personal: "Confidence solid; encourage leadership moments at training.",
-      education: "Busy assessment period; create weekly plan Sunday night.",
-      brand: "Training content performing best; post 2x/week.",
-      focus: "Conditioning + defensive reads",
-      goals: ["4 gym sessions/week", "10pm device cutoff", "2 IG posts/week"],
-      attentionRequired: false,
-    });
-  }
+  const startRecording = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser. Try Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-AU";
+    finalTranscriptRef.current = transcript;
 
-  return (
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscriptRef.current += t + " ";
+        } else {
+          interim += t;
+        }
+      }
+      setTranscript(finalTranscriptRef.current + interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error !== "no-speech") {
+        toast.error(`Microphone error: ${event.error}`);
+        setIsRecording(false);
+      }
+    };
+
+    recognition.onend = () => {
+      // Restart if still recording (browser stops after silence)
+      if (isRecording) {
+        try { recognition.start(); } catch {}
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsRecording(true);
+    toast.success("Recording started — speak into your microphone");
+  }, [transcript, isRecording]);
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setTranscript(finalTranscriptRef.current);
+    toast.info("Recording stopped");
+  }, []);
+
+  const generateAISummary = useCallback(async () => {
+    const textToSummarise = transcript || notes;
+    if (!textToSummarise.trim()) {
+      toast.error("No transcript or notes to summarise");
+      return;
+    }
+    setIsSummarising(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarise-call", {
+        body: { transcript: textToSummarise, athleteName: athlete.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAiSummary(data.summary);
+      toast.success("Summary generated");
+    } catch (e: any) {
+      console.error("Summary error:", e);
+      toast.error(e.message || "Failed to generate summary");
+    } finally {
+      setIsSummarising(false);
+    }
+  }, [transcript, notes, athlete.name]);
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
