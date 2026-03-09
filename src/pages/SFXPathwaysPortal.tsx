@@ -1056,6 +1056,15 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
             className="min-h-[100px]"
           />
           <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={saveTranscriptToCommsLog} 
+              variant="outline" 
+              className="gap-2" 
+              disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
+            >
+              {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {transcriptSaved ? "Saved ✓" : isSavingTranscript ? "Saving..." : "Save Transcript"}
+            </Button>
             <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isSummarising ? "Summarising..." : "Generate AI Summary"}
