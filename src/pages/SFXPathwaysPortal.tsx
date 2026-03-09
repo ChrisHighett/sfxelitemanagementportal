@@ -328,8 +328,8 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
 }
 
 function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
-  const reviews = mockReviews.filter((r) => r.athleteId === athlete.id);
-  const comms = mockComms.filter((c) => c.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const { data: comms = [] } = useCommsLog(athlete.id);
 
   return (
     <div className="space-y-6 p-6">
