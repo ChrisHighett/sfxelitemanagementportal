@@ -1253,6 +1253,45 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
   const { data: allComms = [] } = useCommsLog();
 
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
+
+  const contractAlerts = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thirtyFiveDaysOut = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000);
+    const alerts: { name: string; type: string; expiry: string }[] = [];
+    athletes.forEach((a) => {
+      if (a.managementContractExpiry) {
+        const d = new Date(a.managementContractExpiry);
+        if (d >= now && d <= thirtyFiveDaysOut) {
+          alerts.push({ name: a.name, type: "Management", expiry: a.managementContractExpiry });
+        }
+      }
+      if (a.clubContractExpiry) {
+        const d = new Date(a.clubContractExpiry);
+        if (d >= now && d <= thirtyFiveDaysOut) {
+          alerts.push({ name: a.name, type: "Club", expiry: a.clubContractExpiry });
+        }
+      }
+    });
+    return alerts;
+  }, [athletes]);
+
+  const birthdayAlerts = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thirtyFiveDaysOut = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000);
+    const results: { name: string; turnsOn: string }[] = [];
+    athletes.forEach((a) => {
+      if (!a.dateOfBirth) return;
+      const dob = new Date(a.dateOfBirth);
+      const birthday17 = new Date(dob);
+      birthday17.setFullYear(dob.getFullYear() + 17);
+      if (birthday17 >= now && birthday17 <= thirtyFiveDaysOut) {
+        results.push({ name: a.name, turnsOn: birthday17.toISOString().slice(0, 10) });
+      }
+    });
+    return results;
+  }, [athletes]);
   const attention = athletes.filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving").length;
   const highCommercial = athletes.filter((a) => a.commercialPotential === "High").length;
 
