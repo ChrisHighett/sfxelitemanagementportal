@@ -1730,7 +1730,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
 
-      {active === "resources" && <Resources />}
+      {active === "resources" && <Resources athlete={athlete} role={role} />}
       {role === "admin" && active === "admin" && <AdminSecurity />}
 
       {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
