@@ -718,6 +718,8 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       setIsSummarising(false);
     }
   }, [transcript, notes, athlete.name]);
+
+  return (
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
