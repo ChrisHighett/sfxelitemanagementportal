@@ -16,6 +16,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 import { useUserRole } from "@/hooks/useUserRole";
+import AdminAthleteManager from "@/components/AdminAthleteManager";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
@@ -1145,26 +1146,28 @@ function Resources() {
 function AdminSecurity() {
   return (
     <div className="space-y-6 p-6">
-      <Card>
-        <CardHeader><CardTitle className="text-base">Admin & Security</CardTitle></CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Role-Based Access Control</div><div className="text-muted-foreground">Athletes/Parents only see their own records. Agents see assigned athletes. Admin sees all.</div></CardContent></Card>
-            <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Audit Log</div><div className="text-muted-foreground">Track edits to reviews, contact details, and documents with timestamps and user IDs.</div></CardContent></Card>
-            <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Consent & Permissions</div><div className="text-muted-foreground">Store guardian consent flags; control whether parents can view goals and brand notes.</div></CardContent></Card>
-            <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Data Retention</div><div className="text-muted-foreground">Policies for call audio retention, exports, and backups. Essential for C-suite and governance.</div></CardContent></Card>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle className="text-base">Production Build Notes</CardTitle></CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <div>• Frontend: Next.js (App Router) + Tailwind + shadcn/ui</div>
-          <div>• Backend: Supabase (Postgres + Auth + Storage + Row-Level Security)</div>
-          <div>• AI: optional server function for transcription + structured summary</div>
-          <div>• Hosting: Vercel</div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="athletes" className="w-full">
+        <TabsList>
+          <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
+          <TabsTrigger value="security">Security & Access</TabsTrigger>
+        </TabsList>
+        <TabsContent value="athletes" className="mt-4">
+          <AdminAthleteManager />
+        </TabsContent>
+        <TabsContent value="security" className="mt-4 space-y-6">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Admin & Security</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Role-Based Access Control</div><div className="text-muted-foreground">Athletes/Parents only see their own records. Agents see assigned athletes. Admin sees all.</div></CardContent></Card>
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Audit Log</div><div className="text-muted-foreground">Track edits to reviews, contact details, and documents with timestamps and user IDs.</div></CardContent></Card>
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Consent & Permissions</div><div className="text-muted-foreground">Store guardian consent flags; control whether parents can view goals and brand notes.</div></CardContent></Card>
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Data Retention</div><div className="text-muted-foreground">Policies for call audio retention, exports, and backups. Essential for C-suite and governance.</div></CardContent></Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
