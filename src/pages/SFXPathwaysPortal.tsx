@@ -555,6 +555,12 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioSaved, setAudioSaved] = useState(false);
+  const audioFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const scriptGuides = [
     {
