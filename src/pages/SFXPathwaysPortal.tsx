@@ -1150,9 +1150,31 @@ SFX Pathways`;
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isSummarising ? "Summarising..." : "Generate AI Summary"}
             </Button>
-            <Button variant="secondary">Publish to Tracker</Button>
-            <Button variant="secondary">Create Athlete Email</Button>
-            <Button variant="secondary">Create Parent Email</Button>
+            <Button 
+              variant="secondary" 
+              onClick={publishToTracker} 
+              disabled={!aiSummary || isPublishing || isPublished}
+              className="gap-2"
+            >
+              {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
+              {isPublished ? "Published ✓" : isPublishing ? "Publishing..." : "Publish to Tracker"}
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={createAthleteEmail} 
+              disabled={!aiSummary}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" /> Create Athlete Email
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={createParentEmail} 
+              disabled={!aiSummary}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" /> Create Parent Email
+            </Button>
           </div>
           {aiSummary && (
             <Card>
@@ -1173,6 +1195,53 @@ SFX Pathways`;
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Email Drafts */}
+          {athleteEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(athleteEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {parentEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(parentEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
               </CardContent>
             </Card>
           )}
