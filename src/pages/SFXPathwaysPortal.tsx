@@ -546,6 +546,7 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const [isSummarising, setIsSummarising] = useState(false);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
+  const isRecordingRef = useRef(false);
 
   const scriptGuides = [
     {
