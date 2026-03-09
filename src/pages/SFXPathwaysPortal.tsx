@@ -1253,6 +1253,45 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
   const { data: allComms = [] } = useCommsLog();
 
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
+
+  const contractAlerts = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thirtyFiveDaysOut = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000);
+    const alerts: { name: string; type: string; expiry: string }[] = [];
+    athletes.forEach((a) => {
+      if (a.managementContractExpiry) {
+        const d = new Date(a.managementContractExpiry);
+        if (d >= now && d <= thirtyFiveDaysOut) {
+          alerts.push({ name: a.name, type: "Management", expiry: a.managementContractExpiry });
+        }
+      }
+      if (a.clubContractExpiry) {
+        const d = new Date(a.clubContractExpiry);
+        if (d >= now && d <= thirtyFiveDaysOut) {
+          alerts.push({ name: a.name, type: "Club", expiry: a.clubContractExpiry });
+        }
+      }
+    });
+    return alerts;
+  }, [athletes]);
+
+  const birthdayAlerts = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const thirtyFiveDaysOut = new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000);
+    const results: { name: string; turnsOn: string }[] = [];
+    athletes.forEach((a) => {
+      if (!a.dateOfBirth) return;
+      const dob = new Date(a.dateOfBirth);
+      const birthday17 = new Date(dob);
+      birthday17.setFullYear(dob.getFullYear() + 17);
+      if (birthday17 >= now && birthday17 <= thirtyFiveDaysOut) {
+        results.push({ name: a.name, turnsOn: birthday17.toISOString().slice(0, 10) });
+      }
+    });
+    return results;
+  }, [athletes]);
   const attention = athletes.filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving").length;
   const highCommercial = athletes.filter((a) => a.commercialPotential === "High").length;
 
@@ -1332,6 +1371,34 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
 
   return (
     <div className="space-y-6 p-6">
+      {contractAlerts.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Contract Expiry Alerts</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {contractAlerts.map((alert, i) => (
+                <li key={i}>
+                  <span className="font-medium">{alert.name}</span> — {alert.type} contract expires <span className="font-medium">{alert.expiry}</span>
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      {birthdayAlerts.length > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Turning 17 Soon</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {birthdayAlerts.map((b, i) => (
+                <li key={i}><span className="font-medium">{b.name}</span> turns 17 on <span className="font-medium">{b.turnsOn}</span></li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Total Athletes</div><div className="mt-1 text-2xl font-semibold">{athletes.length}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Thriving</div><div className="mt-1 text-2xl font-semibold">{thriving}</div></CardContent></Card>
