@@ -1061,10 +1061,25 @@ export default function SFXPathwaysPortal() {
     setActive(first);
   }
 
-  if (athletesLoading) {
+  if (athletesLoading || roleLoading || !role) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!userRoleData?.approved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Pending Approval</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            Your account is pending approval. Please contact an administrator.
+          </CardContent>
+        </Card>
       </div>
     );
   }
