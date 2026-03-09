@@ -785,7 +785,33 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     }
   }, [transcript, notes, athlete.name]);
 
-  return (
+  const saveTranscriptToCommsLog = useCallback(async () => {
+    const textToSave = transcript || notes;
+    if (!textToSave.trim()) {
+      toast.error("No transcript or notes to save");
+      return;
+    }
+    setIsSavingTranscript(true);
+    try {
+      const { error } = await supabase.from("comms_log").insert({
+        athlete_id: athlete.id,
+        subject: `Call Transcript — ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`,
+        body: textToSave,
+        recipient_type: "athlete",
+        sent_by: user?.id ?? null,
+      });
+      if (error) throw error;
+      setTranscriptSaved(true);
+      toast.success("Transcript saved to Comms Log");
+    } catch (e: any) {
+      console.error("Save transcript error:", e);
+      toast.error(e.message || "Failed to save transcript");
+    } finally {
+      setIsSavingTranscript(false);
+    }
+  }, [transcript, notes, athlete.id, user?.id]);
+
+
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
