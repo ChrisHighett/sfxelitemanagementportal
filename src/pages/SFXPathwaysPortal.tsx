@@ -659,47 +659,95 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       toast.error("Speech recognition is not supported in this browser. Try Chrome.");
       return;
     }
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-AU";
-    finalTranscriptRef.current = transcript;
 
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscriptRef.current += t + " ";
-        } else {
-          interim += t;
+    const createRecognition = () => {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-AU";
+      recognition.maxAlternatives = 3;
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          // Pick the highest confidence alternative
+          let bestTranscript = "";
+          let bestConfidence = 0;
+          for (let j = 0; j < event.results[i].length; j++) {
+            if (event.results[i][j].confidence > bestConfidence) {
+              bestConfidence = event.results[i][j].confidence;
+              bestTranscript = event.results[i][j].transcript;
+            }
+          }
+          if (event.results[i].isFinal) {
+            finalTranscriptRef.current += bestTranscript + " ";
+          } else {
+            interim += bestTranscript;
+          }
         }
-      }
-      setTranscript(finalTranscriptRef.current + interim);
-    };
+        setTranscript(finalTranscriptRef.current + interim);
+      };
 
-    recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
-      if (event.error !== "no-speech") {
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === "no-speech") {
+          // Silently restart on no-speech instead of stopping
+          if (isRecordingRef.current) {
+            try { recognition.stop(); } catch {}
+          }
+          return;
+        }
+        if (event.error === "aborted" || event.error === "network") {
+          // Auto-recover from transient errors
+          if (isRecordingRef.current) {
+            setTimeout(() => {
+              if (isRecordingRef.current) {
+                try {
+                  const newRec = createRecognition();
+                  newRec.start();
+                  recognitionRef.current = newRec;
+                } catch {}
+              }
+            }, 300);
+          }
+          return;
+        }
         toast.error(`Microphone error: ${event.error}`);
+        isRecordingRef.current = false;
         setIsRecording(false);
-      }
+      };
+
+      recognition.onend = () => {
+        // Use ref to avoid stale closure — always restart if still recording
+        if (isRecordingRef.current) {
+          setTimeout(() => {
+            if (isRecordingRef.current) {
+              try {
+                const newRec = createRecognition();
+                newRec.start();
+                recognitionRef.current = newRec;
+              } catch (e) {
+                console.error("Failed to restart recognition:", e);
+              }
+            }
+          }, 100);
+        }
+      };
+
+      return recognition;
     };
 
-    recognition.onend = () => {
-      // Restart if still recording (browser stops after silence)
-      if (isRecording) {
-        try { recognition.start(); } catch {}
-      }
-    };
-
+    finalTranscriptRef.current = transcript;
+    const recognition = createRecognition();
     recognition.start();
     recognitionRef.current = recognition;
+    isRecordingRef.current = true;
     setIsRecording(true);
-    toast.success("Recording started — speak into your microphone");
-  }, [transcript, isRecording]);
+    toast.success("Recording started — speak clearly into your microphone");
+  }, [transcript]);
 
   const stopRecording = useCallback(() => {
+    isRecordingRef.current = false;
     if (recognitionRef.current) {
       recognitionRef.current.onend = null;
       recognitionRef.current.stop();
