@@ -1546,7 +1546,8 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Development Tracker for athlete/parent — shows only their linked athlete */}
+      {/* Development Tracker download + inline view */}
+      {athlete && <TrackerDownloadCard athlete={athlete} />}
       {athlete && (role === "athlete" || role === "parent") && (
         <DevelopmentTracker athlete={athlete} />
       )}
