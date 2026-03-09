@@ -1465,7 +1465,7 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
       const commsRows = commsData
         .filter((c) => c.recipient === "parent")
         .map((c) => [
-          (athlete as any).athleteCode || "—",
+          athlete.athleteCode || "—",
           athlete.parentName, "email", c.sentAt, c.body, "—"
         ]);
       const sheet4 = XLSX.utils.aoa_to_sheet([commsHeaders, ...commsRows]);
