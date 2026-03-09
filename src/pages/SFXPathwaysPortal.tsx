@@ -16,6 +16,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 import { useUserRole } from "@/hooks/useUserRole";
+import AdminAthleteManager from "@/components/AdminAthleteManager";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
