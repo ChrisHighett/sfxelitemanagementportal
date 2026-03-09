@@ -9,114 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import {
-  CalendarDays, ClipboardList, FileText, LayoutDashboard, Library,
-  Mail, Phone, Shield, Sparkles, Users,
-} from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users } from "lucide-react";
+import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
-
-interface Athlete {
-  id: string;
-  name: string;
-  age: number;
-  club: string;
-  school: string;
-  position: string;
-  stage: "Emerging" | "Elite" | "Pre-Pro";
-  assignedAgent: string;
-  parentName: string;
-  parentEmail: string;
-  wellbeingScore: number;
-  status: "Thriving" | "Monitoring" | "Needs Support";
-  lastCall: string;
-  nextCall: string;
-  commercialPotential: "Low" | "Medium" | "High";
-}
-
-interface MonthlyReview {
-  athleteId: string;
-  month: string;
-  wellbeingScore: number;
-  performance: string;
-  lifestyle: string;
-  personal: string;
-  education: string;
-  brand: string;
-  focus: string;
-  goals: string[];
-  attentionRequired: boolean;
-}
-
-interface CommsLog {
-  athleteId: string;
-  recipient: "athlete" | "parent";
-  subject: string;
-  body: string;
-  sentAt: string;
-}
-
-const mockAthletes: Athlete[] = [
-  {
-    id: "a1", name: "Jaxon Worthing", age: 17, club: "Bulldogs",
-    school: "Patrician Brothers (example)", position: "Back Row", stage: "Elite",
-    assignedAgent: "Chris Highett", parentName: "Parent / Guardian",
-    parentEmail: "parent@example.com", wellbeingScore: 4, status: "Thriving",
-    lastCall: "2026-03-04", nextCall: "2026-04-04", commercialPotential: "Medium",
-  },
-  {
-    id: "a2", name: "Tyler Smith", age: 16, club: "Sharks",
-    school: "Local High School (example)", position: "Half", stage: "Elite",
-    assignedAgent: "Chris Highett", parentName: "Guardian",
-    parentEmail: "guardian@example.com", wellbeingScore: 3, status: "Monitoring",
-    lastCall: "2026-02-18", nextCall: "2026-03-18", commercialPotential: "Low",
-  },
-  {
-    id: "a3", name: "Jimmy Carter", age: 18, club: "Eels",
-    school: "—", position: "Outside Back", stage: "Pre-Pro",
-    assignedAgent: "Chris Highett", parentName: "Guardian",
-    parentEmail: "guardian2@example.com", wellbeingScore: 5, status: "Thriving",
-    lastCall: "2026-03-02", nextCall: "2026-04-02", commercialPotential: "High",
-  },
-];
-
-const mockReviews: MonthlyReview[] = [
-  {
-    athleteId: "a1", month: "2026-03", wellbeingScore: 4,
-    performance: "Gym consistency improving; coach wants better defensive reads.",
-    lifestyle: "Sleep inconsistent on school nights; recovery routine improving.",
-    personal: "Confidence growing; good response to feedback.",
-    education: "Keeping up with school; needs better weekly planning.",
-    brand: "Posted twice; training content performing best.",
-    focus: "Conditioning + defensive reads",
-    goals: ["4 gym sessions/week", "10:00pm device cutoff", "2 IG posts/week"],
-    attentionRequired: false,
-  },
-  {
-    athleteId: "a2", month: "2026-02", wellbeingScore: 3,
-    performance: "Kicking + game management improving; needs strength work.",
-    lifestyle: "Sleep okay; nutrition inconsistent.",
-    personal: "Confidence dipped after selection feedback.",
-    education: "Busy assessment period.",
-    brand: "No consistent posting.",
-    focus: "Confidence + strength foundation",
-    goals: ["3 gym sessions/week", "Protein with breakfast", "1 story/week"],
-    attentionRequired: true,
-  },
-];
-
-const mockComms: CommsLog[] = [
-  {
-    athleteId: "a1", recipient: "athlete", subject: "Great catch up today",
-    body: "Proud of your effort. Focus this month: conditioning + defensive reads. 4 gym sessions/week + earlier sleep. Call anytime.",
-    sentAt: "2026-03-04 15:12",
-  },
-  {
-    athleteId: "a1", recipient: "parent", subject: "Jaxon monthly development update",
-    body: "Really positive catch up. Gym consistency and coach feedback strong. Focus next month: sleep routine + recovery discipline.",
-    sentAt: "2026-03-04 15:18",
-  },
-];
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -214,6 +110,8 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
   role: Role; setRole: (r: Role) => void;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
 }) {
+  const { data: athletes = [] } = useAthletes();
+
   return (
     <div className="border-b border-border bg-card px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -244,7 +142,7 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockAthletes.map((a) => (
+                  {athletes.map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -258,7 +156,8 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
 }
 
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
-  const review = mockReviews.find((r) => r.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
       <Card>
@@ -334,7 +233,8 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
 }
 
 function ParentDashboard({ athlete }: { athlete: Athlete }) {
-  const review = mockReviews.find((r) => r.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
       <Card>
@@ -430,8 +330,8 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
 }
 
 function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
-  const reviews = mockReviews.filter((r) => r.athleteId === athlete.id);
-  const comms = mockComms.filter((c) => c.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const { data: comms = [] } = useCommsLog(athlete.id);
 
   return (
     <div className="space-y-6 p-6">
@@ -802,7 +702,8 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
 }
 
 function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
-  const review = mockReviews.find((r) => r.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
       <div className="grid gap-6 md:grid-cols-3">
@@ -855,9 +756,12 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
 export default function SFXPathwaysPortal() {
   const [role, setRole] = useState<Role>("agent");
   const [active, setActive] = useState("roster");
-  const [selectedAthleteId, setSelectedAthleteId] = useState("a1");
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
-  const athlete = useMemo(() => mockAthletes.find((a) => a.id === selectedAthleteId) ?? mockAthletes[0], [selectedAthleteId]);
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+
+  const currentAthleteId = selectedAthleteId || athletes[0]?.id;
+  const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
 
   function handleRoleChange(nextRole: Role) {
     setRole(nextRole);
@@ -865,16 +769,44 @@ export default function SFXPathwaysPortal() {
     setActive(first);
   }
 
+  if (athletesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!athlete) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Athletes Found</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            There are no athletes in the system yet. Please add athletes to get started.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <Shell role={role} active={active} onNav={setActive}>
-      <TopBar role={role} setRole={handleRoleChange} selectedAthleteId={selectedAthleteId} setSelectedAthleteId={setSelectedAthleteId} />
+      <TopBar 
+        role={role} 
+        setRole={handleRoleChange} 
+        selectedAthleteId={currentAthleteId} 
+        setSelectedAthleteId={setSelectedAthleteId} 
+      />
 
       {role === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
       {role === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
       {role === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
       {role === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
 
-      {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={mockAthletes} />}
+      {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
