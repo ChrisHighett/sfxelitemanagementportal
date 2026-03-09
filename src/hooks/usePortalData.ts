@@ -92,6 +92,7 @@ export function useAthletes() {
 
         return {
           id: athlete.id,
+          athleteCode: athlete.athlete_code || null,
           name: `${athlete.first_name} ${athlete.last_name}`,
           age: age ?? 0,
           dateOfBirth: dob || null,
