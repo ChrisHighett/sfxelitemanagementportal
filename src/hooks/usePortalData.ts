@@ -89,6 +89,8 @@ export function useAthletes() {
           lastCall: "2026-03-04", // Could come from comms_log
           nextCall: "2026-04-04", // Could be calculated
           commercialPotential: "Medium", // Could be a field in athletes table
+          managementContractExpiry: (athlete as any).management_contract_expiry || null,
+          clubContractExpiry: (athlete as any).club_contract_expiry || null,
         };
       });
 

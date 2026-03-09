@@ -356,6 +356,10 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
               <div>School: {athlete.school}</div>
               <div>Position: {athlete.position}</div>
               <Separator className="my-3" />
+              <div className="font-medium">Contract Dates</div>
+              <div>Management Expiry: {athlete.managementContractExpiry || "—"}</div>
+              <div>Club Contract Expiry: {athlete.clubContractExpiry || "—"}</div>
+              <Separator className="my-3" />
               <div className="font-medium">Primary contact</div>
               <div>📧 {athlete.parentEmail}</div>
               <div>Parent: {athlete.parentName}</div>
