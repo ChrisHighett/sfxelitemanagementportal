@@ -154,7 +154,8 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
 }
 
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
-  const review = mockReviews.find((r) => r.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
       <Card>
