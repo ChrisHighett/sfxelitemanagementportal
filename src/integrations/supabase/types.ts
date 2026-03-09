@@ -18,11 +18,13 @@ export type Database = {
         Row: {
           assigned_agent_id: string | null
           club: string | null
+          club_contract_expiry: string | null
           created_at: string
           email: string | null
           first_name: string
           id: string
           last_name: string
+          management_contract_expiry: string | null
           position: string | null
           school: string | null
           stage: string | null
@@ -31,11 +33,13 @@ export type Database = {
         Insert: {
           assigned_agent_id?: string | null
           club?: string | null
+          club_contract_expiry?: string | null
           created_at?: string
           email?: string | null
           first_name: string
           id?: string
           last_name: string
+          management_contract_expiry?: string | null
           position?: string | null
           school?: string | null
           stage?: string | null
@@ -44,11 +48,13 @@ export type Database = {
         Update: {
           assigned_agent_id?: string | null
           club?: string | null
+          club_contract_expiry?: string | null
           created_at?: string
           email?: string | null
           first_name?: string
           id?: string
           last_name?: string
+          management_contract_expiry?: string | null
           position?: string | null
           school?: string | null
           stage?: string | null
