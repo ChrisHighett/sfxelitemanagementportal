@@ -700,7 +700,8 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
 }
 
 function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
-  const review = mockReviews.find((r) => r.athleteId === athlete.id);
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
       <div className="grid gap-6 md:grid-cols-3">
