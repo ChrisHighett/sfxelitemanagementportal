@@ -548,6 +548,10 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   const [isSummarising, setIsSummarising] = useState(false);
   const [isSavingTranscript, setIsSavingTranscript] = useState(false);
   const [transcriptSaved, setTranscriptSaved] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
+  const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
+  const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef("");
   const isRecordingRef = useRef(false);
@@ -812,6 +816,83 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   }, [transcript, notes, athlete.id, user?.id]);
 
 
+  const publishToTracker = useCallback(async () => {
+    if (!aiSummary) return;
+    setIsPublishing(true);
+    try {
+      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01"; // first of current month
+      const { error } = await supabase.from("monthly_reviews").upsert({
+        athlete_id: athlete.id,
+        review_month: reviewMonth,
+        performance_notes: aiSummary.performance,
+        lifestyle_notes: aiSummary.lifestyle,
+        personal_notes: aiSummary.personal,
+        education_notes: aiSummary.education,
+        brand_notes: aiSummary.brand,
+        focus_next_month: aiSummary.focus,
+        goals: aiSummary.goals,
+        attention_required: aiSummary.attentionRequired,
+        wellbeing_score: aiSummary.attentionRequired ? 2 : 4,
+        created_by: user?.id ?? null,
+      }, { onConflict: "athlete_id,review_month" });
+      if (error) throw error;
+      setIsPublished(true);
+      toast.success("Summary published to Development Tracker");
+    } catch (e: any) {
+      console.error("Publish error:", e);
+      toast.error(e.message || "Failed to publish to tracker");
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [aiSummary, athlete.id, user?.id]);
+
+  const createAthleteEmail = useCallback(() => {
+    if (!aiSummary) return;
+    const draft = `Hi ${athlete.name.split(" ")[0]},
+
+Great chat today! Here's a quick recap of what we discussed:
+
+**Performance Focus:** ${aiSummary.performance}
+
+**Lifestyle:** ${aiSummary.lifestyle}
+
+**Goals for Next Month:**
+${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+
+**Primary Focus:** ${aiSummary.focus}
+
+Keep up the great work and reach out if you need anything before our next call.
+
+Cheers,
+SFX Pathways`;
+    setAthleteEmailDraft(draft);
+    toast.success("Athlete email draft created");
+  }, [aiSummary, athlete.name]);
+
+  const createParentEmail = useCallback(() => {
+    if (!aiSummary) return;
+    const draft = `Hi,
+
+I wanted to share a brief update following my call with ${athlete.name} today.
+
+**Performance:** ${aiSummary.performance}
+
+**Education:** ${aiSummary.education}
+
+**Wellbeing:** ${aiSummary.personal}
+
+**Goals for Next Month:**
+${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+
+${aiSummary.attentionRequired ? "⚠️ **Note:** There are some areas that may need extra attention. Please feel free to reach out if you'd like to discuss further." : "Everything is tracking well. Please don't hesitate to get in touch if you have any questions."}
+
+Kind regards,
+SFX Pathways`;
+    setParentEmailDraft(draft);
+    toast.success("Parent email draft created");
+  }, [aiSummary, athlete.name]);
+
+
   return (
     <div className="space-y-6 p-6">
       <Card>
@@ -1069,9 +1150,31 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {isSummarising ? "Summarising..." : "Generate AI Summary"}
             </Button>
-            <Button variant="secondary">Publish to Tracker</Button>
-            <Button variant="secondary">Create Athlete Email</Button>
-            <Button variant="secondary">Create Parent Email</Button>
+            <Button 
+              variant="secondary" 
+              onClick={publishToTracker} 
+              disabled={!aiSummary || isPublishing || isPublished}
+              className="gap-2"
+            >
+              {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
+              {isPublished ? "Published ✓" : isPublishing ? "Publishing..." : "Publish to Tracker"}
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={createAthleteEmail} 
+              disabled={!aiSummary}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" /> Create Athlete Email
+            </Button>
+            <Button 
+              variant="secondary" 
+              onClick={createParentEmail} 
+              disabled={!aiSummary}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" /> Create Parent Email
+            </Button>
           </div>
           {aiSummary && (
             <Card>
@@ -1092,6 +1195,53 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Email Drafts */}
+          {athleteEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(athleteEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {parentEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(parentEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
               </CardContent>
             </Card>
           )}
