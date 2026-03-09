@@ -311,6 +311,24 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
     return alerts;
   }, [athletes]);
 
+  const birthdayAlerts = useMemo(() => {
+    const now = new Date();
+    const oneMonthOut = new Date(now);
+    oneMonthOut.setMonth(oneMonthOut.getMonth() + 1);
+    const results: { name: string; turnsOn: string }[] = [];
+    athletes.forEach((a) => {
+      if (!a.dateOfBirth) return;
+      const dob = new Date(a.dateOfBirth);
+      // Find their 17th birthday
+      const birthday17 = new Date(dob);
+      birthday17.setFullYear(dob.getFullYear() + 17);
+      if (birthday17 >= now && birthday17 <= oneMonthOut) {
+        results.push({ name: a.name, turnsOn: birthday17.toISOString().slice(0, 10) });
+      }
+    });
+    return results;
+  }, [athletes]);
+
   return (
     <div className="space-y-4 p-6">
       {contractAlerts.length > 0 && (
@@ -322,6 +340,21 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
               {contractAlerts.map((alert, i) => (
                 <li key={i}>
                   <span className="font-medium">{alert.name}</span> — {alert.type} contract expires <span className="font-medium">{alert.expiry}</span>
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      {birthdayAlerts.length > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Turning 17 Soon</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-1 space-y-1 text-sm">
+              {birthdayAlerts.map((alert, i) => (
+                <li key={i}>
+                  <span className="font-medium">{alert.name}</span> turns 17 on <span className="font-medium">{alert.turnsOn}</span>
                 </li>
               ))}
             </ul>

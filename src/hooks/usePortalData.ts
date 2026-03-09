@@ -5,6 +5,7 @@ export interface Athlete {
   id: string;
   name: string;
   age: number;
+  dateOfBirth: string | null;
   club: string;
   school: string;
   position: string;
@@ -73,10 +74,16 @@ export function useAthletes() {
         else if (wellbeingScore === 3) status = "Monitoring";
         else status = "Needs Support";
 
+        const dob = (athlete as any).date_of_birth;
+        const age = dob
+          ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+          : null;
+
         return {
           id: athlete.id,
           name: `${athlete.first_name} ${athlete.last_name}`,
-          age: 17, // Could be calculated from DOB if we add that field
+          age: age ?? 0,
+          dateOfBirth: dob || null,
           club: athlete.club || "—",
           school: athlete.school || "—",
           position: athlete.position || "—",
