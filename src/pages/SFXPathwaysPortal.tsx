@@ -812,6 +812,7 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
   }, [transcript, notes, athlete.id, user?.id]);
 
 
+  return (
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
