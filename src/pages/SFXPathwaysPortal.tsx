@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1358,6 +1359,78 @@ SFX Pathways`;
   );
 }
 
+function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
+  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
+  const [downloading, setDownloading] = useState(false);
+
+  function handleDownload() {
+    setDownloading(true);
+    try {
+      // Profile sheet
+      const profileRows = [
+        { Field: "Name", Value: athlete.name },
+        { Field: "Club", Value: athlete.club },
+        { Field: "Position", Value: athlete.position },
+        { Field: "Stage", Value: athlete.stage },
+        { Field: "School", Value: athlete.school },
+        { Field: "Date of Birth", Value: athlete.dateOfBirth || "—" },
+        { Field: "Wellbeing Score", Value: athlete.wellbeingScore },
+        { Field: "Status", Value: athlete.status },
+        { Field: "Management Contract Expiry", Value: athlete.managementContractExpiry || "—" },
+        { Field: "Club Contract Expiry", Value: athlete.clubContractExpiry || "—" },
+      ];
+
+      // Monthly reviews sheet
+      const reviewRows = reviews.map((r) => ({
+        Month: r.month,
+        "Wellbeing Score": r.wellbeingScore,
+        Performance: r.performance,
+        Lifestyle: r.lifestyle,
+        Personal: r.personal,
+        Education: r.education,
+        Brand: r.brand,
+        "Focus Next Month": r.focus,
+        Goals: r.goals.join("; "),
+        "Attention Required": r.attentionRequired ? "Yes" : "No",
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const profileSheet = XLSX.utils.json_to_sheet(profileRows);
+      XLSX.utils.book_append_sheet(wb, profileSheet, "Profile");
+
+      if (reviewRows.length > 0) {
+        const reviewSheet = XLSX.utils.json_to_sheet(reviewRows);
+        XLSX.utils.book_append_sheet(wb, reviewSheet, "Monthly Reviews");
+      }
+
+      const fileName = `Development_Tracker_${athlete.name.replace(/\s+/g, "_")}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      toast.success(`Tracker downloaded as ${fileName}`);
+    } catch (e: any) {
+      console.error("Download error:", e);
+      toast.error("Failed to generate tracker file");
+    }
+    setDownloading(false);
+  }
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-base">📊 Development Tracker — {athlete.name}</CardTitle>
+        <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
+          {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+          Download .xlsx
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Download the full development tracker including athlete profile and {reviews.length} monthly review{reviews.length !== 1 ? "s" : ""} as an Excel spreadsheet.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const latestReview = reviews[0];
@@ -1545,7 +1618,8 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Development Tracker for athlete/parent — shows only their linked athlete */}
+      {/* Development Tracker download + inline view */}
+      {athlete && <TrackerDownloadCard athlete={athlete} />}
       {athlete && (role === "athlete" || role === "parent") && (
         <DevelopmentTracker athlete={athlete} />
       )}
