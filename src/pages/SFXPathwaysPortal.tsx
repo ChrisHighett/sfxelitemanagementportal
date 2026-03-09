@@ -757,6 +757,23 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
     recognitionRef.current = recognition;
     isRecordingRef.current = true;
     setIsRecording(true);
+
+    // Start MediaRecorder for audio capture
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
+        audioChunksRef.current = [];
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          setAudioUrl(URL.createObjectURL(blob));
+          stream.getTracks().forEach((t) => t.stop());
+        };
+        mediaRecorder.start(1000); // capture in 1s chunks
+        mediaRecorderRef.current = mediaRecorder;
+      })
+      .catch((err) => console.warn("MediaRecorder unavailable:", err));
+
     toast.success("Recording started — speak clearly into your microphone");
   }, [transcript]);
 
@@ -767,10 +784,51 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
     setIsRecording(false);
     setTranscript(finalTranscriptRef.current);
     toast.info("Recording stopped");
   }, []);
+
+  const uploadAudioToStorage = useCallback(async () => {
+    if (audioChunksRef.current.length === 0) {
+      toast.error("No audio recorded");
+      return;
+    }
+    setIsUploadingAudio(true);
+    try {
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const fileName = `${athlete.id}/${Date.now()}-call.webm`;
+      const { error } = await supabase.storage.from("call-audio").upload(fileName, blob, { contentType: "audio/webm" });
+      if (error) throw error;
+      setAudioSaved(true);
+      toast.success("Audio saved to call recordings");
+    } catch (e: any) {
+      console.error("Audio upload error:", e);
+      toast.error(e.message || "Failed to upload audio");
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  }, [athlete.id]);
+
+  const handleAudioFileUpload = useCallback(async (file: File) => {
+    setIsUploadingAudio(true);
+    try {
+      const fileName = `${athlete.id}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("call-audio").upload(fileName, file, { contentType: file.type });
+      if (error) throw error;
+      setAudioSaved(true);
+      toast.success(`"${file.name}" uploaded to call recordings`);
+    } catch (e: any) {
+      console.error("Audio file upload error:", e);
+      toast.error(e.message || "Failed to upload audio file");
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  }, [athlete.id]);
 
   const generateAISummary = useCallback(async () => {
     const textToSummarise = transcript || notes;
