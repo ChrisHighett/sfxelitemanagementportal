@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Athlete {
   id: string;
+  athleteCode: string | null;
   name: string;
   age: number;
   dateOfBirth: string | null;
@@ -34,6 +35,16 @@ export interface MonthlyReview {
   focus: string;
   goals: string[];
   attentionRequired: boolean;
+  callDate: string | null;
+  callDuration: string | null;
+  trainingHighlights: string | null;
+  areasForImprovement: string | null;
+  footballGoal: string | null;
+  personalGoal: string | null;
+  schoolLifeGoal: string | null;
+  educationTopic: string | null;
+  parentEngagementNotes: string | null;
+  followUpActions: string | null;
 }
 
 export interface CommsLog {
@@ -81,6 +92,7 @@ export function useAthletes() {
 
         return {
           id: athlete.id,
+          athleteCode: athlete.athlete_code || null,
           name: `${athlete.first_name} ${athlete.last_name}`,
           age: age ?? 0,
           dateOfBirth: dob || null,
@@ -122,7 +134,7 @@ export function useMonthlyReviews(athleteId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      const reviews: MonthlyReview[] = (data || []).map((review) => ({
+      const reviews: MonthlyReview[] = (data || []).map((review: any) => ({
         athleteId: review.athlete_id,
         month: new Date(review.review_month).toISOString().slice(0, 7),
         wellbeingScore: review.wellbeing_score || 3,
@@ -134,6 +146,16 @@ export function useMonthlyReviews(athleteId?: string) {
         focus: review.focus_next_month || "—",
         goals: Array.isArray(review.goals) ? review.goals as string[] : [],
         attentionRequired: review.attention_required || false,
+        callDate: review.call_date || null,
+        callDuration: review.call_duration || null,
+        trainingHighlights: review.training_highlights || null,
+        areasForImprovement: review.areas_for_improvement || null,
+        footballGoal: review.football_goal || null,
+        personalGoal: review.personal_goal || null,
+        schoolLifeGoal: review.school_life_goal || null,
+        educationTopic: review.education_notes || null,
+        parentEngagementNotes: review.parent_engagement_notes || null,
+        followUpActions: review.follow_up_actions || null,
       }));
 
       return reviews;

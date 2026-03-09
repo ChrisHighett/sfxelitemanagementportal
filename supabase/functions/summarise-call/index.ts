@@ -13,17 +13,26 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are an elite youth athlete development analyst for SFX Pathways. You will receive a call transcript between an agent and a young athlete (or their parent). Summarise it into structured categories.
+    const systemPrompt = `You are an elite youth athlete development analyst for SFX Pathways. You will receive a call transcript between an agent and a young athlete (or their parent). Summarise it into the structured tracker format used by SFX Pathways.
 
 Return a JSON object with exactly these fields:
-- performance (string): Key performance insights
-- lifestyle (string): Sleep, nutrition, recovery observations  
+- trainingHighlights (string): What's going well in training — attitude, effort, specific skills, selections
+- areasForImprovement (string): Specific areas to work on — fitness, skills, mental, tactical
+- footballGoal (string): Specific football goal for next month
+- personalGoal (string): Personal development goal — confidence, leadership, habits
+- schoolLifeGoal (string): School, education, or life balance goal
+- educationTopic (string): Education topics discussed — standards, journaling, habits, routines
+- parentEngagementNotes (string): Notes about the conversation flow, parent relationship, observations
+- followUpActions (string): Specific follow-up actions for the agent before next call
+- wellbeingScore (number 1-5): Overall wellbeing rating based on the conversation
+- attentionRequired (boolean): true if any welfare concerns were flagged
+- performance (string): Key performance insights (brief)
+- lifestyle (string): Sleep, nutrition, recovery observations
 - personal (string): Mental health, confidence, social observations
 - education (string): School/study observations
 - brand (string): Social media and personal brand observations
 - focus (string): Primary focus area for next month
 - goals (string[]): 2-4 specific actionable goals
-- attentionRequired (boolean): true if any welfare concerns were flagged
 
 Be concise but specific. Use the athlete's context. If a category wasn't discussed, write "Not discussed this call."`;
 
@@ -44,10 +53,20 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
             type: "function",
             function: {
               name: "structured_summary",
-              description: "Return a structured call summary",
+              description: "Return a structured call summary matching the SFX Development Tracker format",
               parameters: {
                 type: "object",
                 properties: {
+                  trainingHighlights: { type: "string" },
+                  areasForImprovement: { type: "string" },
+                  footballGoal: { type: "string" },
+                  personalGoal: { type: "string" },
+                  schoolLifeGoal: { type: "string" },
+                  educationTopic: { type: "string" },
+                  parentEngagementNotes: { type: "string" },
+                  followUpActions: { type: "string" },
+                  wellbeingScore: { type: "number" },
+                  attentionRequired: { type: "boolean" },
                   performance: { type: "string" },
                   lifestyle: { type: "string" },
                   personal: { type: "string" },
@@ -55,9 +74,13 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
                   brand: { type: "string" },
                   focus: { type: "string" },
                   goals: { type: "array", items: { type: "string" } },
-                  attentionRequired: { type: "boolean" },
                 },
-                required: ["performance", "lifestyle", "personal", "education", "brand", "focus", "goals", "attentionRequired"],
+                required: [
+                  "trainingHighlights", "areasForImprovement", "footballGoal", "personalGoal",
+                  "schoolLifeGoal", "educationTopic", "parentEngagementNotes", "followUpActions",
+                  "wellbeingScore", "attentionRequired", "performance", "lifestyle", "personal",
+                  "education", "brand", "focus", "goals"
+                ],
                 additionalProperties: false,
               },
             },
@@ -95,7 +118,6 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
     if (toolCall) {
       summary = JSON.parse(toolCall.function.arguments);
     } else {
-      // Fallback: try to parse from content
       const content = data.choices?.[0]?.message?.content || "";
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
