@@ -1000,13 +1000,141 @@ function CallCentre({ athlete }: { athlete: Athlete }) {
 }
 
 function Resources() {
+  const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
+  const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string }[]>>({});
+  const [uploading, setUploading] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Fetch resources on mount
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  async function fetchResources() {
+    const { data, error } = await supabase
+      .from("resources")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Error fetching resources:", error);
+      return;
+    }
+    const grouped: typeof resources = {};
+    for (const r of data || []) {
+      if (!grouped[r.category]) grouped[r.category] = [];
+      grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at });
+    }
+    setResources(grouped);
+  }
+
+  async function handleUpload(category: string, file: File) {
+    setUploading(category);
+    const filePath = `${category.toLowerCase().replace(/\s+/g, "-")}/${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("resources")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      toast.error(`Upload failed: ${uploadError.message}`);
+      setUploading(null);
+      return;
+    }
+
+    const { error: dbError } = await supabase
+      .from("resources")
+      .insert({ category, file_name: file.name, file_path: filePath, file_size: file.size });
+
+    if (dbError) {
+      toast.error(`Failed to save record: ${dbError.message}`);
+    } else {
+      toast.success(`"${file.name}" uploaded to ${category}`);
+      fetchResources();
+    }
+    setUploading(null);
+  }
+
+  async function handleDelete(id: string, filePath: string, category: string) {
+    const { error: storageError } = await supabase.storage.from("resources").remove([filePath]);
+    if (storageError) {
+      toast.error(`Delete failed: ${storageError.message}`);
+      return;
+    }
+    const { error: dbError } = await supabase.from("resources").delete().eq("id", id);
+    if (dbError) {
+      toast.error(`Failed to remove record: ${dbError.message}`);
+    } else {
+      toast.success("File deleted");
+      fetchResources();
+    }
+  }
+
+  function getPublicUrl(filePath: string) {
+    const { data } = supabase.storage.from("resources").getPublicUrl(filePath);
+    return data.publicUrl;
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-3 p-6">
-      {["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"].map((t) => (
-        <Card key={t} className="hover:shadow-sm transition">
-          <CardHeader className="pb-2"><CardTitle className="text-base">{t}</CardTitle></CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Upload PDFs, videos, and checklists here. In production, store files in Supabase Storage with role permissions.
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-6">
+      {categories.map((cat) => (
+        <Card key={cat} className="hover:shadow-sm transition">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-base">{cat}</CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1"
+              disabled={uploading === cat}
+              onClick={() => fileInputRefs.current[cat]?.click()}
+            >
+              {uploading === cat ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
+              Upload
+            </Button>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.jpg,.png,.webp"
+              className="hidden"
+              ref={(el) => { fileInputRefs.current[cat] = el; }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleUpload(cat, file);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(resources[cat] || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No files yet. Upload a PDF or document.</p>
+            ) : (
+              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                {(resources[cat] || []).map((res) => (
+                  <div key={res.id} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
+                    <a
+                      href={getPublicUrl(res.file_path)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-primary hover:underline flex-1"
+                    >
+                      {res.file_name}
+                    </a>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => handleDelete(res.id, res.file_path, cat)}
+                    >
+                      <span className="text-xs text-destructive">✕</span>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

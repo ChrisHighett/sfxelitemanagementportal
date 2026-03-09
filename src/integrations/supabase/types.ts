@@ -279,6 +279,36 @@ export type Database = {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       user_athlete_access: {
         Row: {
           approved_at: string | null
