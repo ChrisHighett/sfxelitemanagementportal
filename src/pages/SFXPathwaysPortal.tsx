@@ -893,6 +893,7 @@ SFX Pathways`;
   }, [aiSummary, athlete.name]);
 
 
+  return (
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader>
