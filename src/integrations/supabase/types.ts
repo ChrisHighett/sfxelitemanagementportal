@@ -121,6 +121,50 @@ export type Database = {
           },
         ]
       }
+      goal_tracker: {
+        Row: {
+          athlete_id: string
+          comments: string | null
+          created_at: string
+          goal_description: string
+          goal_type: string
+          id: string
+          month_set: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          comments?: string | null
+          created_at?: string
+          goal_description: string
+          goal_type: string
+          id?: string
+          month_set: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          comments?: string | null
+          created_at?: string
+          goal_description?: string
+          goal_type?: string
+          id?: string
+          month_set?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_tracker_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardians: {
         Row: {
           athlete_id: string
@@ -164,53 +208,80 @@ export type Database = {
       }
       monthly_reviews: {
         Row: {
+          areas_for_improvement: string | null
           athlete_id: string
           attention_required: boolean | null
           brand_notes: string | null
+          call_date: string | null
+          call_duration: string | null
           created_at: string
           created_by: string | null
           education_notes: string | null
           focus_next_month: string | null
+          follow_up_actions: string | null
+          football_goal: string | null
           goals: Json | null
           id: string
           lifestyle_notes: string | null
+          parent_engagement_notes: string | null
           performance_notes: string | null
+          personal_goal: string | null
           personal_notes: string | null
           review_month: string
+          school_life_goal: string | null
+          training_highlights: string | null
           updated_at: string
           wellbeing_score: number | null
         }
         Insert: {
+          areas_for_improvement?: string | null
           athlete_id: string
           attention_required?: boolean | null
           brand_notes?: string | null
+          call_date?: string | null
+          call_duration?: string | null
           created_at?: string
           created_by?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
+          follow_up_actions?: string | null
+          football_goal?: string | null
           goals?: Json | null
           id?: string
           lifestyle_notes?: string | null
+          parent_engagement_notes?: string | null
           performance_notes?: string | null
+          personal_goal?: string | null
           personal_notes?: string | null
           review_month: string
+          school_life_goal?: string | null
+          training_highlights?: string | null
           updated_at?: string
           wellbeing_score?: number | null
         }
         Update: {
+          areas_for_improvement?: string | null
           athlete_id?: string
           attention_required?: boolean | null
           brand_notes?: string | null
+          call_date?: string | null
+          call_duration?: string | null
           created_at?: string
           created_by?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
+          follow_up_actions?: string | null
+          football_goal?: string | null
           goals?: Json | null
           id?: string
           lifestyle_notes?: string | null
+          parent_engagement_notes?: string | null
           performance_notes?: string | null
+          personal_goal?: string | null
           personal_notes?: string | null
           review_month?: string
+          school_life_goal?: string | null
+          training_highlights?: string | null
           updated_at?: string
           wellbeing_score?: number | null
         }
