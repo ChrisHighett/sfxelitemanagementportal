@@ -255,6 +255,7 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
     email: "",
     management_contract_expiry: athlete.managementContractExpiry || "",
     club_contract_expiry: athlete.clubContractExpiry || "",
+    assigned_agent: athlete.assignedAgent || "",
   };
 
   async function handleDeleteGuardian(id: string) {
