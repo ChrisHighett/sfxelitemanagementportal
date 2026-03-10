@@ -2302,7 +2302,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={role} />}
