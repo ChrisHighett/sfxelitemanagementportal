@@ -25,7 +25,15 @@ interface AthleteForm {
   email: string;
   management_contract_expiry: string;
   club_contract_expiry: string;
+  assigned_agent: string;
 }
+
+const AGENTS = [
+  { label: "George Mimis", value: "George Mimis" },
+  { label: "Chris Highett", value: "Chris Highett" },
+  { label: "Chase Stanley", value: "Chase Stanley" },
+  { label: "Paul Sutton", value: "Paul Sutton" },
+];
 
 interface GuardianForm {
   parent_name: string;
@@ -36,7 +44,7 @@ interface GuardianForm {
 
 const emptyAthlete: AthleteForm = {
   first_name: "", last_name: "", date_of_birth: "", club: "", school: "",
-  position: "", stage: "Emerging", email: "", management_contract_expiry: "", club_contract_expiry: "",
+  position: "", stage: "Emerging", email: "", management_contract_expiry: "", club_contract_expiry: "", assigned_agent: "",
 };
 
 const emptyGuardian: GuardianForm = {
@@ -83,7 +91,8 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
       email: form.email || null,
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
-    };
+      assigned_agent_name: form.assigned_agent || null,
+    } as any;
 
     const { error } = isEdit
       ? await supabase.from("athletes").update(payload).eq("id", athleteId)
@@ -135,6 +144,17 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
               <SelectItem value="Emerging">Emerging</SelectItem>
               <SelectItem value="Elite">Elite</SelectItem>
               <SelectItem value="Pre-Pro">Pre-Pro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Assigned Agent</Label>
+          <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
+            <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
+            <SelectContent>
+              {AGENTS.map((a) => (
+                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -247,6 +267,7 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
     email: "",
     management_contract_expiry: athlete.managementContractExpiry || "",
     club_contract_expiry: athlete.clubContractExpiry || "",
+    assigned_agent: athlete.assignedAgent || "",
   };
 
   async function handleDeleteGuardian(id: string) {
@@ -299,6 +320,7 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
               <div><span className="text-muted-foreground">School:</span> {athlete.school}</div>
               <div><span className="text-muted-foreground">Position:</span> {athlete.position}</div>
               <div><span className="text-muted-foreground">Stage:</span> {athlete.stage}</div>
+              <div><span className="text-muted-foreground">Assigned Agent:</span> {athlete.assignedAgent}</div>
               <div><span className="text-muted-foreground">Mgmt Contract Expiry:</span> {athlete.managementContractExpiry || "—"}</div>
               <div><span className="text-muted-foreground">Club Contract Expiry:</span> {athlete.clubContractExpiry || "—"}</div>
             </div>

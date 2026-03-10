@@ -100,7 +100,7 @@ export function useAthletes() {
           school: athlete.school || "—",
           position: athlete.position || "—",
           stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
-          assignedAgent: "Chris Highett", // Could come from a relationship table
+          assignedAgent: (athlete as any).assigned_agent_name || "Unassigned",
           parentName: guardian?.parent_name || "Guardian",
           parentEmail: guardian?.parent_email || "guardian@example.com",
           wellbeingScore,
