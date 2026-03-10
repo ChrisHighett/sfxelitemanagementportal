@@ -320,6 +320,7 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
               <div><span className="text-muted-foreground">School:</span> {athlete.school}</div>
               <div><span className="text-muted-foreground">Position:</span> {athlete.position}</div>
               <div><span className="text-muted-foreground">Stage:</span> {athlete.stage}</div>
+              <div><span className="text-muted-foreground">Assigned Agent:</span> {athlete.assignedAgent}</div>
               <div><span className="text-muted-foreground">Mgmt Contract Expiry:</span> {athlete.managementContractExpiry || "—"}</div>
               <div><span className="text-muted-foreground">Club Contract Expiry:</span> {athlete.clubContractExpiry || "—"}</div>
             </div>
