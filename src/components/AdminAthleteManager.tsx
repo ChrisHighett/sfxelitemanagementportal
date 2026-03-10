@@ -157,6 +157,7 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
               ))}
             </SelectContent>
           </Select>
+        </div>
         <div className="space-y-2">
           <Label>Management Contract Expiry</Label>
           <Input type="date" value={form.management_contract_expiry} onChange={(e) => set("management_contract_expiry", e.target.value)} />
