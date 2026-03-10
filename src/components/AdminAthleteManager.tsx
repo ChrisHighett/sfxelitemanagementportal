@@ -44,7 +44,7 @@ interface GuardianForm {
 
 const emptyAthlete: AthleteForm = {
   first_name: "", last_name: "", date_of_birth: "", club: "", school: "",
-  position: "", stage: "Emerging", email: "", management_contract_expiry: "", club_contract_expiry: "",
+  position: "", stage: "Emerging", email: "", management_contract_expiry: "", club_contract_expiry: "", assigned_agent: "",
 };
 
 const emptyGuardian: GuardianForm = {
