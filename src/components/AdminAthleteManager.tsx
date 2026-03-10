@@ -148,6 +148,16 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
           </Select>
         </div>
         <div className="space-y-2">
+          <Label>Assigned Agent</Label>
+          <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
+            <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
+            <SelectContent>
+              {AGENTS.map((a) => (
+                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        <div className="space-y-2">
           <Label>Management Contract Expiry</Label>
           <Input type="date" value={form.management_contract_expiry} onChange={(e) => set("management_contract_expiry", e.target.value)} />
         </div>
