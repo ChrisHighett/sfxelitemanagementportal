@@ -25,7 +25,15 @@ interface AthleteForm {
   email: string;
   management_contract_expiry: string;
   club_contract_expiry: string;
+  assigned_agent: string;
 }
+
+const AGENTS = [
+  { label: "George Mimis", value: "George Mimis" },
+  { label: "Chris Highett", value: "Chris Highett" },
+  { label: "Chase Stanley", value: "Chase Stanley" },
+  { label: "Paul Sutton", value: "Paul Sutton" },
+];
 
 interface GuardianForm {
   parent_name: string;
