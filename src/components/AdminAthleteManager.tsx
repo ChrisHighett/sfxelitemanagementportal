@@ -91,7 +91,8 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
       email: form.email || null,
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
-    };
+      assigned_agent_name: form.assigned_agent || null,
+    } as any;
 
     const { error } = isEdit
       ? await supabase.from("athletes").update(payload).eq("id", athleteId)
