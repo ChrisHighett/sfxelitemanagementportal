@@ -17,6 +17,7 @@ export type Database = {
       athletes: {
         Row: {
           assigned_agent_id: string | null
+          assigned_agent_name: string | null
           athlete_code: string | null
           club: string | null
           club_contract_expiry: string | null
@@ -34,6 +35,7 @@ export type Database = {
         }
         Insert: {
           assigned_agent_id?: string | null
+          assigned_agent_name?: string | null
           athlete_code?: string | null
           club?: string | null
           club_contract_expiry?: string | null
@@ -51,6 +53,7 @@ export type Database = {
         }
         Update: {
           assigned_agent_id?: string | null
+          assigned_agent_name?: string | null
           athlete_code?: string | null
           club?: string | null
           club_contract_expiry?: string | null

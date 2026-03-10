@@ -1,0 +1,1 @@
+ALTER TABLE public.athletes ADD COLUMN IF NOT EXISTS assigned_agent_name text;
