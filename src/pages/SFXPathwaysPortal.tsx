@@ -19,6 +19,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
+import EditableReviews from "@/components/EditableReviews";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
@@ -2301,7 +2302,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "reviews" && <AthleteTimeline athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={role} />}
