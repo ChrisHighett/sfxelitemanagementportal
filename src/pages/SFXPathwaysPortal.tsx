@@ -1397,11 +1397,41 @@ SFX Pathways`;
   );
 }
 
-function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
+function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const { data: commsData = [] } = useCommsLog(athlete.id);
   const [downloading, setDownloading] = useState(false);
+  const [uploadingTracker, setUploadingTracker] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
+  const [savedTrackerUrl, setSavedTrackerUrl] = useState<string | null>(null);
+  const [savedTrackerName, setSavedTrackerName] = useState<string | null>(null);
+  const trackerInputRef = useRef<HTMLInputElement | null>(null);
+  const isAgentOrAdmin = role === "agent" || role === "admin";
+  const trackerFilePath = `development-tracker/${athlete.id}/latest.xlsx`;
+
+  const refreshSavedTracker = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("resources")
+      .select("id, file_name, file_path")
+      .eq("category", "Development Tracker")
+      .eq("file_path", trackerFilePath)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Saved tracker fetch error:", error);
+      return;
+    }
+
+    if (!data) {
+      setSavedTrackerName(null);
+      setSavedTrackerUrl(null);
+      return;
+    }
+
+    const { data: publicData } = supabase.storage.from("resources").getPublicUrl(data.file_path);
+    setSavedTrackerName(data.file_name);
+    setSavedTrackerUrl(publicData.publicUrl);
+  }, [trackerFilePath]);
 
   useEffect(() => {
     supabase
@@ -1411,6 +1441,67 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
       .order("created_at", { ascending: false })
       .then(({ data }) => setGoals(data || []));
   }, [athlete.id]);
+
+  useEffect(() => {
+    refreshSavedTracker();
+  }, [refreshSavedTracker]);
+
+  async function handleTrackerUpload(file: File) {
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
+      toast.error("Please upload an Excel file (.xlsx or .xls)");
+      return;
+    }
+
+    setUploadingTracker(true);
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from("resources")
+        .upload(trackerFilePath, file, {
+          upsert: true,
+          contentType: file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: existing, error: existingError } = await supabase
+        .from("resources")
+        .select("id")
+        .eq("category", "Development Tracker")
+        .eq("file_path", trackerFilePath)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existing?.id) {
+        const { error: updateError } = await supabase
+          .from("resources")
+          .update({ file_name: file.name, file_size: file.size })
+          .eq("id", existing.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("resources")
+          .insert({
+            category: "Development Tracker",
+            file_name: file.name,
+            file_path: trackerFilePath,
+            file_size: file.size,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      await refreshSavedTracker();
+      toast.success("Updated tracker saved to portal");
+    } catch (e: any) {
+      console.error("Tracker upload error:", e);
+      toast.error(e.message || "Failed to save updated tracker");
+    } finally {
+      setUploadingTracker(false);
+    }
+  }
 
   function handleDownload() {
     setDownloading(true);
@@ -1505,10 +1596,54 @@ function TrackerDownloadCard({ athlete }: { athlete: Athlete }) {
           Download .xlsx
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
           Full 5-sheet tracker: Athlete Profile, Monthly Reviews, Goal Tracker, Parent Comms, and Dashboard KPIs ({reviews.length} review{reviews.length !== 1 ? "s" : ""}).
         </p>
+
+        {(isAgentOrAdmin || savedTrackerUrl) && (
+          <div className="rounded-md border bg-background p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {isAgentOrAdmin && (
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    disabled={uploadingTracker}
+                    onClick={() => trackerInputRef.current?.click()}
+                  >
+                    {uploadingTracker ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    Save edited .xlsx to portal
+                  </Button>
+                  <input
+                    ref={trackerInputRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleTrackerUpload(file);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </>
+              )}
+
+              {savedTrackerUrl && (
+                <a
+                  href={savedTrackerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Open latest saved tracker{savedTrackerName ? `: ${savedTrackerName}` : ""}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
