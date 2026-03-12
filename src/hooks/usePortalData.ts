@@ -136,6 +136,7 @@ export function useMonthlyReviews(athleteId?: string) {
       if (error) throw error;
 
       const reviews: MonthlyReview[] = (data || []).map((review: any) => ({
+        id: review.id,
         athleteId: review.athlete_id,
         month: new Date(review.review_month).toISOString().slice(0, 7),
         wellbeingScore: review.wellbeing_score || 3,

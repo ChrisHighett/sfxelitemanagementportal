@@ -82,8 +82,7 @@ function EditableReviewCard({
           parent_engagement_notes: form.parentEngagementNotes || null,
           follow_up_actions: form.followUpActions || null,
         } as any)
-        .eq("athlete_id", athleteId)
-        .eq("review_month", `${form.month}-01`);
+        .eq("id", review.id);
 
       if (error) throw error;
       toast.success("Review saved");
