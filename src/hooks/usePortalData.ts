@@ -24,6 +24,7 @@ export interface Athlete {
 }
 
 export interface MonthlyReview {
+  id: string;
   athleteId: string;
   month: string;
   wellbeingScore: number;
