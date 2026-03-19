@@ -14,6 +14,282 @@ export type Database = {
   }
   public: {
     Tables: {
+      athlete_alerts: {
+        Row: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          assigned_to: string | null
+          athlete_id: string
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          status: Database["public"]["Enums"]["alert_status"]
+          title: string
+          triggered_at: string
+          triggered_from_review_id: string | null
+          triggered_from_scorecard_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alert_type: Database["public"]["Enums"]["alert_type"]
+          assigned_to?: string | null
+          athlete_id: string
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          title: string
+          triggered_at?: string
+          triggered_from_review_id?: string | null
+          triggered_from_scorecard_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: Database["public"]["Enums"]["alert_type"]
+          assigned_to?: string | null
+          athlete_id?: string
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          title?: string
+          triggered_at?: string
+          triggered_from_review_id?: string | null
+          triggered_from_scorecard_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_alerts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_alerts_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_alerts_triggered_from_review_id_fkey"
+            columns: ["triggered_from_review_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_alerts_triggered_from_scorecard_id_fkey"
+            columns: ["triggered_from_scorecard_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_scorecards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_scorecards: {
+        Row: {
+          athlete_id: string
+          brand_score: number
+          created_at: string
+          created_by: string | null
+          created_from_review_id: string | null
+          education_score: number
+          id: string
+          lifestyle_score: number
+          overall_score: number | null
+          performance_score: number
+          personal_score: number
+          review_month: string
+          scoring_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          brand_score: number
+          created_at?: string
+          created_by?: string | null
+          created_from_review_id?: string | null
+          education_score: number
+          id?: string
+          lifestyle_score: number
+          overall_score?: number | null
+          performance_score: number
+          personal_score: number
+          review_month: string
+          scoring_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          brand_score?: number
+          created_at?: string
+          created_by?: string | null
+          created_from_review_id?: string | null
+          education_score?: number
+          id?: string
+          lifestyle_score?: number
+          overall_score?: number | null
+          performance_score?: number
+          personal_score?: number
+          review_month?: string
+          scoring_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_scorecards_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_scorecards_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_scorecards_created_from_review_id_fkey"
+            columns: ["created_from_review_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      athlete_tasks: {
+        Row: {
+          assigned_to_user_id: string | null
+          athlete_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          owner_type: Database["public"]["Enums"]["task_owner_type"]
+          priority: number
+          related_alert_id: string | null
+          related_call_id: string | null
+          related_review_id: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_user_id?: string | null
+          athlete_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_type: Database["public"]["Enums"]["task_owner_type"]
+          priority?: number
+          related_alert_id?: string | null
+          related_call_id?: string | null
+          related_review_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_user_id?: string | null
+          athlete_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner_type?: Database["public"]["Enums"]["task_owner_type"]
+          priority?: number
+          related_alert_id?: string | null
+          related_call_id?: string | null
+          related_review_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_tasks_assigned_to_user_id_fkey"
+            columns: ["assigned_to_user_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_related_alert_id_fkey"
+            columns: ["related_alert_id"]
+            isOneToOne: false
+            referencedRelation: "athlete_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_related_call_id_fkey"
+            columns: ["related_call_id"]
+            isOneToOne: false
+            referencedRelation: "call_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athlete_tasks_related_review_id_fkey"
+            columns: ["related_review_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_timeline_events: {
         Row: {
           athlete_id: string
@@ -124,6 +400,78 @@ export type Database = {
           {
             foreignKeyName: "athletes_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_history: {
+        Row: {
+          ai_summary_json: Json | null
+          athlete_id: string
+          audio_file_url: string | null
+          call_date: string
+          call_type: Database["public"]["Enums"]["call_type"]
+          conducted_by: string | null
+          created_at: string
+          detailed_notes: string | null
+          duration_minutes: number | null
+          follow_up_required: boolean
+          id: string
+          outcome: string | null
+          parent_involved: boolean
+          summary: string
+          transcript_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_summary_json?: Json | null
+          athlete_id: string
+          audio_file_url?: string | null
+          call_date?: string
+          call_type?: Database["public"]["Enums"]["call_type"]
+          conducted_by?: string | null
+          created_at?: string
+          detailed_notes?: string | null
+          duration_minutes?: number | null
+          follow_up_required?: boolean
+          id?: string
+          outcome?: string | null
+          parent_involved?: boolean
+          summary: string
+          transcript_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_summary_json?: Json | null
+          athlete_id?: string
+          audio_file_url?: string | null
+          call_date?: string
+          call_type?: Database["public"]["Enums"]["call_type"]
+          conducted_by?: string | null
+          created_at?: string
+          detailed_notes?: string | null
+          duration_minutes?: number | null
+          follow_up_required?: boolean
+          id?: string
+          outcome?: string | null
+          parent_involved?: boolean
+          summary?: string
+          transcript_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_history_conducted_by_fkey"
+            columns: ["conducted_by"]
             isOneToOne: false
             referencedRelation: "portal_users"
             referencedColumns: ["id"]
@@ -413,6 +761,82 @@ export type Database = {
           },
         ]
       }
+      parent_engagement_scores: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          created_by: string | null
+          engagement_level:
+            | Database["public"]["Enums"]["parent_engagement_level"]
+            | null
+          engagement_score: number
+          guardian_id: string | null
+          id: string
+          involvement_score: number | null
+          notes: string | null
+          responsiveness_score: number | null
+          review_month: string
+          trust_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          created_by?: string | null
+          engagement_level?:
+            | Database["public"]["Enums"]["parent_engagement_level"]
+            | null
+          engagement_score: number
+          guardian_id?: string | null
+          id?: string
+          involvement_score?: number | null
+          notes?: string | null
+          responsiveness_score?: number | null
+          review_month: string
+          trust_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          created_by?: string | null
+          engagement_level?:
+            | Database["public"]["Enums"]["parent_engagement_level"]
+            | null
+          engagement_score?: number
+          guardian_id?: string | null
+          id?: string
+          involvement_score?: number | null
+          notes?: string | null
+          responsiveness_score?: number | null
+          review_month?: string
+          trust_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_engagement_scores_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_engagement_scores_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_engagement_scores_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_users: {
         Row: {
           approved: boolean
@@ -551,7 +975,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_athlete_score_trends: {
+        Row: {
+          athlete_id: string | null
+          brand_score: number | null
+          education_score: number | null
+          lifestyle_score: number | null
+          overall_score: number | null
+          overall_score_delta: number | null
+          performance_score: number | null
+          personal_score: number | null
+          previous_overall_score: number | null
+          review_month: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "athlete_scorecards_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_athlete_wellbeing_trends: {
+        Row: {
+          athlete_id: string | null
+          previous_wellbeing_score: number | null
+          review_month: string | null
+          wellbeing_delta: number | null
+          wellbeing_score: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_reviews_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       current_user_role: { Args: never; Returns: string }
@@ -572,7 +1036,26 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      alert_severity: "low" | "medium" | "high" | "critical"
+      alert_status: "open" | "in_progress" | "resolved" | "dismissed"
+      alert_type:
+        | "wellbeing_drop"
+        | "overdue_review"
+        | "injury_flag"
+        | "parent_followup"
+        | "selection_setback"
+        | "low_engagement"
+        | "custom"
+      call_type:
+        | "monthly_review"
+        | "check_in"
+        | "parent_call"
+        | "issue_followup"
+        | "commercial"
+        | "other"
+      parent_engagement_level: "low" | "moderate" | "high"
+      task_owner_type: "agent" | "athlete" | "parent" | "admin"
+      task_status: "open" | "pending" | "done" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -699,6 +1182,29 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_severity: ["low", "medium", "high", "critical"],
+      alert_status: ["open", "in_progress", "resolved", "dismissed"],
+      alert_type: [
+        "wellbeing_drop",
+        "overdue_review",
+        "injury_flag",
+        "parent_followup",
+        "selection_setback",
+        "low_engagement",
+        "custom",
+      ],
+      call_type: [
+        "monthly_review",
+        "check_in",
+        "parent_call",
+        "issue_followup",
+        "commercial",
+        "other",
+      ],
+      parent_engagement_level: ["low", "moderate", "high"],
+      task_owner_type: ["agent", "athlete", "parent", "admin"],
+      task_status: ["open", "pending", "done", "cancelled"],
+    },
   },
 } as const
