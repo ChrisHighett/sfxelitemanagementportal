@@ -216,18 +216,18 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
   athletes: Athlete[];
 }) {
   return (
-    <div className="border-b border-border bg-card px-6 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">Portal View</span>
-          <Badge variant="secondary">{role.toUpperCase()}</Badge>
+    <div className="border-b border-border bg-card px-4 md:px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium hidden md:inline">Portal View</span>
+          <Badge variant="secondary" className="text-xs">{role.toUpperCase()}</Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           {(role === "agent" || role === "admin") && athletes.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Athlete</span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">Athlete</span>
               <Select value={selectedAthleteId} onValueChange={setSelectedAthleteId}>
-                <SelectTrigger className="w-44">
+                <SelectTrigger className="w-36 md:w-44 h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
