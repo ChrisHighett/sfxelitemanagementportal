@@ -11,7 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, GitBranch, HeartHandshake, DatabaseBackup } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, GitBranch, HeartHandshake, DatabaseBackup, Menu, WifiOff, MessageSquare } from "lucide-react";
+import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -103,9 +105,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
 
 function Shell({ role, active, onNav, children }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode }) {
   const items = NAV[role] ?? [];
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isOnline, pendingCount } = useOfflineQueue();
+  const mobileQuickNav = items.slice(0, 4);
+
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
         <div className="space-y-6 flex-1">
           <div>
             <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways Hub</h2>
@@ -127,13 +134,78 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
               );
             })}
           </nav>
-          <Separator />
-          <p className="text-xs text-muted-foreground">
-            This Canvas prototype shows architecture & UX. Production build: Next.js + Supabase.
-          </p>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-30">
+          <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+          <div className="flex items-center gap-2">
+            {!isOnline && (
+              <Badge variant="destructive" className="gap-1 text-xs">
+                <WifiOff className="h-3 w-3" /> Offline
+                {pendingCount > 0 && <span>({pendingCount})</span>}
+              </Badge>
+            )}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-4">
+                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+                <nav className="space-y-1">
+                  {items.map((it) => {
+                    const Icon = it.icon;
+                    const isAct = active === it.key;
+                    return (
+                      <button
+                        key={it.key}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${isAct ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                        onClick={() => { onNav(it.key); setMobileOpen(false); }}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {it.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-center justify-around py-1">
+            {mobileQuickNav.map((it) => {
+              const Icon = it.icon;
+              const isAct = active === it.key;
+              return (
+                <button
+                  key={it.key}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[56px] transition-colors ${isAct ? "text-primary" : "text-muted-foreground"}`}
+                  onClick={() => onNav(it.key)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] leading-tight font-medium truncate max-w-[56px]">{it.label.split(" ")[0]}</span>
+                </button>
+              );
+            })}
+            <button
+              className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[56px] text-muted-foreground"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="text-[10px] leading-tight font-medium">More</span>
+            </button>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }
@@ -144,18 +216,18 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
   athletes: Athlete[];
 }) {
   return (
-    <div className="border-b border-border bg-card px-6 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">Portal View</span>
-          <Badge variant="secondary">{role.toUpperCase()}</Badge>
+    <div className="border-b border-border bg-card px-4 md:px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium hidden md:inline">Portal View</span>
+          <Badge variant="secondary" className="text-xs">{role.toUpperCase()}</Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           {(role === "agent" || role === "admin") && athletes.length > 1 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Athlete</span>
+              <span className="text-xs text-muted-foreground hidden sm:inline">Athlete</span>
               <Select value={selectedAthleteId} onValueChange={setSelectedAthleteId}>
-                <SelectTrigger className="w-44">
+                <SelectTrigger className="w-36 md:w-44 h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1039,7 +1111,7 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
 
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-3 md:space-y-6 md:p-6">
       <Card>
         <CardHeader>
           <CardTitle>Call Script Guide</CardTitle>
@@ -1243,7 +1315,7 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
+        <CardHeader className="pb-2 md:pb-4"><CardTitle className="text-base md:text-lg">Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {/* Voice Recording */}
           <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
@@ -1321,47 +1393,48 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Or type notes manually..."
-            className="min-h-[100px]"
+            placeholder="Type call notes here..."
+            className="min-h-[80px] md:min-h-[100px] text-base"
           />
-          <div className="flex flex-wrap gap-2">
+          {/* Action buttons - grid on mobile for large tap targets */}
+          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-2">
             <Button 
               onClick={saveTranscriptToCommsLog} 
               variant="outline" 
-              className="gap-2" 
+              className="gap-2 h-11 md:h-9 text-sm" 
               disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
             >
               {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              {transcriptSaved ? "Saved ✓" : isSavingTranscript ? "Saving..." : "Save Transcript"}
+              {transcriptSaved ? "Saved ✓" : "Save Notes"}
             </Button>
-            <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
+            <Button onClick={generateAISummary} className="gap-2 h-11 md:h-9 text-sm" disabled={isSummarising}>
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isSummarising ? "Summarising..." : "Generate AI Summary"}
+              {isSummarising ? "Summarising..." : "AI Summary"}
             </Button>
             <Button 
               variant="secondary" 
               onClick={publishToTracker} 
               disabled={!aiSummary || isPublishing || isPublished}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 text-sm"
             >
               {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-              {isPublished ? "Published ✓" : isPublishing ? "Publishing..." : "Publish to Tracker"}
+              {isPublished ? "Published ✓" : "Publish"}
             </Button>
             <Button 
               variant="secondary" 
               onClick={createAthleteEmail} 
               disabled={!aiSummary}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 text-sm"
             >
-              <Mail className="h-4 w-4" /> Create Athlete Email
+              <Mail className="h-4 w-4" /> Athlete Email
             </Button>
             <Button 
               variant="secondary" 
               onClick={createParentEmail} 
               disabled={!aiSummary}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 col-span-2 md:col-span-1 text-sm"
             >
-              <Mail className="h-4 w-4" /> Create Parent Email
+              <Mail className="h-4 w-4" /> Parent Email
             </Button>
           </div>
           {aiSummary && (
