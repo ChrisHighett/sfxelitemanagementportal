@@ -105,9 +105,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
 
 function Shell({ role, active, onNav, children }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode }) {
   const items = NAV[role] ?? [];
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isOnline, pendingCount } = useOfflineQueue();
+  const mobileQuickNav = items.slice(0, 4);
+
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
         <div className="space-y-6 flex-1">
           <div>
             <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways Hub</h2>
@@ -129,13 +134,78 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
               );
             })}
           </nav>
-          <Separator />
-          <p className="text-xs text-muted-foreground">
-            This Canvas prototype shows architecture & UX. Production build: Next.js + Supabase.
-          </p>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-30">
+          <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+          <div className="flex items-center gap-2">
+            {!isOnline && (
+              <Badge variant="destructive" className="gap-1 text-xs">
+                <WifiOff className="h-3 w-3" /> Offline
+                {pendingCount > 0 && <span>({pendingCount})</span>}
+              </Badge>
+            )}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-4">
+                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+                <nav className="space-y-1">
+                  {items.map((it) => {
+                    const Icon = it.icon;
+                    const isAct = active === it.key;
+                    return (
+                      <button
+                        key={it.key}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${isAct ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                        onClick={() => { onNav(it.key); setMobileOpen(false); }}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {it.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
+
+        {/* Mobile bottom navigation */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <div className="flex items-center justify-around py-1">
+            {mobileQuickNav.map((it) => {
+              const Icon = it.icon;
+              const isAct = active === it.key;
+              return (
+                <button
+                  key={it.key}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[56px] transition-colors ${isAct ? "text-primary" : "text-muted-foreground"}`}
+                  onClick={() => onNav(it.key)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] leading-tight font-medium truncate max-w-[56px]">{it.label.split(" ")[0]}</span>
+                </button>
+              );
+            })}
+            <button
+              className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[56px] text-muted-foreground"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="text-[10px] leading-tight font-medium">More</span>
+            </button>
+          </div>
+        </nav>
+      </div>
     </div>
   );
 }
