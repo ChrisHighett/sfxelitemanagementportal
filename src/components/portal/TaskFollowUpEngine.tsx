@@ -12,56 +12,46 @@ import { Loader2, Plus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
 
-interface Task {
-  id: string;
-  athlete_id: string;
-  assigned_to: string;
-  title: string;
-  description: string | null;
-  status: string;
-  due_date: string | null;
-  completed_at: string | null;
-  created_at: string;
-}
-
 export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Athlete; athletes: Athlete[] }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [assignedTo, setAssignedTo] = useState("agent");
+  const [ownerType, setOwnerType] = useState("agent");
+  const [priority, setPriority] = useState("3");
   const [dueDate, setDueDate] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterAssigned, setFilterAssigned] = useState<string>("all");
+  const [filterOwner, setFilterOwner] = useState<string>("all");
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["follow_up_tasks", athlete.id],
+    queryKey: ["athlete_tasks", athlete.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("follow_up_tasks")
+        .from("athlete_tasks")
         .select("*")
         .eq("athlete_id", athlete.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Task[];
+      return data;
     },
   });
 
   const createTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("follow_up_tasks").insert({
+      const { error } = await supabase.from("athlete_tasks").insert({
         athlete_id: athlete.id,
-        assigned_to: assignedTo,
+        owner_type: ownerType as any,
         title,
         description: description || null,
+        priority: Number(priority),
         due_date: dueDate || null,
         created_by: user?.id ?? null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["follow_up_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["athlete_tasks"] });
       setShowForm(false);
       setTitle("");
       setDescription("");
@@ -74,12 +64,12 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const updates: any = { status };
-      if (status === "completed") updates.completed_at = new Date().toISOString();
-      const { error } = await supabase.from("follow_up_tasks").update(updates).eq("id", id);
+      if (status === "done") updates.completed_at = new Date().toISOString();
+      const { error } = await supabase.from("athlete_tasks").update(updates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["follow_up_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["athlete_tasks"] });
       toast.success("Task updated");
     },
     onError: (e: any) => toast.error(e.message),
@@ -87,14 +77,15 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
 
   const filtered = tasks.filter((t) => {
     if (filterStatus !== "all" && t.status !== filterStatus) return false;
-    if (filterAssigned !== "all" && t.assigned_to !== filterAssigned) return false;
+    if (filterOwner !== "all" && t.owner_type !== filterOwner) return false;
     return true;
   });
 
   const statusColor: Record<string, "default" | "secondary" | "destructive"> = {
+    open: "secondary",
     pending: "secondary",
-    in_progress: "default",
-    completed: "default",
+    done: "default",
+    cancelled: "destructive",
   };
 
   return (
@@ -115,18 +106,20 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
               <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterAssigned} onValueChange={setFilterAssigned}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="Assigned To" /></SelectTrigger>
+            <Select value={filterOwner} onValueChange={setFilterOwner}>
+              <SelectTrigger className="w-36"><SelectValue placeholder="Owner" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="agent">Agent</SelectItem>
                 <SelectItem value="athlete">Athlete</SelectItem>
                 <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -138,12 +131,23 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
                 <Input placeholder="Task title" value={title} onChange={(e) => setTitle(e.target.value)} />
                 <Textarea placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-[60px]" />
                 <div className="flex flex-wrap gap-3">
-                  <Select value={assignedTo} onValueChange={setAssignedTo}>
+                  <Select value={ownerType} onValueChange={setOwnerType}>
                     <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="agent">Agent</SelectItem>
                       <SelectItem value="athlete">Athlete</SelectItem>
                       <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={priority} onValueChange={setPriority}>
+                    <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">P1 — Urgent</SelectItem>
+                      <SelectItem value="2">P2 — High</SelectItem>
+                      <SelectItem value="3">P3 — Medium</SelectItem>
+                      <SelectItem value="4">P4 — Low</SelectItem>
+                      <SelectItem value="5">P5 — Minimal</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-44" />
@@ -164,12 +168,13 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
           ) : (
             <div className="space-y-2">
               {filtered.map((task) => (
-                <div key={task.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${task.status === "completed" ? "opacity-60" : ""}`}>
+                <div key={task.id} className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${task.status === "done" ? "opacity-60" : ""}`}>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-medium text-sm ${task.status === "completed" ? "line-through" : ""}`}>{task.title}</span>
-                      <Badge variant={statusColor[task.status] ?? "secondary"}>{task.status.replace("_", " ")}</Badge>
-                      <Badge variant="outline" className="text-xs">→ {task.assigned_to}</Badge>
+                      <span className={`font-medium text-sm ${task.status === "done" ? "line-through" : ""}`}>{task.title}</span>
+                      <Badge variant={statusColor[task.status] ?? "secondary"}>{task.status}</Badge>
+                      <Badge variant="outline" className="text-xs">→ {task.owner_type}</Badge>
+                      <Badge variant="outline" className="text-xs">P{task.priority}</Badge>
                     </div>
                     {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
                     <div className="flex gap-3 text-xs text-muted-foreground">
@@ -178,13 +183,13 @@ export default function TaskFollowUpEngine({ athlete, athletes }: { athlete: Ath
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    {task.status === "pending" && (
-                      <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: task.id, status: "in_progress" })}>
+                    {task.status === "open" && (
+                      <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: task.id, status: "pending" })}>
                         Start
                       </Button>
                     )}
-                    {task.status !== "completed" && (
-                      <Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: task.id, status: "completed" })} className="gap-1">
+                    {task.status !== "done" && task.status !== "cancelled" && (
+                      <Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ id: task.id, status: "done" })} className="gap-1">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Done
                       </Button>
                     )}

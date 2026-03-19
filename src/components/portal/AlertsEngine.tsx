@@ -1,102 +1,77 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
 
-type Severity = "critical" | "warning" | "info";
+type Severity = "low" | "medium" | "high" | "critical";
 
-interface AlertItem {
-  athlete: string;
-  athleteId: string;
-  message: string;
-  severity: Severity;
-  category: string;
-}
-
-function severityBadge(severity: Severity) {
-  const map: Record<Severity, "destructive" | "secondary" | "default"> = {
+function severityBadge(severity: string) {
+  const map: Record<string, "destructive" | "secondary" | "default"> = {
     critical: "destructive",
-    warning: "secondary",
-    info: "default",
+    high: "destructive",
+    medium: "secondary",
+    low: "default",
   };
-  return <Badge variant={map[severity]}>{severity.toUpperCase()}</Badge>;
+  return <Badge variant={map[severity] ?? "default"}>{severity.toUpperCase()}</Badge>;
 }
 
 export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
-  const alerts: AlertItem[] = [];
+  const queryClient = useQueryClient();
+  const athleteIds = athletes.map((a) => a.id);
 
-  athletes.forEach((a) => {
-    // Wellbeing alerts
-    if (a.wellbeingScore <= 2) {
-      alerts.push({
-        athlete: a.name, athleteId: a.id,
-        message: `Wellbeing score critically low (${a.wellbeingScore}/5)`,
-        severity: "critical", category: "Wellbeing",
-      });
-    } else if (a.wellbeingScore === 3) {
-      alerts.push({
-        athlete: a.name, athleteId: a.id,
-        message: `Wellbeing score at monitoring level (${a.wellbeingScore}/5)`,
-        severity: "warning", category: "Wellbeing",
-      });
-    }
-
-    // Status alerts
-    if (a.status === "Needs Support") {
-      alerts.push({
-        athlete: a.name, athleteId: a.id,
-        message: "Status: Needs Support — immediate attention required",
-        severity: "critical", category: "Status",
-      });
-    } else if (a.status === "Monitoring") {
-      alerts.push({
-        athlete: a.name, athleteId: a.id,
-        message: "Status: Monitoring — keep watch",
-        severity: "warning", category: "Status",
-      });
-    }
-
-    // Contract alerts
-    const now = new Date();
-    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    if (a.managementContractExpiry) {
-      const d = new Date(a.managementContractExpiry);
-      if (d >= now && d <= thirtyDays) {
-        alerts.push({
-          athlete: a.name, athleteId: a.id,
-          message: `Management contract expires ${a.managementContractExpiry}`,
-          severity: d <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) ? "critical" : "warning",
-          category: "Contract",
-        });
-      }
-    }
-    if (a.clubContractExpiry) {
-      const d = new Date(a.clubContractExpiry);
-      if (d >= now && d <= thirtyDays) {
-        alerts.push({
-          athlete: a.name, athleteId: a.id,
-          message: `Club contract expires ${a.clubContractExpiry}`,
-          severity: d <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) ? "critical" : "warning",
-          category: "Contract",
-        });
-      }
-    }
+  const { data: alerts = [], isLoading } = useQuery({
+    queryKey: ["athlete_alerts", athleteIds],
+    queryFn: async () => {
+      if (athleteIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("athlete_alerts")
+        .select("*, athletes!inner(first_name, last_name)")
+        .in("athlete_id", athleteIds)
+        .in("status", ["open", "in_progress"])
+        .order("triggered_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: athleteIds.length > 0,
   });
 
-  // Sort by severity
-  const order: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
-  alerts.sort((a, b) => order[a.severity] - order[b.severity]);
+  const resolveAlert = useMutation({
+    mutationFn: async (alertId: string) => {
+      const { error } = await supabase
+        .from("athlete_alerts")
+        .update({ status: "resolved" as any, resolved_at: new Date().toISOString() })
+        .eq("id", alertId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["athlete_alerts"] });
+      toast.success("Alert resolved");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
-  const critical = alerts.filter((a) => a.severity === "critical");
-  const warnings = alerts.filter((a) => a.severity === "warning");
+  const critical = alerts.filter((a) => a.severity === "critical" || a.severity === "high");
+  const warnings = alerts.filter((a) => a.severity === "medium");
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
       {critical.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{critical.length} Critical Alert{critical.length !== 1 ? "s" : ""}</AlertTitle>
+          <AlertTitle>{critical.length} Critical/High Alert{critical.length !== 1 ? "s" : ""}</AlertTitle>
           <AlertDescription>Immediate attention required for the athletes listed below.</AlertDescription>
         </Alert>
       )}
@@ -116,33 +91,47 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
           {alerts.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-2xl mb-2">✅</div>
-              <p className="text-sm text-muted-foreground">All athletes are tracking well. No alerts.</p>
+              <p className="text-sm text-muted-foreground">All athletes are tracking well. No open alerts.</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {alerts.map((alert, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${
-                    alert.severity === "critical"
-                      ? "border-destructive/30 bg-destructive/5"
-                      : alert.severity === "warning"
-                      ? "border-border bg-muted/30"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{alert.athlete}</span>
+              {alerts.map((alert) => {
+                const athleteName = (alert as any).athletes
+                  ? `${(alert as any).athletes.first_name} ${(alert as any).athletes.last_name}`
+                  : "Unknown";
+                return (
+                  <div
+                    key={alert.id}
+                    className={`flex items-center justify-between rounded-lg border p-3 ${
+                      alert.severity === "critical" || alert.severity === "high"
+                        ? "border-destructive/30 bg-destructive/5"
+                        : alert.severity === "medium"
+                        ? "border-border bg-muted/30"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{athleteName}</span>
                         {severityBadge(alert.severity)}
-                        <Badge variant="outline" className="text-xs">{alert.category}</Badge>
+                        <Badge variant="outline" className="text-xs">{alert.alert_type.replace("_", " ")}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{alert.message}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{alert.title}</p>
+                      {alert.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{alert.description}</p>
+                      )}
                     </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => resolveAlert.mutate(alert.id)}
+                      className="gap-1 shrink-0"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                    </Button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
