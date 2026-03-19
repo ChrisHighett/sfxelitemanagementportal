@@ -962,22 +962,37 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
 
   const createAthleteEmail = useCallback(() => {
     if (!aiSummary) return;
-    const draft = `Hi ${athlete.name.split(" ")[0]},
+    const firstName = athlete.name.split(" ")[0];
+    const goalsBlock = aiSummary.goals.length > 0
+      ? aiSummary.goals.map((g) => `• ${g}`).join("\n")
+      : "• We'll lock these in together next month";
+    const draft = `Hey ${firstName},
 
-Great chat today! Here's a quick recap of what we discussed:
+Really enjoyed catching up today mate. Proud of the effort you're putting in — it's clear you're taking things seriously and that shows.
 
-**Performance Focus:** ${aiSummary.performance}
+Here's a quick recap of what we covered:
 
-**Lifestyle:** ${aiSummary.lifestyle}
+**On the Pitch**
+${aiSummary.performance || "We didn't dive too deep into this one today, but keep doing what you're doing."}
 
-**Goals for Next Month:**
-${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+**Off the Pitch**
+${aiSummary.lifestyle || "Everything is tracking well on this front."}
 
-**Primary Focus:** ${aiSummary.focus}
+**Personal Development**
+${aiSummary.personal || "You're growing as a person and that's just as important as what happens on the field."}
 
-Keep up the great work and reach out if you need anything before our next call.
+**Education**
+${aiSummary.education || "Keep staying on top of things at school — it all counts."}
 
-Cheers,
+**What We're Focusing on Next**
+${aiSummary.focus || "We'll map this out properly on our next call."}
+
+**Goals**
+${goalsBlock}
+
+Keep backing yourself mate. You're on the right track and I'm here to support you every step of the way. If you need anything at all between now and our next catch up, just give me a call.
+
+Speak soon,
 SFX Pathways`;
     setAthleteEmailDraft(draft);
     toast.success("Athlete email draft created");
