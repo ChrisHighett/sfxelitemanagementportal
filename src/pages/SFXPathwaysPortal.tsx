@@ -2457,16 +2457,23 @@ export default function SFXPathwaysPortal() {
 
       {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "scorecard" && <AthleteScorecard athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
+      {(role === "agent" || role === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={role === "agent" || role === "admin"} />}
       {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={role} />}
       {role === "admin" && active === "admin" && <AdminSecurity />}
 
       {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
         (role === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((role === "agent" || role === "admin") && !["roster", "athlete", "call", "reviews", "comms", "resources", "admin"].includes(active))) && (
+        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "admin"].includes(active))) && (
         <div className="p-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
