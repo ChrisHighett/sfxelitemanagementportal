@@ -1393,47 +1393,48 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Or type notes manually..."
-            className="min-h-[100px]"
+            placeholder="Type call notes here..."
+            className="min-h-[80px] md:min-h-[100px] text-base"
           />
-          <div className="flex flex-wrap gap-2">
+          {/* Action buttons - grid on mobile for large tap targets */}
+          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-2">
             <Button 
               onClick={saveTranscriptToCommsLog} 
               variant="outline" 
-              className="gap-2" 
+              className="gap-2 h-11 md:h-9 text-sm" 
               disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
             >
               {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              {transcriptSaved ? "Saved ✓" : isSavingTranscript ? "Saving..." : "Save Transcript"}
+              {transcriptSaved ? "Saved ✓" : "Save Notes"}
             </Button>
-            <Button onClick={generateAISummary} className="gap-2" disabled={isSummarising}>
+            <Button onClick={generateAISummary} className="gap-2 h-11 md:h-9 text-sm" disabled={isSummarising}>
               {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isSummarising ? "Summarising..." : "Generate AI Summary"}
+              {isSummarising ? "Summarising..." : "AI Summary"}
             </Button>
             <Button 
               variant="secondary" 
               onClick={publishToTracker} 
               disabled={!aiSummary || isPublishing || isPublished}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 text-sm"
             >
               {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-              {isPublished ? "Published ✓" : isPublishing ? "Publishing..." : "Publish to Tracker"}
+              {isPublished ? "Published ✓" : "Publish"}
             </Button>
             <Button 
               variant="secondary" 
               onClick={createAthleteEmail} 
               disabled={!aiSummary}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 text-sm"
             >
-              <Mail className="h-4 w-4" /> Create Athlete Email
+              <Mail className="h-4 w-4" /> Athlete Email
             </Button>
             <Button 
               variant="secondary" 
               onClick={createParentEmail} 
               disabled={!aiSummary}
-              className="gap-2"
+              className="gap-2 h-11 md:h-9 col-span-2 md:col-span-1 text-sm"
             >
-              <Mail className="h-4 w-4" /> Create Parent Email
+              <Mail className="h-4 w-4" /> Parent Email
             </Button>
           </div>
           {aiSummary && (
