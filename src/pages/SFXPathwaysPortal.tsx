@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, GitBranch, HeartHandshake } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, GitBranch, HeartHandshake, DatabaseBackup } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -27,6 +27,7 @@ import TaskFollowUpEngine from "@/components/portal/TaskFollowUpEngine";
 import CallHistory from "@/components/portal/CallHistory";
 import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import ParentEngagementScore from "@/components/portal/ParentEngagementScore";
+import AthleteImport from "@/components/portal/AthleteImport";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
@@ -95,6 +96,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "comms", label: "Parent Comms", icon: Mail },
     { key: "parentengagement", label: "Parent Engagement", icon: HeartHandshake },
     { key: "resources", label: "Resources", icon: Library },
+    { key: "import", label: "Athlete Import", icon: DatabaseBackup },
     { key: "admin", label: "Admin & Security", icon: Shield },
   ],
 };
@@ -136,12 +138,11 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
   );
 }
 
-function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
-  role: Role; setRole: (r: Role) => void;
+function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
+  role: Role;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
+  athletes: Athlete[];
 }) {
-  const { data: athletes = [] } = useAthletes();
-
   return (
     <div className="border-b border-border bg-card px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -150,21 +151,7 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
           <Badge variant="secondary">{role.toUpperCase()}</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Role</span>
-            <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="athlete">Athlete</SelectItem>
-                <SelectItem value="parent">Parent</SelectItem>
-                <SelectItem value="agent">Agent</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {(role === "agent" || role === "admin") && (
+          {(role === "agent" || role === "admin") && athletes.length > 1 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Athlete</span>
               <Select value={selectedAthleteId} onValueChange={setSelectedAthleteId}>
@@ -178,6 +165,9 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
                 </SelectContent>
               </Select>
             </div>
+          )}
+          {(role === "athlete" || role === "parent") && athletes.length > 0 && (
+            <span className="text-sm font-medium">{athletes[0]?.name}</span>
           )}
         </div>
       </div>
@@ -2383,7 +2373,13 @@ export default function SFXPathwaysPortal() {
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
-  const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+  // For athlete/parent: restrict to allocated athlete only
+  const allocatedAthleteId = userRoleData?.allocatedAthleteId ?? null;
+  const restrictToIds = (role === "athlete" || role === "parent") && allocatedAthleteId
+    ? [allocatedAthleteId]
+    : undefined;
+
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes(restrictToIds);
 
   // Set role from database once loaded
   useEffect(() => {
@@ -2396,12 +2392,6 @@ export default function SFXPathwaysPortal() {
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
   const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
-
-  function handleRoleChange(nextRole: Role) {
-    setRole(nextRole);
-    const first = NAV[nextRole]?.[0]?.key ?? "dash";
-    setActive(first);
-  }
 
   if (athletesLoading || roleLoading || !role) {
     return (
@@ -2426,6 +2416,22 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // For athlete/parent with no allocated athlete
+  if ((role === "athlete" || role === "parent") && !allocatedAthleteId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Athlete Allocated</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            Your account has been approved but no athlete has been allocated to you yet. Please contact your manager.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!athlete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -2443,11 +2449,11 @@ export default function SFXPathwaysPortal() {
 
   return (
     <Shell role={role} active={active} onNav={setActive}>
-      <TopBar 
-        role={role} 
-        setRole={handleRoleChange} 
-        selectedAthleteId={currentAthleteId} 
-        setSelectedAthleteId={setSelectedAthleteId} 
+      <TopBar
+        role={role}
+        selectedAthleteId={currentAthleteId}
+        setSelectedAthleteId={setSelectedAthleteId}
+        athletes={athletes}
       />
 
       {role === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
@@ -2469,11 +2475,12 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={role} />}
+      {role === "admin" && active === "import" && <AthleteImport />}
       {role === "admin" && active === "admin" && <AdminSecurity />}
 
       {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
         (role === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "admin"].includes(active))) && (
+        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
         <div className="p-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
