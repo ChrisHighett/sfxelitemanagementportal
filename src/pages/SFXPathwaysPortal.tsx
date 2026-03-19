@@ -2467,7 +2467,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
-      {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={role === "agent" || role === "admin"} />}
       {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
