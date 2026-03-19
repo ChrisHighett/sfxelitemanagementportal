@@ -89,7 +89,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "trends", label: "Trend Tracking", icon: TrendingUp },
     { key: "alerts", label: "Alerts Engine", icon: Bell },
     { key: "tasks", label: "Follow-Up Tasks", icon: CheckSquare },
-    { key: "call", label: "Call Centre", icon: Phone },
+    { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "callhistory", label: "Call History", icon: History },
     { key: "timeline", label: "Athlete Timeline", icon: GitBranch },
     { key: "reviews", label: "Monthly Reviews", icon: ClipboardList },
