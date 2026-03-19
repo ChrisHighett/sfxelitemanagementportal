@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, Timeline, HeartHandshake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +20,13 @@ import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type Monthly
 import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
+import AthleteScorecard from "@/components/portal/AthleteScorecard";
+import TrendTracking from "@/components/portal/TrendTracking";
+import AlertsEngine from "@/components/portal/AlertsEngine";
+import TaskFollowUpEngine from "@/components/portal/TaskFollowUpEngine";
+import CallHistory from "@/components/portal/CallHistory";
+import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
+import ParentEngagementScore from "@/components/portal/ParentEngagementScore";
 
 type Role = "athlete" | "parent" | "agent" | "admin";
 
