@@ -74,7 +74,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "trends", label: "Trend Tracking", icon: TrendingUp },
     { key: "alerts", label: "Alerts Engine", icon: Bell },
     { key: "tasks", label: "Follow-Up Tasks", icon: CheckSquare },
-    { key: "call", label: "Call Centre", icon: Phone },
+    { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "callhistory", label: "Call History", icon: History },
     { key: "timeline", label: "Athlete Timeline", icon: GitBranch },
     { key: "reviews", label: "Monthly Reviews", icon: ClipboardList },
@@ -89,7 +89,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "trends", label: "Trend Tracking", icon: TrendingUp },
     { key: "alerts", label: "Alerts Engine", icon: Bell },
     { key: "tasks", label: "Follow-Up Tasks", icon: CheckSquare },
-    { key: "call", label: "Call Centre", icon: Phone },
+    { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "callhistory", label: "Call History", icon: History },
     { key: "timeline", label: "Athlete Timeline", icon: GitBranch },
     { key: "reviews", label: "Monthly Reviews", icon: ClipboardList },
@@ -544,7 +544,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function CallCentre({ athlete }: { athlete: Athlete }) {
+function AthleteComms({ athlete }: { athlete: Athlete }) {
   const { user } = useAuth();
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
@@ -2467,7 +2467,7 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
       {(role === "agent" || role === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
-      {(role === "agent" || role === "admin") && active === "call" && <CallCentre athlete={athlete} />}
+      {(role === "agent" || role === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
       {(role === "agent" || role === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={role === "agent" || role === "admin"} />}
       {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
