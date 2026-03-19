@@ -1315,7 +1315,7 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Call Notes — {athlete.name}</CardTitle></CardHeader>
+        <CardHeader className="pb-2 md:pb-4"><CardTitle className="text-base md:text-lg">Call Notes — {athlete.name}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {/* Voice Recording */}
           <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
