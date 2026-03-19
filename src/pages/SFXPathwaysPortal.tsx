@@ -2373,7 +2373,13 @@ export default function SFXPathwaysPortal() {
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
 
-  const { data: athletes = [], isLoading: athletesLoading } = useAthletes();
+  // For athlete/parent: restrict to allocated athlete only
+  const allocatedAthleteId = userRoleData?.allocatedAthleteId ?? null;
+  const restrictToIds = (role === "athlete" || role === "parent") && allocatedAthleteId
+    ? [allocatedAthleteId]
+    : undefined;
+
+  const { data: athletes = [], isLoading: athletesLoading } = useAthletes(restrictToIds);
 
   // Set role from database once loaded
   useEffect(() => {
@@ -2386,12 +2392,6 @@ export default function SFXPathwaysPortal() {
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
   const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
-
-  function handleRoleChange(nextRole: Role) {
-    setRole(nextRole);
-    const first = NAV[nextRole]?.[0]?.key ?? "dash";
-    setActive(first);
-  }
 
   if (athletesLoading || roleLoading || !role) {
     return (
@@ -2416,6 +2416,22 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // For athlete/parent with no allocated athlete
+  if ((role === "athlete" || role === "parent") && !allocatedAthleteId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>No Athlete Allocated</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            Your account has been approved but no athlete has been allocated to you yet. Please contact your manager.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!athlete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -2433,11 +2449,11 @@ export default function SFXPathwaysPortal() {
 
   return (
     <Shell role={role} active={active} onNav={setActive}>
-      <TopBar 
-        role={role} 
-        setRole={handleRoleChange} 
-        selectedAthleteId={currentAthleteId} 
-        setSelectedAthleteId={setSelectedAthleteId} 
+      <TopBar
+        role={role}
+        selectedAthleteId={currentAthleteId}
+        setSelectedAthleteId={setSelectedAthleteId}
+        athletes={athletes}
       />
 
       {role === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
@@ -2459,11 +2475,12 @@ export default function SFXPathwaysPortal() {
       {(role === "agent" || role === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={role} />}
+      {role === "admin" && active === "import" && <AthleteImport />}
       {role === "admin" && active === "admin" && <AdminSecurity />}
 
       {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
         (role === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "admin"].includes(active))) && (
+        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
         <div className="p-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
