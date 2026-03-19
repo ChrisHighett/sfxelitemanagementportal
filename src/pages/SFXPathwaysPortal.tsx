@@ -138,12 +138,11 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
   );
 }
 
-function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
-  role: Role; setRole: (r: Role) => void;
+function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
+  role: Role;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
+  athletes: Athlete[];
 }) {
-  const { data: athletes = [] } = useAthletes();
-
   return (
     <div className="border-b border-border bg-card px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -152,21 +151,7 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
           <Badge variant="secondary">{role.toUpperCase()}</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Role</span>
-            <Select value={role} onValueChange={(v) => setRole(v as Role)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="athlete">Athlete</SelectItem>
-                <SelectItem value="parent">Parent</SelectItem>
-                <SelectItem value="agent">Agent</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {(role === "agent" || role === "admin") && (
+          {(role === "agent" || role === "admin") && athletes.length > 1 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Athlete</span>
               <Select value={selectedAthleteId} onValueChange={setSelectedAthleteId}>
@@ -180,6 +165,9 @@ function TopBar({ role, setRole, selectedAthleteId, setSelectedAthleteId }: {
                 </SelectContent>
               </Select>
             </div>
+          )}
+          {(role === "athlete" || role === "parent") && athletes.length > 0 && (
+            <span className="text-sm font-medium">{athletes[0]?.name}</span>
           )}
         </div>
       </div>
