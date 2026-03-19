@@ -1111,7 +1111,7 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
 
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-3 md:space-y-6 md:p-6">
       <Card>
         <CardHeader>
           <CardTitle>Call Script Guide</CardTitle>
