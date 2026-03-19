@@ -56,29 +56,51 @@ export interface CommsLog {
   sentAt: string;
 }
 
-export function useAthletes() {
+/**
+ * Fetch athletes. If restrictToIds is provided, only those athletes are loaded
+ * (used for athlete/parent roles with allocated access).
+ */
+export function useAthletes(restrictToIds?: string[]) {
   return useQuery({
-    queryKey: ["athletes"],
+    queryKey: ["athletes", restrictToIds],
     queryFn: async () => {
-      const { data: athletesData, error: athletesError } = await supabase
+      let query = supabase
         .from("athletes")
         .select("*")
         .order("first_name");
 
+      if (restrictToIds && restrictToIds.length > 0) {
+        query = query.in("id", restrictToIds);
+      }
+
+      const { data: athletesData, error: athletesError } = await query;
       if (athletesError) throw athletesError;
+
+      const athleteIds = (athletesData || []).map((a) => a.id);
+      if (athleteIds.length === 0) return [];
 
       const { data: guardiansData } = await supabase
         .from("guardians")
-        .select("*");
+        .select("*")
+        .in("athlete_id", athleteIds);
 
       const { data: reviewsData } = await supabase
         .from("monthly_reviews")
         .select("*")
+        .in("athlete_id", athleteIds)
         .order("review_month", { ascending: false });
+
+      // Get latest call dates from call_history
+      const { data: callData } = await supabase
+        .from("call_history")
+        .select("athlete_id, call_date")
+        .in("athlete_id", athleteIds)
+        .order("call_date", { ascending: false });
 
       const athletes: Athlete[] = (athletesData || []).map((athlete) => {
         const guardian = guardiansData?.find((g) => g.athlete_id === athlete.id);
         const latestReview = reviewsData?.find((r) => r.athlete_id === athlete.id);
+        const latestCall = callData?.find((c) => c.athlete_id === athlete.id);
 
         const wellbeingScore = latestReview?.wellbeing_score || 3;
         let status: "Thriving" | "Monitoring" | "Needs Support";
@@ -86,10 +108,14 @@ export function useAthletes() {
         else if (wellbeingScore === 3) status = "Monitoring";
         else status = "Needs Support";
 
-        const dob = (athlete as any).date_of_birth;
+        const dob = athlete.date_of_birth;
         const age = dob
           ? Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
           : null;
+
+        const lastCallDate = latestCall
+          ? new Date(latestCall.call_date).toISOString().slice(0, 10)
+          : "No calls";
 
         return {
           id: athlete.id,
@@ -101,16 +127,16 @@ export function useAthletes() {
           school: athlete.school || "—",
           position: athlete.position || "—",
           stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
-          assignedAgent: (athlete as any).assigned_agent_name || "Unassigned",
+          assignedAgent: athlete.assigned_agent_name || "Unassigned",
           parentName: guardian?.parent_name || "Guardian",
           parentEmail: guardian?.parent_email || "guardian@example.com",
           wellbeingScore,
           status,
-          lastCall: "2026-03-04", // Could come from comms_log
-          nextCall: "2026-04-04", // Could be calculated
-          commercialPotential: "Medium", // Could be a field in athletes table
-          managementContractExpiry: (athlete as any).management_contract_expiry || null,
-          clubContractExpiry: (athlete as any).club_contract_expiry || null,
+          lastCall: lastCallDate,
+          nextCall: "—",
+          commercialPotential: "Medium",
+          managementContractExpiry: athlete.management_contract_expiry || null,
+          clubContractExpiry: athlete.club_contract_expiry || null,
         };
       });
 
