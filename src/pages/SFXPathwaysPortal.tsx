@@ -96,6 +96,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "comms", label: "Parent Comms", icon: Mail },
     { key: "parentengagement", label: "Parent Engagement", icon: HeartHandshake },
     { key: "resources", label: "Resources", icon: Library },
+    { key: "import", label: "Athlete Import", icon: DatabaseBackup },
     { key: "admin", label: "Admin & Security", icon: Shield },
   ],
 };
