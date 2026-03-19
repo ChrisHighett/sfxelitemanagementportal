@@ -962,22 +962,37 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
 
   const createAthleteEmail = useCallback(() => {
     if (!aiSummary) return;
-    const draft = `Hi ${athlete.name.split(" ")[0]},
+    const firstName = athlete.name.split(" ")[0];
+    const goalsBlock = aiSummary.goals.length > 0
+      ? aiSummary.goals.map((g) => `• ${g}`).join("\n")
+      : "• We'll lock these in together next month";
+    const draft = `Hey ${firstName},
 
-Great chat today! Here's a quick recap of what we discussed:
+Really enjoyed catching up today mate. Proud of the effort you're putting in — it's clear you're taking things seriously and that shows.
 
-**Performance Focus:** ${aiSummary.performance}
+Here's a quick recap of what we covered:
 
-**Lifestyle:** ${aiSummary.lifestyle}
+**On the Pitch**
+${aiSummary.performance || "We didn't dive too deep into this one today, but keep doing what you're doing."}
 
-**Goals for Next Month:**
-${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+**Off the Pitch**
+${aiSummary.lifestyle || "Everything is tracking well on this front."}
 
-**Primary Focus:** ${aiSummary.focus}
+**Personal Development**
+${aiSummary.personal || "You're growing as a person and that's just as important as what happens on the field."}
 
-Keep up the great work and reach out if you need anything before our next call.
+**Education**
+${aiSummary.education || "Keep staying on top of things at school — it all counts."}
 
-Cheers,
+**What We're Focusing on Next**
+${aiSummary.focus || "We'll map this out properly on our next call."}
+
+**Goals**
+${goalsBlock}
+
+Keep backing yourself mate. You're on the right track and I'm here to support you every step of the way. If you need anything at all between now and our next catch up, just give me a call.
+
+Speak soon,
 SFX Pathways`;
     setAthleteEmailDraft(draft);
     toast.success("Athlete email draft created");
@@ -985,22 +1000,39 @@ SFX Pathways`;
 
   const createParentEmail = useCallback(() => {
     if (!aiSummary) return;
-    const draft = `Hi,
+    const firstName = athlete.name.split(" ")[0];
+    const goalsBlock = aiSummary.goals.length > 0
+      ? aiSummary.goals.map((g) => `• ${g}`).join("\n")
+      : "• We'll be setting clear targets together next month";
+    const draft = `Hi there,
 
-I wanted to share a brief update following my call with ${athlete.name} today.
+I had a really positive catch up with ${firstName} this month and wanted to share a brief summary with you.
 
-**Performance:** ${aiSummary.performance}
+${firstName} is tracking well and showing good progress across the board. Here's an overview of what we discussed:
 
-**Education:** ${aiSummary.education}
+**Performance**
+${aiSummary.performance || "Things are progressing nicely on the football side."}
 
-**Wellbeing:** ${aiSummary.personal}
+**Education**
+${aiSummary.education || "School is going well and there are no concerns at this stage."}
 
-**Goals for Next Month:**
-${aiSummary.goals.map((g) => `• ${g}`).join("\n")}
+**Personal Development & Wellbeing**
+${aiSummary.personal || `${firstName} is in a good place and continuing to develop well as a young person.`}
 
-${aiSummary.attentionRequired ? "⚠️ **Note:** There are some areas that may need extra attention. Please feel free to reach out if you'd like to discuss further." : "Everything is tracking well. Please don't hesitate to get in touch if you have any questions."}
+**Lifestyle**
+${aiSummary.lifestyle || "No concerns here — everything is on track."}
 
-Kind regards,
+**Focus for Next Month**
+${aiSummary.focus || `We'll continue to build on what ${firstName} is doing well and set some fresh goals.`}
+
+**Goals**
+${goalsBlock}
+
+${aiSummary.attentionRequired ? `I did want to flag that there are a couple of areas we're keeping a close eye on. Nothing to be overly concerned about, but I'd welcome a chat if you'd like to discuss further.` : `Overall, I'm really pleased with how ${firstName} is going. There's a lot to be positive about.`}
+
+Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.
+
+Warm regards,
 SFX Pathways`;
     setParentEmailDraft(draft);
     toast.success("Parent email draft created");
