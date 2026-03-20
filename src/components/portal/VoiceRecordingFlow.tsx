@@ -397,13 +397,13 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         created_by: user?.id ?? null,
         call_date: new Date().toISOString().slice(0, 10),
         call_duration: durationStr,
-        training_highlights: aiSummary?.trainingHighlights || null,
-        areas_for_improvement: aiSummary?.areasForImprovement || null,
-        football_goal: aiSummary?.footballGoal || null,
-        personal_goal: aiSummary?.personalGoal || null,
-        school_life_goal: aiSummary?.schoolLifeGoal || null,
-        parent_engagement_notes: aiSummary?.parentEngagementNotes || null,
-        follow_up_actions: aiSummary?.followUpActions || null,
+        training_highlights: editedSummary.performance || null,
+        areas_for_improvement: null,
+        football_goal: null,
+        personal_goal: null,
+        school_life_goal: null,
+        parent_engagement_notes: null,
+        follow_up_actions: null,
       } as any, { onConflict: "athlete_id,review_month" });
       if (error) throw error;
       setReviewCreated(true);
