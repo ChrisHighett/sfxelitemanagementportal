@@ -88,7 +88,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
   const [creatingReview, setCreatingReview] = useState(false);
   const [reviewCreated, setReviewCreated] = useState(false);
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
+  const [athleteEmailSubject, setAthleteEmailSubject] = useState<string>("");
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
+  const [parentEmailSubject, setParentEmailSubject] = useState<string>("");
+  const [generatingAthleteEmail, setGeneratingAthleteEmail] = useState(false);
+  const [generatingParentEmail, setGeneratingParentEmail] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskForm, setTaskForm] = useState({
     title: "", description: "", owner_type: "agent" as string,
