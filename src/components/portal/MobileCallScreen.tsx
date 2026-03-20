@@ -74,6 +74,7 @@ interface MobileCallScreenProps {
   athlete: Athlete;
   onClose: () => void;
   onCreateEmail: (type: "athlete" | "parent", notes: Record<SectionKey, string>) => void;
+  onReviewPublished?: () => void;
 }
 
 export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: MobileCallScreenProps) {
