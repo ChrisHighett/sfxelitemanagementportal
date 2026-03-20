@@ -224,7 +224,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
           <Badge variant="secondary" className="text-xs">{role.toUpperCase()}</Badge>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {(role === "agent" || role === "admin") && athletes.length > 1 && (
+          {athletes.length > 1 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground hidden sm:inline">Athlete</span>
               <Select value={selectedAthleteId} onValueChange={setSelectedAthleteId}>
@@ -239,7 +239,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
               </Select>
             </div>
           )}
-          {(role === "athlete" || role === "parent") && athletes.length > 0 && (
+          {athletes.length <= 1 && athletes.length > 0 && (
             <span className="text-sm font-medium">{athletes[0]?.name}</span>
           )}
         </div>
