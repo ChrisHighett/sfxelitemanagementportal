@@ -104,7 +104,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
 };
 
-function Shell({ role, active, onNav, children }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode }) {
+function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode; hideBottomNav?: boolean }) {
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
@@ -178,10 +178,10 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
           </div>
         </div>
 
-        <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
+        <main className={`flex-1 overflow-auto ${hideBottomNav ? 'pb-0' : 'pb-20'} md:pb-0`}>{children}</main>
 
         {/* Mobile bottom navigation */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        {!hideBottomNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div className="flex items-center justify-around py-1">
             {mobileQuickNav.map((it) => {
               const Icon = it.icon;
@@ -205,7 +205,7 @@ function Shell({ role, active, onNav, children }: { role: Role; active: string; 
               <span className="text-[10px] leading-tight font-medium">More</span>
             </button>
           </div>
-        </nav>
+        </nav>}
       </div>
     </div>
   );
@@ -617,7 +617,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function AthleteComms({ athlete }: { athlete: Athlete }) {
+function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActive?: (active: boolean) => void }) {
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
@@ -625,6 +625,12 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
   });
+  
+  // Notify parent when call is active so bottom nav can be hidden
+  useEffect(() => {
+    onCallActive?.(callSessionActive || voiceRecordingActive);
+  }, [callSessionActive, voiceRecordingActive, onCallActive]);
+
   const [notes, setNotes] = useState("");
   const [aiSummary, setAiSummary] = useState<{
     performance: string; lifestyle: string; personal: string;
@@ -2589,6 +2595,7 @@ export default function SFXPathwaysPortal() {
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [roleOverride, setRoleOverride] = useState<Role | null>(null);
+  const [callActive, setCallActive] = useState(false);
 
   const isAdmin = userRoleData?.role === "admin";
   const effectiveRole = roleOverride || role;
@@ -2680,7 +2687,7 @@ export default function SFXPathwaysPortal() {
   }
 
   return (
-    <Shell role={effectiveRole} active={active} onNav={setActive}>
+    <Shell role={effectiveRole} active={active} onNav={setActive} hideBottomNav={callActive}>
       {/* Admin role preview switcher */}
       {isAdmin && (
         <div className="px-4 pt-3 pb-1 flex items-center gap-2">
@@ -2722,7 +2729,7 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={effectiveRole === "agent" || effectiveRole === "admin"} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
