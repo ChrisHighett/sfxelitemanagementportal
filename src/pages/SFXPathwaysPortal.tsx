@@ -617,7 +617,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function AthleteComms({ athlete }: { athlete: Athlete }) {
+function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActive?: (active: boolean) => void }) {
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
