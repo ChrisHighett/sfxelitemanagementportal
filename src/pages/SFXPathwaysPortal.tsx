@@ -1111,8 +1111,99 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
   }, [aiSummary, athlete.name, athlete.parentName]);
 
 
+  // Handle email creation from mobile call screen
+  const handleMobileCallEmail = useCallback((type: "athlete" | "parent", sectionNotes: Record<string, string>) => {
+    // Build notes string from sections for AI summary input
+    const combinedNotes = Object.entries(sectionNotes)
+      .filter(([, v]) => v.trim())
+      .map(([k, v]) => `${k}: ${v}`)
+      .join("\n");
+    setNotes(combinedNotes);
+    setCallSessionActive(false);
+
+    // Use section notes directly to create emails without AI summary
+    const firstName = athlete.name.split(" ")[0];
+    const parentName = athlete.parentName || "there";
+
+    if (type === "athlete") {
+      const sections: string[] = [];
+      if (sectionNotes.performance) sections.push(`**On the Pitch**\n${sectionNotes.performance}`);
+      if (sectionNotes.lifestyle) sections.push(`**Off the Pitch**\n${sectionNotes.lifestyle}`);
+      if (sectionNotes.personal) sections.push(`**Personal Development**\n${sectionNotes.personal}`);
+      if (sectionNotes.education) sections.push(`**Education**\n${sectionNotes.education}`);
+      if (sectionNotes.goals) sections.push(`**What We're Working on Next**\n${sectionNotes.goals}`);
+
+      const draft = [
+        `Hey ${firstName},`,
+        ``,
+        `Really enjoyed our catch up today mate. It's great to see the effort you're putting in — you should be proud of how far you've come.`,
+        ``,
+        ...(sections.length > 0 ? [`Here's a quick summary of what we covered:`, ``, ...sections.map(s => s + "\n")] : []),
+        `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
+        ``,
+        `Speak soon,`,
+        `SFX Pathways`,
+      ].join("\n");
+      setAthleteEmailDraft(draft);
+      toast.success("Athlete email draft created");
+    } else {
+      const points: string[] = [];
+      if (sectionNotes.performance) points.push(`**Performance:** ${sectionNotes.performance}`);
+      if (sectionNotes.education) points.push(`**Education:** ${sectionNotes.education}`);
+      if (sectionNotes.personal) points.push(`**Wellbeing & Development:** ${sectionNotes.personal}`);
+      if (sectionNotes.lifestyle) points.push(`**Lifestyle:** ${sectionNotes.lifestyle}`);
+
+      const draft = [
+        `Hi ${parentName},`,
+        ``,
+        `I had a really positive catch up with ${firstName} this month and wanted to share a brief update with you.`,
+        ``,
+        `${firstName} is tracking well and showing good progress. I'm really pleased with how things are going.`,
+        ``,
+        ...(points.length > 0 ? [`Here's a summary of the key areas we discussed:`, ``, ...points, ``] : []),
+        ...(sectionNotes.goals ? [`**Next Focus**\n${sectionNotes.goals}`, ``] : []),
+        `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
+        ``,
+        `Warm regards,`,
+        `SFX Pathways`,
+      ].join("\n");
+      setParentEmailDraft(draft);
+      toast.success("Parent email draft created");
+    }
+  }, [athlete.name, athlete.parentName]);
+
+  if (callSessionActive) {
+    return (
+      <MobileCallScreen
+        athlete={athlete}
+        onClose={() => setCallSessionActive(false)}
+        onCreateEmail={handleMobileCallEmail}
+      />
+    );
+  }
+
   return (
     <div className="space-y-4 p-3 md:space-y-6 md:p-6">
+      {/* Start Call Session button — prominent on mobile */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-base md:text-lg">Start a Call Session</h3>
+              <p className="text-sm text-muted-foreground">
+                Step-by-step guided call with {athlete.name} — optimised for mobile
+              </p>
+            </div>
+            <Button
+              className="w-full sm:w-auto h-12 md:h-10 text-base gap-2"
+              onClick={() => setCallSessionActive(true)}
+            >
+              <Phone className="h-5 w-5" /> Start Call Session
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Call Script Guide</CardTitle>
