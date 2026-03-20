@@ -442,16 +442,17 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     if (editedSummary.focus) focusLines.push(editedSummary.focus);
     if (editedGoals.length > 0) focusLines.push(editedGoals.filter(g => g.trim()).map(g => `• ${g}`).join("\n"));
 
-    const positives = [editedSummary.performance, editedSummary.lifestyle, editedSummary.personal].filter(Boolean);
+    const emailPoints = aiSummary?.athlete_email_summary_points?.filter(Boolean) || [];
+    const bulletPoints = emailPoints.length > 0
+      ? emailPoints.map(p => `• ${p}`).join("\n")
+      : positives.slice(0, 3).map(p => `• ${p}`).join("\n");
 
     setAthleteEmailDraft([
       `Hey ${firstName},`,
       ``,
       `Really enjoyed our catch up today mate. It's great to see the effort you're putting in — you should be proud of how far you've come.`,
       ``,
-      ...(positives.length > 0 ? [`A couple of things that stood out — ${positives.slice(0, 2).map(p => p.replace(/\.$/, "").toLowerCase()).join(", and ")}. That's all really positive mate.`] : []),
-      ``,
-      ...(sections.length > 0 ? [`Here's a quick summary of what we covered:`, ``, ...sections.map(s => s + "\n")] : []),
+      ...(bulletPoints ? [`Here are some highlights from our chat:\n${bulletPoints}`, ``] : []),
       ...(focusLines.length > 0 ? [`**What We're Working on Next**`, ...focusLines, ``] : []),
       `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
       ``,
@@ -459,7 +460,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       `SFX Pathways`,
     ].join("\n"));
     toast.success("Athlete email draft created");
-  }, [athlete.name, editedSummary, editedGoals]);
+  }, [athlete.name, editedSummary, editedGoals, aiSummary]);
 
   const generateParentEmail = useCallback(() => {
     const firstName = athlete.name.split(" ")[0];
