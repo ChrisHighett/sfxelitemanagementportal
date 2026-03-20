@@ -328,6 +328,76 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
     }
   }, [athlete.id, callStart, sectionNotes, user?.id, stopSectionRecording]);
 
+  // ── Publish approved summary to monthly_reviews (upsert) ──
+  const publishToMonthlyReview = useCallback(async () => {
+    if (wellbeingScore === null) {
+      toast.error("Please select a wellbeing score before publishing");
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01"; // e.g. "2026-03-01"
+
+      // Check if a review already exists for this athlete + month
+      const { data: existing, error: fetchErr } = await supabase
+        .from("monthly_reviews")
+        .select("id")
+        .eq("athlete_id", athlete.id)
+        .eq("review_month", reviewMonth)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+
+      const reviewPayload = {
+        athlete_id: athlete.id,
+        review_month: reviewMonth,
+        performance_notes: sectionNotes.performance || null,
+        lifestyle_notes: sectionNotes.lifestyle || null,
+        personal_notes: sectionNotes.personal || null,
+        education_notes: sectionNotes.education || null,
+        brand_notes: sectionNotes.brand || null,
+        focus_next_month: sectionNotes.goals || null,
+        attention_required: attentionRequired,
+        wellbeing_score: wellbeingScore,
+        created_by: user?.id ?? null,
+      };
+
+      if (existing?.id) {
+        // Update existing review
+        const { error } = await supabase
+          .from("monthly_reviews")
+          .update(reviewPayload)
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        // Create new review
+        const { error } = await supabase
+          .from("monthly_reviews")
+          .insert(reviewPayload);
+        if (error) throw error;
+      }
+
+      // Invalidate all relevant queries to refresh views
+      queryClient.invalidateQueries({ queryKey: ["monthly_reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["athletes"] });
+      queryClient.invalidateQueries({ queryKey: ["athlete_scorecards"] });
+      queryClient.invalidateQueries({ queryKey: ["athlete_alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["v_athlete_score_trends"] });
+      queryClient.invalidateQueries({ queryKey: ["v_athlete_wellbeing_trends"] });
+      queryClient.invalidateQueries({ queryKey: ["call_history"] });
+
+      setReviewPublished(true);
+      onReviewPublished?.();
+      toast.success("Monthly review published successfully");
+    } catch (e: any) {
+      console.error("Publish monthly review error:", e);
+      toast.error(e.message || "Failed to publish monthly review — your summary is preserved, try again");
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished]);
+
   // POST-CALL ACTIONS screen
   if (step === "done") {
     return (
@@ -341,8 +411,83 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
             </p>
           </div>
 
+          {/* Publish to Development Tracker section */}
+          <Card className={reviewPublished ? "border-green-500/50 bg-green-500/5" : "border-primary/30"}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Publish to Development Tracker
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {reviewPublished ? (
+                <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+                  ✅ Monthly review published successfully
+                </div>
+              ) : (
+                <>
+                  {/* Wellbeing score selector */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Wellbeing Score:</span>
+                    <Select
+                      value={wellbeingScore !== null ? String(wellbeingScore) : ""}
+                      onValueChange={(v) => setWellbeingScore(Number(v))}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}/5</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {wellbeingScore === null && (
+                      <span className="text-xs text-destructive">Required</span>
+                    )}
+                  </div>
+
+                  {/* Attention required toggle */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium">Attention Required:</span>
+                    <Switch
+                      checked={attentionRequired}
+                      onCheckedChange={setAttentionRequired}
+                    />
+                    <Badge variant={attentionRequired ? "destructive" : "secondary"}>
+                      {attentionRequired ? "Yes" : "No"}
+                    </Badge>
+                  </div>
+
+                  {/* Summary preview */}
+                  <div className="rounded-md bg-muted/50 p-3 space-y-1 text-xs max-h-32 overflow-y-auto">
+                    {SECTIONS.filter(s => sectionNotes[s.key]?.trim()).map(s => (
+                      <div key={s.key}>
+                        <span className="font-medium">{s.title}:</span>{" "}
+                        <span className="text-muted-foreground">{sectionNotes[s.key].slice(0, 80)}...</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    className="w-full h-12 text-base gap-2"
+                    onClick={publishToMonthlyReview}
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <ClipboardList className="h-5 w-5" />
+                    )}
+                    {isPublishing ? "Publishing..." : "Publish to Monthly Review"}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Next Actions</h3>
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Other Actions</h3>
 
             <Button
               className="w-full h-14 text-base gap-3 justify-start"
@@ -368,17 +513,6 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
               }}
             >
               <CheckSquare className="h-5 w-5" /> Create Task
-            </Button>
-
-            <Button
-              className="w-full h-14 text-base gap-3 justify-start"
-              variant="secondary"
-              onClick={() => {
-                toast.info("Navigate to Monthly Reviews to create a review");
-                onClose();
-              }}
-            >
-              <ClipboardList className="h-5 w-5" /> Create Monthly Review
             </Button>
           </div>
 
