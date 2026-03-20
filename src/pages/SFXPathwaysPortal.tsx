@@ -1174,6 +1174,15 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
     }
   }, [athlete.name, athlete.parentName]);
 
+  if (voiceRecordingActive) {
+    return (
+      <VoiceRecordingFlow
+        athlete={athlete}
+        onClose={() => setVoiceRecordingActive(false)}
+      />
+    );
+  }
+
   if (callSessionActive) {
     return (
       <MobileCallScreen
