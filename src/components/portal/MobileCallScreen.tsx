@@ -190,6 +190,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
     };
 
     finalTranscriptRef.current = "";
+    baseNotesRef.current = sectionNotes[sectionKey] || "";
     const recognition = createRecognition();
     recognition.start();
     recognitionRef.current = recognition;
