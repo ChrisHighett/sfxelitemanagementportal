@@ -2687,7 +2687,7 @@ export default function SFXPathwaysPortal() {
   }
 
   return (
-    <Shell role={effectiveRole} active={active} onNav={setActive}>
+    <Shell role={effectiveRole} active={active} onNav={setActive} hideBottomNav={callActive}>
       {/* Admin role preview switcher */}
       {isAdmin && (
         <div className="px-4 pt-3 pb-1 flex items-center gap-2">
