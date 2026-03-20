@@ -30,7 +30,7 @@ import CallHistory from "@/components/portal/CallHistory";
 import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import ParentEngagementScore from "@/components/portal/ParentEngagementScore";
 import AthleteImport from "@/components/portal/AthleteImport";
-
+import MobileCallScreen from "@/components/portal/MobileCallScreen";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
