@@ -442,6 +442,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     if (editedSummary.focus) focusLines.push(editedSummary.focus);
     if (editedGoals.length > 0) focusLines.push(editedGoals.filter(g => g.trim()).map(g => `• ${g}`).join("\n"));
 
+    const positives = [editedSummary.performance, editedSummary.lifestyle, editedSummary.personal].filter(Boolean);
     const emailPoints = aiSummary?.athlete_email_summary_points?.filter(Boolean) || [];
     const bulletPoints = emailPoints.length > 0
       ? emailPoints.map(p => `• ${p}`).join("\n")
