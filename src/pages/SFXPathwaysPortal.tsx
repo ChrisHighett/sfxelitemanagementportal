@@ -620,6 +620,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
 function AthleteComms({ athlete }: { athlete: Athlete }) {
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
+  const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
