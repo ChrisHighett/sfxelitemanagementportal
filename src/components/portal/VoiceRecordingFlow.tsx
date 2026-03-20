@@ -43,12 +43,14 @@ interface VoiceRecordingFlowProps {
 }
 
 const REVIEW_SECTIONS = [
+  { key: "warm_opener", label: "Warm Opener", icon: "👋" },
   { key: "performance", label: "Performance", icon: "⚽" },
   { key: "lifestyle", label: "Lifestyle", icon: "🏠" },
   { key: "personal", label: "Personal", icon: "💪" },
   { key: "education", label: "Education", icon: "📚" },
   { key: "brand", label: "Brand", icon: "📱" },
-  { key: "focus", label: "Focus & Goals", icon: "🎯" },
+  { key: "goals", label: "Goals", icon: "🎯" },
+  { key: "focus", label: "Focus Next Month", icon: "🔮" },
 ] as const;
 
 export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingFlowProps) {
