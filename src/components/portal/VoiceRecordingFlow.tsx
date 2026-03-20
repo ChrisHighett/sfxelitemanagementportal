@@ -332,8 +332,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     } else {
       toast.info("No transcript captured — add notes manually");
       setEditedSummary({
-        performance: "", lifestyle: "", personal: "",
-        education: "", brand: "", focus: "",
+        warm_opener: "", performance: "", lifestyle: "", personal: "",
+        education: "", brand: "", goals: "", focus: "",
       });
       setEditedGoals([]);
       setStep("review");
