@@ -22,23 +22,19 @@ import { type Athlete } from "@/hooks/usePortalData";
 type FlowStep = "ready" | "recording" | "processing" | "review" | "done";
 
 interface AISummary {
+  warm_opener: string;
   performance: string;
   lifestyle: string;
   personal: string;
   education: string;
   brand: string;
-  focus: string;
-  goals: string[];
-  attentionRequired: boolean;
-  trainingHighlights: string;
-  areasForImprovement: string;
-  footballGoal: string;
-  personalGoal: string;
-  schoolLifeGoal: string;
-  educationTopic: string;
-  parentEngagementNotes: string;
-  followUpActions: string;
-  wellbeingScore: number;
+  goals: string;
+  suggested_focus_next_month: string;
+  suggested_goals: string[];
+  attention_required: boolean;
+  attention_reason: string;
+  athlete_email_summary_points: string[];
+  parent_email_summary_points: string[];
 }
 
 interface VoiceRecordingFlowProps {
@@ -311,11 +307,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
           personal: s.personal || "",
           education: s.education || "",
           brand: s.brand || "",
-          focus: s.focus || "",
+          focus: s.suggested_focus_next_month || "",
         });
-        setEditedGoals(s.goals || []);
-        setWellbeingScore(s.wellbeingScore || 4);
-        setAttentionRequired(s.attentionRequired || false);
+        setEditedGoals(s.suggested_goals || []);
+        setWellbeingScore(4);
+        setAttentionRequired(s.attention_required || false);
         setStep("review");
         toast.success("AI review draft ready");
       } catch (e: any) {
@@ -401,13 +397,13 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         created_by: user?.id ?? null,
         call_date: new Date().toISOString().slice(0, 10),
         call_duration: durationStr,
-        training_highlights: aiSummary?.trainingHighlights || null,
-        areas_for_improvement: aiSummary?.areasForImprovement || null,
-        football_goal: aiSummary?.footballGoal || null,
-        personal_goal: aiSummary?.personalGoal || null,
-        school_life_goal: aiSummary?.schoolLifeGoal || null,
-        parent_engagement_notes: aiSummary?.parentEngagementNotes || null,
-        follow_up_actions: aiSummary?.followUpActions || null,
+        training_highlights: editedSummary.performance || null,
+        areas_for_improvement: null,
+        football_goal: null,
+        personal_goal: null,
+        school_life_goal: null,
+        parent_engagement_notes: null,
+        follow_up_actions: null,
       } as any, { onConflict: "athlete_id,review_month" });
       if (error) throw error;
       setReviewCreated(true);
