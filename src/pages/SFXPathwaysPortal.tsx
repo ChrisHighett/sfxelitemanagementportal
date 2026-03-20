@@ -2588,10 +2588,15 @@ export default function SFXPathwaysPortal() {
   const [role, setRole] = useState<Role | null>(null);
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [roleOverride, setRoleOverride] = useState<Role | null>(null);
 
-  // For athlete/parent: restrict to allocated athlete only
+  const isAdmin = userRoleData?.role === "admin";
+  const effectiveRole = roleOverride || role;
+
+  // For athlete/parent: restrict to allocated athlete only (skip when admin is previewing)
   const allocatedAthleteId = userRoleData?.allocatedAthleteId ?? null;
-  const restrictToIds = (role === "athlete" || role === "parent") && allocatedAthleteId
+  const isPreviewingOtherRole = isAdmin && roleOverride && roleOverride !== "admin";
+  const restrictToIds = !isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && allocatedAthleteId
     ? [allocatedAthleteId]
     : undefined;
 
@@ -2605,6 +2610,17 @@ export default function SFXPathwaysPortal() {
       setActive(firstTab);
     }
   }, [userRoleData, role]);
+
+  // When admin switches role preview, reset to first tab of that role
+  const handleRoleSwitch = (newRole: Role) => {
+    if (newRole === userRoleData?.role) {
+      setRoleOverride(null);
+    } else {
+      setRoleOverride(newRole);
+    }
+    const firstTab = NAV[newRole]?.[0]?.key ?? "dash";
+    setActive(firstTab);
+  };
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
   const athlete = useMemo(() => athletes.find((a) => a.id === currentAthleteId) ?? athletes[0], [athletes, currentAthleteId]);
