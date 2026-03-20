@@ -207,15 +207,17 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-    // Append final transcript to section
+    // Final state is already set by onresult — just set the clean final value
     if (finalTranscriptRef.current.trim() && recordingSection) {
-      setSectionNotes(prev => {
-        const existing = prev[recordingSection] || "";
-        const prefix = existing && !existing.endsWith("\n") && !existing.endsWith(" ") ? " " : "";
-        return { ...prev, [recordingSection]: existing + prefix + finalTranscriptRef.current.trim() };
-      });
+      const base = baseNotesRef.current;
+      const separator = base && !base.endsWith("\n") && !base.endsWith(" ") ? " " : "";
+      setSectionNotes(prev => ({
+        ...prev,
+        [recordingSection]: (base + separator + finalTranscriptRef.current.trim()).trim(),
+      }));
     }
     finalTranscriptRef.current = "";
+    baseNotesRef.current = "";
     setRecordingSection(null);
   }, [recordingSection]);
 
