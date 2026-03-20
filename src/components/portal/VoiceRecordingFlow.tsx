@@ -467,11 +467,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     const firstName = athlete.name.split(" ")[0];
     const parentName = athlete.parentName || "there";
 
-    const points: string[] = [];
-    if (editedSummary.performance) points.push(`**Performance:** ${editedSummary.performance}`);
-    if (editedSummary.education) points.push(`**Education:** ${editedSummary.education}`);
-    if (editedSummary.personal) points.push(`**Wellbeing & Development:** ${editedSummary.personal}`);
-    if (editedSummary.lifestyle) points.push(`**Lifestyle:** ${editedSummary.lifestyle}`);
+    const parentPoints = aiSummary?.parent_email_summary_points?.filter(Boolean) || [];
+    const points: string[] = parentPoints.length > 0
+      ? parentPoints.map(p => `• ${p}`)
+      : [
+          editedSummary.performance ? `• **Performance:** ${editedSummary.performance}` : "",
+          editedSummary.education ? `• **Education:** ${editedSummary.education}` : "",
+          editedSummary.personal ? `• **Wellbeing:** ${editedSummary.personal}` : "",
+          editedSummary.lifestyle ? `• **Lifestyle:** ${editedSummary.lifestyle}` : "",
+        ].filter(Boolean);
 
     setParentEmailDraft([
       `Hi ${parentName},`,
@@ -488,7 +492,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       `SFX Pathways`,
     ].join("\n"));
     toast.success("Parent email draft created");
-  }, [athlete.name, athlete.parentName, editedSummary, attentionRequired]);
+  }, [athlete.name, athlete.parentName, editedSummary, attentionRequired, aiSummary]);
 
   // ── POST-SAVE: Create Task ──
   const saveTask = useCallback(async () => {
