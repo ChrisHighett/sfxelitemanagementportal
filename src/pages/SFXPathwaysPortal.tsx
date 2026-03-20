@@ -625,6 +625,12 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
   });
+  
+  // Notify parent when call is active so bottom nav can be hidden
+  useEffect(() => {
+    onCallActive?.(callSessionActive || voiceRecordingActive);
+  }, [callSessionActive, voiceRecordingActive, onCallActive]);
+
   const [notes, setNotes] = useState("");
   const [aiSummary, setAiSummary] = useState<{
     performance: string; lifestyle: string; personal: string;
