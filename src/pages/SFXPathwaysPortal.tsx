@@ -181,7 +181,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
         <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
 
         {/* Mobile bottom navigation */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        {!hideBottomNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           <div className="flex items-center justify-around py-1">
             {mobileQuickNav.map((it) => {
               const Icon = it.icon;
