@@ -88,7 +88,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
   const [creatingReview, setCreatingReview] = useState(false);
   const [reviewCreated, setReviewCreated] = useState(false);
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
+  const [athleteEmailSubject, setAthleteEmailSubject] = useState<string>("");
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
+  const [parentEmailSubject, setParentEmailSubject] = useState<string>("");
+  const [generatingAthleteEmail, setGeneratingAthleteEmail] = useState(false);
+  const [generatingParentEmail, setGeneratingParentEmail] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [taskForm, setTaskForm] = useState({
     title: "", description: "", owner_type: "agent" as string,
@@ -430,71 +434,67 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
   }, [athlete.id, editedSummary, editedGoals, wellbeingScore, attentionRequired, user?.id, callStart, aiSummary]);
 
   // ── POST-SAVE: Generate emails ──
-  const generateAthleteEmail = useCallback(() => {
+  const generateAthleteEmail = useCallback(async () => {
     const firstName = athlete.name.split(" ")[0];
-    const sections: string[] = [];
-    if (editedSummary.performance) sections.push(`**On the Pitch**\n${editedSummary.performance}`);
-    if (editedSummary.lifestyle) sections.push(`**Off the Pitch**\n${editedSummary.lifestyle}`);
-    if (editedSummary.personal) sections.push(`**Personal Development**\n${editedSummary.personal}`);
-    if (editedSummary.education) sections.push(`**Education**\n${editedSummary.education}`);
+    setGeneratingAthleteEmail(true);
+    try {
+      const structuredReview = {
+        ...editedSummary,
+        suggested_goals: editedGoals.filter(g => g.trim()),
+        attention_required: attentionRequired,
+      };
+      const { data, error } = await supabase.functions.invoke("generate-email", {
+        body: {
+          type: "athlete",
+          athleteFirstName: firstName,
+          structuredReview,
+          summaryPoints: aiSummary?.athlete_email_summary_points || [],
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAthleteEmailSubject(data.email.subject || "");
+      setAthleteEmailDraft(data.email.body || "");
+      toast.success("Athlete email generated");
+    } catch (e: any) {
+      console.error("Athlete email error:", e);
+      toast.error(e.message || "Failed to generate athlete email");
+    } finally {
+      setGeneratingAthleteEmail(false);
+    }
+  }, [athlete.name, editedSummary, editedGoals, attentionRequired, aiSummary]);
 
-    const focusLines: string[] = [];
-    if (editedSummary.focus) focusLines.push(editedSummary.focus);
-    if (editedGoals.length > 0) focusLines.push(editedGoals.filter(g => g.trim()).map(g => `• ${g}`).join("\n"));
-
-    const positives = [editedSummary.performance, editedSummary.lifestyle, editedSummary.personal].filter(Boolean);
-    const emailPoints = aiSummary?.athlete_email_summary_points?.filter(Boolean) || [];
-    const bulletPoints = emailPoints.length > 0
-      ? emailPoints.map(p => `• ${p}`).join("\n")
-      : positives.slice(0, 3).map(p => `• ${p}`).join("\n");
-
-    setAthleteEmailDraft([
-      `Hey ${firstName},`,
-      ``,
-      `Really enjoyed our catch up today mate. It's great to see the effort you're putting in — you should be proud of how far you've come.`,
-      ``,
-      ...(bulletPoints ? [`Here are some highlights from our chat:\n${bulletPoints}`, ``] : []),
-      ...(focusLines.length > 0 ? [`**What We're Working on Next**`, ...focusLines, ``] : []),
-      `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
-      ``,
-      `Speak soon,`,
-      `SFX Pathways`,
-    ].join("\n"));
-    toast.success("Athlete email draft created");
-  }, [athlete.name, editedSummary, editedGoals, aiSummary]);
-
-  const generateParentEmail = useCallback(() => {
+  const generateParentEmail = useCallback(async () => {
     const firstName = athlete.name.split(" ")[0];
     const parentName = athlete.parentName || "there";
-
-    const parentPoints = aiSummary?.parent_email_summary_points?.filter(Boolean) || [];
-    const points: string[] = parentPoints.length > 0
-      ? parentPoints.map(p => `• ${p}`)
-      : [
-          editedSummary.performance ? `• **Performance:** ${editedSummary.performance}` : "",
-          editedSummary.education ? `• **Education:** ${editedSummary.education}` : "",
-          editedSummary.personal ? `• **Wellbeing:** ${editedSummary.personal}` : "",
-          editedSummary.lifestyle ? `• **Lifestyle:** ${editedSummary.lifestyle}` : "",
-        ].filter(Boolean);
-
-    setParentEmailDraft([
-      `Hi ${parentName},`,
-      ``,
-      `I had a really positive catch up with ${firstName} this month and wanted to share a brief update with you.`,
-      ``,
-      `${firstName} is tracking well and showing good progress. ${attentionRequired ? "There are a couple of areas we're keeping an eye on, but nothing to be concerned about — just part of the development process." : "I'm really pleased with how things are going."}`,
-      ``,
-      ...(points.length > 0 ? [`Here's a summary of the key areas we discussed:`, ``, ...points, ``] : []),
-      ...(editedSummary.focus ? [`**Next Focus**\n${editedSummary.focus}`, ``] : []),
-      `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
-      ``,
-      `Warm regards,`,
-      `SFX Pathways`,
-    ].join("\n"));
-    toast.success("Parent email draft created");
-  }, [athlete.name, athlete.parentName, editedSummary, attentionRequired, aiSummary]);
-
-  // ── POST-SAVE: Create Task ──
+    setGeneratingParentEmail(true);
+    try {
+      const structuredReview = {
+        ...editedSummary,
+        suggested_goals: editedGoals.filter(g => g.trim()),
+        attention_required: attentionRequired,
+      };
+      const { data, error } = await supabase.functions.invoke("generate-email", {
+        body: {
+          type: "parent",
+          athleteFirstName: firstName,
+          parentName,
+          structuredReview,
+          summaryPoints: aiSummary?.parent_email_summary_points || [],
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setParentEmailSubject(data.email.subject || "");
+      setParentEmailDraft(data.email.body || "");
+      toast.success("Parent email generated");
+    } catch (e: any) {
+      console.error("Parent email error:", e);
+      toast.error(e.message || "Failed to generate parent email");
+    } finally {
+      setGeneratingParentEmail(false);
+    }
+  }, [athlete.name, athlete.parentName, editedSummary, editedGoals, attentionRequired, aiSummary]);
   const saveTask = useCallback(async () => {
     if (!taskForm.title.trim()) { toast.error("Task title required"); return; }
     setSavingTask(true);
@@ -793,16 +793,20 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
             className="w-full h-14 text-base gap-3 justify-start"
             variant="secondary"
             onClick={generateAthleteEmail}
+            disabled={generatingAthleteEmail}
           >
-            <Mail className="h-5 w-5" /> Generate Athlete Email
+            {generatingAthleteEmail ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mail className="h-5 w-5" />}
+            {athleteEmailDraft ? "Regenerate Athlete Email" : "Generate Athlete Email"}
           </Button>
 
           <Button
             className="w-full h-14 text-base gap-3 justify-start"
             variant="secondary"
             onClick={generateParentEmail}
+            disabled={generatingParentEmail}
           >
-            <Mail className="h-5 w-5" /> Generate Parent Email
+            {generatingParentEmail ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mail className="h-5 w-5" />}
+            {parentEmailDraft ? "Regenerate Parent Email" : "Generate Parent Email"}
           </Button>
 
           <Button
@@ -885,12 +889,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">📧 Athlete Email</CardTitle>
                 <Button size="sm" variant="outline" onClick={() => {
-                  navigator.clipboard.writeText(athleteEmailDraft);
+                  navigator.clipboard.writeText(`Subject: ${athleteEmailSubject}\n\n${athleteEmailDraft}`);
                   toast.success("Copied");
                 }}>Copy</Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              {athleteEmailSubject && (
+                <p className="text-xs font-medium text-muted-foreground">Subject: {athleteEmailSubject}</p>
+              )}
               <div className="whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-lg max-h-[200px] overflow-y-auto">
                 {athleteEmailDraft}
               </div>
@@ -904,12 +911,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">📧 Parent Email</CardTitle>
                 <Button size="sm" variant="outline" onClick={() => {
-                  navigator.clipboard.writeText(parentEmailDraft);
+                  navigator.clipboard.writeText(`Subject: ${parentEmailSubject}\n\n${parentEmailDraft}`);
                   toast.success("Copied");
                 }}>Copy</Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              {parentEmailSubject && (
+                <p className="text-xs font-medium text-muted-foreground">Subject: {parentEmailSubject}</p>
+              )}
               <div className="whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-lg max-h-[200px] overflow-y-auto">
                 {parentEmailDraft}
               </div>
