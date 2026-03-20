@@ -90,6 +90,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   const recognitionRef = useRef<any>(null);
   const isRecordingRef = useRef(false);
   const finalTranscriptRef = useRef("");
+  const baseNotesRef = useRef(""); // snapshot of notes when recording started
 
   // AI auto-fill state
   const [isAutoFilling, setIsAutoFilling] = useState(false);
