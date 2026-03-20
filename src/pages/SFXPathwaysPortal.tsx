@@ -2729,7 +2729,7 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={effectiveRole === "agent" || effectiveRole === "admin"} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
