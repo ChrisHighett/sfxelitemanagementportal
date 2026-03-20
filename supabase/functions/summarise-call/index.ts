@@ -13,40 +13,47 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are an elite youth athlete development analyst for SFX Pathways. You will receive a call transcript between an agent and a young athlete (or their parent). Summarise it into the structured tracker format used by SFX Pathways.
+    const systemPrompt = `You are an athlete development assistant for SFX Sports.
 
-Return a JSON object with exactly these fields:
-- trainingHighlights (string): What's going well in training — attitude, effort, specific skills, selections
-- areasForImprovement (string): Specific areas to work on — fitness, skills, mental, tactical
-- footballGoal (string): Specific football goal for next month
-- personalGoal (string): Personal development goal — confidence, leadership, habits
-- schoolLifeGoal (string): School, education, or life balance goal
-- educationTopic (string): Education topics discussed — standards, journaling, habits, routines
-- parentEngagementNotes (string): Notes about the conversation flow, parent relationship, observations
-- followUpActions (string): Specific follow-up actions for the agent before next call
-- wellbeingScore (number 1-5): Overall wellbeing rating based on the conversation
-- attentionRequired (boolean): true if any welfare concerns were flagged
-- performance (string): Key performance insights (brief)
-- lifestyle (string): Sleep, nutrition, recovery observations
-- personal (string): Mental health, confidence, social observations
-- education (string): School/study observations
-- brand (string): Social media and personal brand observations
-- focus (string): Primary focus area for next month
-- goals (string[]): 2-4 specific actionable goals
+Your role is to convert raw athlete call transcripts into structured development notes for elite pathways athletes.
 
-Be concise but specific. Use the athlete's context. If a category wasn't discussed, write "Not discussed this call."`;
+You must organise the conversation into these 7 SFX call sections:
+1. Warm Opener
+2. Performance
+3. Lifestyle
+4. Personal
+5. Education
+6. Brand
+7. Goals
+
+Your output must be concise, practical, professional, easy to review quickly on mobile, and written in clean Australian English.
+
+Important rules:
+- Do not write long paragraphs
+- Do not repeat the transcript
+- Do not include filler or conversational fluff
+- Summarise only the meaningful points
+- If a section was not discussed, return an empty string for that section
+- Do not invent information that was not discussed
+- If goals are implied but not explicitly stated, infer only the most reasonable and obvious next focus
+- Keep each section to 1-3 short sentences maximum
+- Highlight issues clearly if the transcript suggests concern (sleep, confidence, school pressure, injury, behaviour, etc.)
+
+You must also produce suggested_focus_next_month, suggested_goals (max 3), attention_required (true/false), attention_reason, athlete_email_summary_points, and parent_email_summary_points.
+
+Return valid JSON only. Do not wrap the JSON in markdown.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: \`Bearer \${LOVABLE_API_KEY}\`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Athlete: ${athleteName}\n\nCall Transcript:\n${transcript}` },
+          { role: "user", content: \`Athlete: \${athleteName}\n\nCall Transcript:\n\${transcript}\` },
         ],
         tools: [
           {
@@ -57,6 +64,13 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
               parameters: {
                 type: "object",
                 properties: {
+                  warmOpener: { type: "string", description: "Warm Opener section notes" },
+                  performance: { type: "string", description: "Performance section notes" },
+                  lifestyle: { type: "string", description: "Lifestyle section notes" },
+                  personal: { type: "string", description: "Personal section notes" },
+                  education: { type: "string", description: "Education section notes" },
+                  brand: { type: "string", description: "Brand section notes" },
+                  goals: { type: "string", description: "Goals section notes" },
                   trainingHighlights: { type: "string" },
                   areasForImprovement: { type: "string" },
                   footballGoal: { type: "string" },
@@ -65,21 +79,21 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
                   educationTopic: { type: "string" },
                   parentEngagementNotes: { type: "string" },
                   followUpActions: { type: "string" },
-                  wellbeingScore: { type: "number" },
+                  wellbeingScore: { type: "number", description: "1-5 wellbeing rating" },
                   attentionRequired: { type: "boolean" },
-                  performance: { type: "string" },
-                  lifestyle: { type: "string" },
-                  personal: { type: "string" },
-                  education: { type: "string" },
-                  brand: { type: "string" },
-                  focus: { type: "string" },
-                  goals: { type: "array", items: { type: "string" } },
+                  attentionReason: { type: "string", description: "Reason attention is required, empty if not" },
+                  suggestedFocusNextMonth: { type: "string" },
+                  suggestedGoals: { type: "array", items: { type: "string" }, description: "Max 3 goals" },
+                  athleteEmailSummaryPoints: { type: "array", items: { type: "string" }, description: "Short supportive bullet-ready points for athlete email" },
+                  parentEmailSummaryPoints: { type: "array", items: { type: "string" }, description: "Short reassuring bullet-ready points for parent email" },
                 },
                 required: [
+                  "warmOpener", "performance", "lifestyle", "personal", "education", "brand", "goals",
                   "trainingHighlights", "areasForImprovement", "footballGoal", "personalGoal",
                   "schoolLifeGoal", "educationTopic", "parentEngagementNotes", "followUpActions",
-                  "wellbeingScore", "attentionRequired", "performance", "lifestyle", "personal",
-                  "education", "brand", "focus", "goals"
+                  "wellbeingScore", "attentionRequired", "attentionReason",
+                  "suggestedFocusNextMonth", "suggestedGoals",
+                  "athleteEmailSummaryPoints", "parentEmailSummaryPoints"
                 ],
                 additionalProperties: false,
               },
@@ -113,7 +127,7 @@ Be concise but specific. Use the athlete's context. If a category wasn't discuss
 
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
+
     let summary;
     if (toolCall) {
       summary = JSON.parse(toolCall.function.arguments);
