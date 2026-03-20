@@ -46,14 +46,14 @@ Return valid JSON only. Do not wrap the JSON in markdown.`;
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: \`Bearer \${LOVABLE_API_KEY}\`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: \`Athlete: \${athleteName}\n\nCall Transcript:\n\${transcript}\` },
+          { role: "user", content: `Athlete: ${athleteName}\n\nCall Transcript:\n${transcript}` },
         ],
         tools: [
           {
