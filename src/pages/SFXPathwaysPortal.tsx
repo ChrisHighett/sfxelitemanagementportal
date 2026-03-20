@@ -178,7 +178,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
           </div>
         </div>
 
-        <main className="flex-1 overflow-auto pb-20 md:pb-0">{children}</main>
+        <main className={`flex-1 overflow-auto ${hideBottomNav ? 'pb-0' : 'pb-20'} md:pb-0`}>{children}</main>
 
         {/* Mobile bottom navigation */}
         {!hideBottomNav && <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
