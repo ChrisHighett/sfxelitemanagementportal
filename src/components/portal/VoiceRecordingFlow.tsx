@@ -304,11 +304,13 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         const s = data.summary as AISummary;
         setAiSummary(s);
         setEditedSummary({
+          warm_opener: s.warm_opener || "",
           performance: s.performance || "",
           lifestyle: s.lifestyle || "",
           personal: s.personal || "",
           education: s.education || "",
           brand: s.brand || "",
+          goals: s.goals || "",
           focus: s.suggested_focus_next_month || "",
         });
         setEditedGoals(s.suggested_goals || []);
