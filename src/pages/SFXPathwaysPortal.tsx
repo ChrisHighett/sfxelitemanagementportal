@@ -2648,8 +2648,8 @@ export default function SFXPathwaysPortal() {
     );
   }
 
-  // For athlete/parent with no allocated athlete
-  if ((role === "athlete" || role === "parent") && !allocatedAthleteId) {
+  // For athlete/parent with no allocated athlete (skip when admin is previewing)
+  if (!isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && !allocatedAthleteId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="max-w-md">
@@ -2680,39 +2680,62 @@ export default function SFXPathwaysPortal() {
   }
 
   return (
-    <Shell role={role} active={active} onNav={setActive}>
+    <Shell role={effectiveRole} active={active} onNav={setActive}>
+      {/* Admin role preview switcher */}
+      {isAdmin && (
+        <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+          <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+            <SelectTrigger className="w-36 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="agent">Agent</SelectItem>
+              <SelectItem value="parent">Parent</SelectItem>
+              <SelectItem value="athlete">Athlete</SelectItem>
+            </SelectContent>
+          </Select>
+          {roleOverride && (
+            <Badge variant="secondary" className="text-xs gap-1">
+              Previewing {roleOverride}
+            </Badge>
+          )}
+        </div>
+      )}
+
       <TopBar
-        role={role}
+        role={effectiveRole}
         selectedAthleteId={currentAthleteId}
         setSelectedAthleteId={setSelectedAthleteId}
         athletes={athletes}
       />
 
-      {role === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
-      {role === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
-      {role === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
-      {role === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
+      {effectiveRole === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
+      {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
 
-      {(role === "agent" || role === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
-      {(role === "agent" || role === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "scorecard" && <AthleteScorecard athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
-      {(role === "agent" || role === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
-      {(role === "agent" || role === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={role === "agent" || role === "admin"} />}
-      {(role === "agent" || role === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
-      {(role === "agent" || role === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scorecard" && <AthleteScorecard athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={effectiveRole === "agent" || effectiveRole === "admin"} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
-      {active === "resources" && <Resources athlete={athlete} role={role} />}
-      {role === "admin" && active === "import" && <AthleteImport />}
-      {role === "admin" && active === "admin" && <AdminSecurity />}
+      {active === "resources" && <Resources athlete={athlete} role={effectiveRole} />}
+      {effectiveRole === "admin" && active === "import" && <AthleteImport />}
+      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
 
-      {((role === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
-        (role === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((role === "agent" || role === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
+      {((effectiveRole === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
+        (effectiveRole === "parent" && !["dash", "updates", "resources"].includes(active)) ||
+        ((effectiveRole === "agent" || effectiveRole === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
         <div className="p-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
