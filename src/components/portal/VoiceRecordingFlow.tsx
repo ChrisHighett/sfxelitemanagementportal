@@ -323,8 +323,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         toast.error(e.message || "AI structuring failed");
         // Fall back to review with empty sections
         setEditedSummary({
-          performance: "", lifestyle: "", personal: "",
-          education: "", brand: "", focus: "",
+          warm_opener: "", performance: "", lifestyle: "", personal: "",
+          education: "", brand: "", goals: "", focus: "",
         });
         setEditedGoals([]);
         setStep("review");
