@@ -307,11 +307,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
           personal: s.personal || "",
           education: s.education || "",
           brand: s.brand || "",
-          focus: s.focus || "",
+          focus: s.suggested_focus_next_month || "",
         });
-        setEditedGoals(s.goals || []);
-        setWellbeingScore(s.wellbeingScore || 4);
-        setAttentionRequired(s.attentionRequired || false);
+        setEditedGoals(s.suggested_goals || []);
+        setWellbeingScore(4);
+        setAttentionRequired(s.attention_required || false);
         setStep("review");
         toast.success("AI review draft ready");
       } catch (e: any) {
