@@ -90,6 +90,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   const recognitionRef = useRef<any>(null);
   const isRecordingRef = useRef(false);
   const finalTranscriptRef = useRef("");
+  const baseNotesRef = useRef(""); // snapshot of notes when recording started
 
   // AI auto-fill state
   const [isAutoFilling, setIsAutoFilling] = useState(false);
@@ -133,8 +134,9 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
       recognition.maxAlternatives = 3;
 
       recognition.onresult = (event: any) => {
+        let fullFinal = "";
         let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = 0; i < event.results.length; i++) {
           let best = ""; let bestConf = 0;
           for (let j = 0; j < event.results[i].length; j++) {
             if (event.results[i][j].confidence > bestConf) {
@@ -143,17 +145,19 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
             }
           }
           if (event.results[i].isFinal) {
-            finalTranscriptRef.current += best + " ";
+            fullFinal += best + " ";
           } else {
             interim += best;
           }
         }
-        // Append to existing notes for this section
-        const baseNotes = sectionNotes[sectionKey] || "";
-        const prefix = baseNotes && !baseNotes.endsWith("\n") && !baseNotes.endsWith(" ") ? " " : "";
+        finalTranscriptRef.current = fullFinal;
+        // Replace section notes with: base (before recording) + final transcript + interim
+        const base = baseNotesRef.current;
+        const separator = base && !base.endsWith("\n") && !base.endsWith(" ") ? " " : "";
+        const newValue = base + separator + (fullFinal.trim() + (interim ? " " + interim : "")).trim();
         setSectionNotes(prev => ({
           ...prev,
-          [sectionKey]: (prev[sectionKey]?.trimEnd() || "") + prefix + finalTranscriptRef.current.trim() + (interim ? " " + interim : ""),
+          [sectionKey]: newValue,
         }));
       };
 
@@ -186,6 +190,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
     };
 
     finalTranscriptRef.current = "";
+    baseNotesRef.current = sectionNotes[sectionKey] || "";
     const recognition = createRecognition();
     recognition.start();
     recognitionRef.current = recognition;
@@ -202,15 +207,17 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-    // Append final transcript to section
+    // Final state is already set by onresult — just set the clean final value
     if (finalTranscriptRef.current.trim() && recordingSection) {
-      setSectionNotes(prev => {
-        const existing = prev[recordingSection] || "";
-        const prefix = existing && !existing.endsWith("\n") && !existing.endsWith(" ") ? " " : "";
-        return { ...prev, [recordingSection]: existing + prefix + finalTranscriptRef.current.trim() };
-      });
+      const base = baseNotesRef.current;
+      const separator = base && !base.endsWith("\n") && !base.endsWith(" ") ? " " : "";
+      setSectionNotes(prev => ({
+        ...prev,
+        [recordingSection]: (base + separator + finalTranscriptRef.current.trim()).trim(),
+      }));
     }
     finalTranscriptRef.current = "";
+    baseNotesRef.current = "";
     setRecordingSection(null);
   }, [recordingSection]);
 
