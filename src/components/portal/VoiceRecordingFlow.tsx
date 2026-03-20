@@ -669,6 +669,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
                 </div>
                 <Switch checked={attentionRequired} onCheckedChange={setAttentionRequired} />
               </div>
+              {attentionRequired && aiSummary?.attention_reason && (
+                <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">
+                  {aiSummary.attention_reason}
+                </p>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm">Follow-up Required</span>
                 <Switch checked={followUpRequired} onCheckedChange={setFollowUpRequired} />
