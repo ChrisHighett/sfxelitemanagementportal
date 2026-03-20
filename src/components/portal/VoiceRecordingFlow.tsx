@@ -43,12 +43,14 @@ interface VoiceRecordingFlowProps {
 }
 
 const REVIEW_SECTIONS = [
+  { key: "warm_opener", label: "Warm Opener", icon: "👋" },
   { key: "performance", label: "Performance", icon: "⚽" },
   { key: "lifestyle", label: "Lifestyle", icon: "🏠" },
   { key: "personal", label: "Personal", icon: "💪" },
   { key: "education", label: "Education", icon: "📚" },
   { key: "brand", label: "Brand", icon: "📱" },
-  { key: "focus", label: "Focus & Goals", icon: "🎯" },
+  { key: "goals", label: "Goals", icon: "🎯" },
+  { key: "focus", label: "Focus Next Month", icon: "🔮" },
 ] as const;
 
 export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingFlowProps) {
@@ -302,11 +304,13 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         const s = data.summary as AISummary;
         setAiSummary(s);
         setEditedSummary({
+          warm_opener: s.warm_opener || "",
           performance: s.performance || "",
           lifestyle: s.lifestyle || "",
           personal: s.personal || "",
           education: s.education || "",
           brand: s.brand || "",
+          goals: s.goals || "",
           focus: s.suggested_focus_next_month || "",
         });
         setEditedGoals(s.suggested_goals || []);
@@ -319,8 +323,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         toast.error(e.message || "AI structuring failed");
         // Fall back to review with empty sections
         setEditedSummary({
-          performance: "", lifestyle: "", personal: "",
-          education: "", brand: "", focus: "",
+          warm_opener: "", performance: "", lifestyle: "", personal: "",
+          education: "", brand: "", goals: "", focus: "",
         });
         setEditedGoals([]);
         setStep("review");
@@ -328,8 +332,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     } else {
       toast.info("No transcript captured — add notes manually");
       setEditedSummary({
-        performance: "", lifestyle: "", personal: "",
-        education: "", brand: "", focus: "",
+        warm_opener: "", performance: "", lifestyle: "", personal: "",
+        education: "", brand: "", goals: "", focus: "",
       });
       setEditedGoals([]);
       setStep("review");
@@ -354,10 +358,20 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         summary,
         detailed_notes: detailedNotes,
         ai_summary_json: {
-          ...editedSummary,
-          goals: editedGoals.filter(g => g.trim()),
+          warm_opener: editedSummary.warm_opener || "",
+          performance: editedSummary.performance || "",
+          lifestyle: editedSummary.lifestyle || "",
+          personal: editedSummary.personal || "",
+          education: editedSummary.education || "",
+          brand: editedSummary.brand || "",
+          goals: editedSummary.goals || "",
+          suggested_focus_next_month: editedSummary.focus || "",
+          suggested_goals: editedGoals.filter(g => g.trim()),
+          attention_required: attentionRequired,
+          attention_reason: attentionRequired ? (aiSummary?.attention_reason || "") : "",
+          athlete_email_summary_points: aiSummary?.athlete_email_summary_points || [],
+          parent_email_summary_points: aiSummary?.parent_email_summary_points || [],
           wellbeingScore,
-          attentionRequired,
         },
         outcome: outcome || null,
         follow_up_required: followUpRequired,
@@ -429,15 +443,17 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     if (editedGoals.length > 0) focusLines.push(editedGoals.filter(g => g.trim()).map(g => `• ${g}`).join("\n"));
 
     const positives = [editedSummary.performance, editedSummary.lifestyle, editedSummary.personal].filter(Boolean);
+    const emailPoints = aiSummary?.athlete_email_summary_points?.filter(Boolean) || [];
+    const bulletPoints = emailPoints.length > 0
+      ? emailPoints.map(p => `• ${p}`).join("\n")
+      : positives.slice(0, 3).map(p => `• ${p}`).join("\n");
 
     setAthleteEmailDraft([
       `Hey ${firstName},`,
       ``,
       `Really enjoyed our catch up today mate. It's great to see the effort you're putting in — you should be proud of how far you've come.`,
       ``,
-      ...(positives.length > 0 ? [`A couple of things that stood out — ${positives.slice(0, 2).map(p => p.replace(/\.$/, "").toLowerCase()).join(", and ")}. That's all really positive mate.`] : []),
-      ``,
-      ...(sections.length > 0 ? [`Here's a quick summary of what we covered:`, ``, ...sections.map(s => s + "\n")] : []),
+      ...(bulletPoints ? [`Here are some highlights from our chat:\n${bulletPoints}`, ``] : []),
       ...(focusLines.length > 0 ? [`**What We're Working on Next**`, ...focusLines, ``] : []),
       `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
       ``,
@@ -445,17 +461,21 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       `SFX Pathways`,
     ].join("\n"));
     toast.success("Athlete email draft created");
-  }, [athlete.name, editedSummary, editedGoals]);
+  }, [athlete.name, editedSummary, editedGoals, aiSummary]);
 
   const generateParentEmail = useCallback(() => {
     const firstName = athlete.name.split(" ")[0];
     const parentName = athlete.parentName || "there";
 
-    const points: string[] = [];
-    if (editedSummary.performance) points.push(`**Performance:** ${editedSummary.performance}`);
-    if (editedSummary.education) points.push(`**Education:** ${editedSummary.education}`);
-    if (editedSummary.personal) points.push(`**Wellbeing & Development:** ${editedSummary.personal}`);
-    if (editedSummary.lifestyle) points.push(`**Lifestyle:** ${editedSummary.lifestyle}`);
+    const parentPoints = aiSummary?.parent_email_summary_points?.filter(Boolean) || [];
+    const points: string[] = parentPoints.length > 0
+      ? parentPoints.map(p => `• ${p}`)
+      : [
+          editedSummary.performance ? `• **Performance:** ${editedSummary.performance}` : "",
+          editedSummary.education ? `• **Education:** ${editedSummary.education}` : "",
+          editedSummary.personal ? `• **Wellbeing:** ${editedSummary.personal}` : "",
+          editedSummary.lifestyle ? `• **Lifestyle:** ${editedSummary.lifestyle}` : "",
+        ].filter(Boolean);
 
     setParentEmailDraft([
       `Hi ${parentName},`,
@@ -472,7 +492,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       `SFX Pathways`,
     ].join("\n"));
     toast.success("Parent email draft created");
-  }, [athlete.name, athlete.parentName, editedSummary, attentionRequired]);
+  }, [athlete.name, athlete.parentName, editedSummary, attentionRequired, aiSummary]);
 
   // ── POST-SAVE: Create Task ──
   const saveTask = useCallback(async () => {
@@ -649,6 +669,11 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
                 </div>
                 <Switch checked={attentionRequired} onCheckedChange={setAttentionRequired} />
               </div>
+              {attentionRequired && aiSummary?.attention_reason && (
+                <p className="text-xs text-destructive bg-destructive/10 rounded-md p-2">
+                  {aiSummary.attention_reason}
+                </p>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm">Follow-up Required</span>
                 <Switch checked={followUpRequired} onCheckedChange={setFollowUpRequired} />
@@ -679,7 +704,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
           {/* Goals */}
           <Card>
             <CardHeader className="pb-2 px-4 pt-4">
-              <CardTitle className="text-sm">🎯 Goals</CardTitle>
+              <CardTitle className="text-sm">📋 Suggested Goals</CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-2">
               {editedGoals.map((goal, i) => (
