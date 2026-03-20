@@ -22,23 +22,19 @@ import { type Athlete } from "@/hooks/usePortalData";
 type FlowStep = "ready" | "recording" | "processing" | "review" | "done";
 
 interface AISummary {
+  warm_opener: string;
   performance: string;
   lifestyle: string;
   personal: string;
   education: string;
   brand: string;
-  focus: string;
-  goals: string[];
-  attentionRequired: boolean;
-  trainingHighlights: string;
-  areasForImprovement: string;
-  footballGoal: string;
-  personalGoal: string;
-  schoolLifeGoal: string;
-  educationTopic: string;
-  parentEngagementNotes: string;
-  followUpActions: string;
-  wellbeingScore: number;
+  goals: string;
+  suggested_focus_next_month: string;
+  suggested_goals: string[];
+  attention_required: boolean;
+  attention_reason: string;
+  athlete_email_summary_points: string[];
+  parent_email_summary_points: string[];
 }
 
 interface VoiceRecordingFlowProps {
