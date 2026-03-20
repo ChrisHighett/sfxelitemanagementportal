@@ -77,8 +77,9 @@ interface MobileCallScreenProps {
   onReviewPublished?: () => void;
 }
 
-export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: MobileCallScreenProps) {
+export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onReviewPublished }: MobileCallScreenProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<"calling" | "saving" | "done">("calling");
   const [currentIdx, setCurrentIdx] = useState(0);
   const [sectionNotes, setSectionNotes] = useState<Record<string, string>>(
@@ -88,6 +89,12 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   const [isSaving, setIsSaving] = useState(false);
   const [savedCallId, setSavedCallId] = useState<string | null>(null);
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+
+  // Publish to monthly review state
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [wellbeingScore, setWellbeingScore] = useState<number | null>(null);
+  const [attentionRequired, setAttentionRequired] = useState(false);
+  const [reviewPublished, setReviewPublished] = useState(false);
 
   // Voice recording state (per-section)
   const [recordingSection, setRecordingSection] = useState<string | null>(null);
