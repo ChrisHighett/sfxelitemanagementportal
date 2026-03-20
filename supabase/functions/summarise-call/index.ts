@@ -53,7 +53,7 @@ Return valid JSON only. Do not wrap the JSON in markdown.`;
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Athlete: ${athleteName}\n\nCall Transcript:\n${transcript}` },
+          { role: "user", content: `Athlete: ${athleteName}\nStage: ${athleteStage || "Unknown"}\nCall type: ${callType || "monthly_review"}\nCall date: ${callDate || new Date().toISOString().slice(0, 10)}\n\nCall Transcript:\n${transcript}` },
         ],
         tools: [
           {
