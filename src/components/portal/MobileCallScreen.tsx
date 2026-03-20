@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,6 +85,15 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   const [savedCallId, setSavedCallId] = useState<string | null>(null);
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
+  // Voice recording state (per-section)
+  const [recordingSection, setRecordingSection] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const isRecordingRef = useRef(false);
+  const finalTranscriptRef = useRef("");
+
+  // AI auto-fill state
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
   const section = SECTIONS[currentIdx];
   const progress = ((currentIdx + 1) / SECTIONS.length) * 100;
   const filledSections = SECTIONS.filter((s) => sectionNotes[s.key].trim().length > 0).length;
@@ -95,13 +104,173 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   }, []);
 
   const goNext = () => {
+    stopSectionRecording();
     if (currentIdx < SECTIONS.length - 1) setCurrentIdx((i) => i + 1);
   };
   const goBack = () => {
+    stopSectionRecording();
     if (currentIdx > 0) setCurrentIdx((i) => i - 1);
   };
 
+  // ── Per-section voice recording ──
+  const startSectionRecording = useCallback((sectionKey: string) => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition not supported. Try Chrome.");
+      return;
+    }
+
+    // Stop any existing recording first
+    if (isRecordingRef.current) {
+      stopSectionRecording();
+    }
+
+    const createRecognition = () => {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-AU";
+      recognition.maxAlternatives = 3;
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          let best = ""; let bestConf = 0;
+          for (let j = 0; j < event.results[i].length; j++) {
+            if (event.results[i][j].confidence > bestConf) {
+              bestConf = event.results[i][j].confidence;
+              best = event.results[i][j].transcript;
+            }
+          }
+          if (event.results[i].isFinal) {
+            finalTranscriptRef.current += best + " ";
+          } else {
+            interim += best;
+          }
+        }
+        // Append to existing notes for this section
+        const baseNotes = sectionNotes[sectionKey] || "";
+        const prefix = baseNotes && !baseNotes.endsWith("\n") && !baseNotes.endsWith(" ") ? " " : "";
+        setSectionNotes(prev => ({
+          ...prev,
+          [sectionKey]: (prev[sectionKey]?.trimEnd() || "") + prefix + finalTranscriptRef.current.trim() + (interim ? " " + interim : ""),
+        }));
+      };
+
+      recognition.onerror = (event: any) => {
+        if (event.error === "no-speech" || event.error === "aborted" || event.error === "network") {
+          if (isRecordingRef.current) {
+            setTimeout(() => {
+              if (isRecordingRef.current) {
+                try { const r = createRecognition(); r.start(); recognitionRef.current = r; } catch {}
+              }
+            }, 300);
+          }
+          return;
+        }
+        toast.error(`Microphone error: ${event.error}`);
+        isRecordingRef.current = false;
+        setRecordingSection(null);
+      };
+
+      recognition.onend = () => {
+        if (isRecordingRef.current) {
+          setTimeout(() => {
+            if (isRecordingRef.current) {
+              try { const r = createRecognition(); r.start(); recognitionRef.current = r; } catch {}
+            }
+          }, 100);
+        }
+      };
+      return recognition;
+    };
+
+    finalTranscriptRef.current = "";
+    const recognition = createRecognition();
+    recognition.start();
+    recognitionRef.current = recognition;
+    isRecordingRef.current = true;
+    setRecordingSection(sectionKey);
+    toast.success("Recording — speak now");
+  }, [sectionNotes]);
+
+  const stopSectionRecording = useCallback(() => {
+    if (!isRecordingRef.current) return;
+    isRecordingRef.current = false;
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    // Append final transcript to section
+    if (finalTranscriptRef.current.trim() && recordingSection) {
+      setSectionNotes(prev => {
+        const existing = prev[recordingSection] || "";
+        const prefix = existing && !existing.endsWith("\n") && !existing.endsWith(" ") ? " " : "";
+        return { ...prev, [recordingSection]: existing + prefix + finalTranscriptRef.current.trim() };
+      });
+    }
+    finalTranscriptRef.current = "";
+    setRecordingSection(null);
+  }, [recordingSection]);
+
+  // ── AI Auto-Fill: send all notes through summarise-call ──
+  const aiAutoFill = useCallback(async () => {
+    const combinedNotes = SECTIONS
+      .map(s => sectionNotes[s.key]?.trim() ? `${s.title}: ${sectionNotes[s.key].trim()}` : null)
+      .filter(Boolean)
+      .join("\n\n");
+
+    if (!combinedNotes) {
+      toast.error("Add some notes first — type or speak into at least one section");
+      return;
+    }
+
+    setIsAutoFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarise-call", {
+        body: {
+          transcript: combinedNotes,
+          athleteName: athlete.name,
+          athleteStage: athlete.stage,
+          callType: "monthly_review",
+          callDate: new Date().toISOString().slice(0, 10),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.raw_text) {
+        toast.info("AI returned unstructured text — added to Performance notes");
+        setSectionNotes(prev => ({ ...prev, performance: data.raw_text }));
+      } else if (data?.summary) {
+        const s = data.summary;
+        setSectionNotes(prev => ({
+          ...prev,
+          opener: s.warm_opener || prev.opener || "",
+          performance: s.performance || prev.performance || "",
+          lifestyle: s.lifestyle || prev.lifestyle || "",
+          personal: s.personal || prev.personal || "",
+          education: s.education || prev.education || "",
+          brand: s.brand || prev.brand || "",
+          goals: [
+            s.goals || "",
+            ...(s.suggested_goals || []),
+            s.suggested_focus_next_month ? `Focus: ${s.suggested_focus_next_month}` : "",
+          ].filter(Boolean).join("\n") || prev.goals || "",
+        }));
+        toast.success("AI auto-filled all sections");
+      }
+    } catch (e: any) {
+      console.error("AI auto-fill error:", e);
+      toast.error(e.message || "AI auto-fill failed");
+    } finally {
+      setIsAutoFilling(false);
+    }
+  }, [sectionNotes, athlete.name, athlete.stage]);
+
   const endCallAndSave = useCallback(async () => {
+    stopSectionRecording();
     setStep("saving");
     setIsSaving(true);
 
@@ -139,7 +308,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
     } finally {
       setIsSaving(false);
     }
-  }, [athlete.id, callStart, sectionNotes, user?.id]);
+  }, [athlete.id, callStart, sectionNotes, user?.id, stopSectionRecording]);
 
   // POST-CALL ACTIONS screen
   if (step === "done") {
@@ -220,6 +389,8 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
   }
 
   // ACTIVE CALL screen
+  const isCurrentSectionRecording = recordingSection === section.key;
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-120px)] md:min-h-0">
       {/* Header bar */}
@@ -232,16 +403,28 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
               <Clock className="h-3 w-3" /> {elapsed}m
             </Badge>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-1.5 h-9 flex-shrink-0"
-            onClick={endCallAndSave}
-          >
-            <PhoneOff className="h-4 w-4" />
-            <span className="hidden sm:inline">End Call & Save</span>
-            <span className="sm:hidden">End</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9 flex-shrink-0"
+              onClick={aiAutoFill}
+              disabled={isAutoFilling}
+            >
+              {isAutoFilling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              <span className="hidden sm:inline">{isAutoFilling ? "Filling..." : "AI Auto-Fill"}</span>
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5 h-9 flex-shrink-0"
+              onClick={endCallAndSave}
+            >
+              <PhoneOff className="h-4 w-4" />
+              <span className="hidden sm:inline">End Call & Save</span>
+              <span className="sm:hidden">End</span>
+            </Button>
+          </div>
         </div>
         <Progress value={progress} className="h-1.5 mt-2" />
         <div className="flex items-center justify-between mt-1">
@@ -259,11 +442,44 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
         {/* Section header */}
         <div className="flex items-center gap-3">
           <span className="text-2xl">{section.icon}</span>
-          <div>
+          <div className="flex-1">
             <h2 className="text-lg font-bold">{section.title}</h2>
             <p className="text-xs text-muted-foreground">Step {currentIdx + 1} of {SECTIONS.length}</p>
           </div>
+          {/* Per-section mic button */}
+          <Button
+            variant={isCurrentSectionRecording ? "destructive" : "outline"}
+            size="sm"
+            className="gap-1.5 h-10 px-3"
+            onClick={() => {
+              if (isCurrentSectionRecording) {
+                stopSectionRecording();
+              } else {
+                startSectionRecording(section.key);
+              }
+            }}
+          >
+            {isCurrentSectionRecording ? (
+              <>
+                <Square className="h-4 w-4" />
+                <span className="text-xs">Stop</span>
+              </>
+            ) : (
+              <>
+                <Mic className="h-4 w-4" />
+                <span className="text-xs">Speak</span>
+              </>
+            )}
+          </Button>
         </div>
+
+        {/* Recording indicator */}
+        {isCurrentSectionRecording && (
+          <div className="flex items-center gap-2 text-sm text-destructive px-1">
+            <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+            Listening — speak your notes for {section.title.toLowerCase()}...
+          </div>
+        )}
 
         {/* Prompt card */}
         <Card className="bg-primary/5 border-primary/20">
@@ -282,7 +498,6 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
                 const current = sectionNotes[section.key];
                 const bullet = `• ${tip}`;
                 updateNote(section.key, current ? `${current}\n${bullet}` : bullet);
-                // Focus textarea
                 textareaRefs.current[section.key]?.focus();
               }}
             >
@@ -296,7 +511,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
           ref={(el) => { textareaRefs.current[section.key] = el; }}
           value={sectionNotes[section.key]}
           onChange={(e) => updateNote(section.key, e.target.value)}
-          placeholder={`Notes for ${section.title.toLowerCase()}...`}
+          placeholder={`Notes for ${section.title.toLowerCase()}... (type or tap Speak)`}
           className="min-h-[120px] md:min-h-[140px] text-base resize-none"
         />
 
@@ -312,7 +527,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail }: Mo
                   ? "w-2.5 bg-primary/50"
                   : "w-2.5 bg-muted-foreground/20"
               }`}
-              onClick={() => setCurrentIdx(i)}
+              onClick={() => { stopSectionRecording(); setCurrentIdx(i); }}
             />
           ))}
         </div>
