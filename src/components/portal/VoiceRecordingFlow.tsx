@@ -793,16 +793,20 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
             className="w-full h-14 text-base gap-3 justify-start"
             variant="secondary"
             onClick={generateAthleteEmail}
+            disabled={generatingAthleteEmail}
           >
-            <Mail className="h-5 w-5" /> Generate Athlete Email
+            {generatingAthleteEmail ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mail className="h-5 w-5" />}
+            {athleteEmailDraft ? "Regenerate Athlete Email" : "Generate Athlete Email"}
           </Button>
 
           <Button
             className="w-full h-14 text-base gap-3 justify-start"
             variant="secondary"
             onClick={generateParentEmail}
+            disabled={generatingParentEmail}
           >
-            <Mail className="h-5 w-5" /> Generate Parent Email
+            {generatingParentEmail ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mail className="h-5 w-5" />}
+            {parentEmailDraft ? "Regenerate Parent Email" : "Generate Parent Email"}
           </Button>
 
           <Button
