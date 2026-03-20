@@ -453,9 +453,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setAthleteEmailSubject(data.email.subject || "");
-      setAthleteEmailDraft(data.email.body || "");
-      toast.success("Athlete email generated");
+      if (data?.raw_text) {
+        setAthleteEmailSubject("Follow-up — " + firstName);
+        setAthleteEmailDraft(data.raw_text);
+        toast.info("AI returned unstructured text — you can edit it below");
+      } else {
+        setAthleteEmailSubject(data.email.subject || "");
+        setAthleteEmailDraft(data.email.body || "");
+        toast.success("Athlete email generated");
+      }
     } catch (e: any) {
       console.error("Athlete email error:", e);
       toast.error(e.message || "Failed to generate athlete email");
@@ -463,7 +469,6 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       setGeneratingAthleteEmail(false);
     }
   }, [athlete.name, editedSummary, editedGoals, attentionRequired, aiSummary]);
-
   const generateParentEmail = useCallback(async () => {
     const firstName = athlete.name.split(" ")[0];
     const parentName = athlete.parentName || "there";
