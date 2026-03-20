@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Phone, PhoneOff, ChevronLeft, ChevronRight, Sparkles,
-  Mail, ClipboardList, CheckSquare, Loader2, Clock, Mic, MicOff, Square
+  Mail, ClipboardList, CheckSquare, Loader2, Clock, Mic, MicOff, Square, BookOpen
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { type Athlete } from "@/hooks/usePortalData";
 
 const SECTIONS = [
