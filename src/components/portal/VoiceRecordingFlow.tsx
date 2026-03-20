@@ -889,12 +889,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">📧 Athlete Email</CardTitle>
                 <Button size="sm" variant="outline" onClick={() => {
-                  navigator.clipboard.writeText(athleteEmailDraft);
+                  navigator.clipboard.writeText(`Subject: ${athleteEmailSubject}\n\n${athleteEmailDraft}`);
                   toast.success("Copied");
                 }}>Copy</Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              {athleteEmailSubject && (
+                <p className="text-xs font-medium text-muted-foreground">Subject: {athleteEmailSubject}</p>
+              )}
               <div className="whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-lg max-h-[200px] overflow-y-auto">
                 {athleteEmailDraft}
               </div>
