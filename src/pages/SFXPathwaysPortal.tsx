@@ -31,6 +31,7 @@ import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import ParentEngagementScore from "@/components/portal/ParentEngagementScore";
 import AthleteImport from "@/components/portal/AthleteImport";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
+import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
@@ -619,6 +620,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
 function AthleteComms({ athlete }: { athlete: Athlete }) {
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
+  const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
@@ -1172,6 +1174,15 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
     }
   }, [athlete.name, athlete.parentName]);
 
+  if (voiceRecordingActive) {
+    return (
+      <VoiceRecordingFlow
+        athlete={athlete}
+        onClose={() => setVoiceRecordingActive(false)}
+      />
+    );
+  }
+
   if (callSessionActive) {
     return (
       <MobileCallScreen
@@ -1187,19 +1198,28 @@ function AthleteComms({ athlete }: { athlete: Athlete }) {
       {/* Start Call Session button — prominent on mobile */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-col gap-4">
             <div>
-              <h3 className="font-bold text-base md:text-lg">Start a Call Session</h3>
+              <h3 className="font-bold text-base md:text-lg">Call Tools</h3>
               <p className="text-sm text-muted-foreground">
-                Step-by-step guided call with {athlete.name} — optimised for mobile
+                Choose a workflow for your call with {athlete.name}
               </p>
             </div>
-            <Button
-              className="w-full sm:w-auto h-12 md:h-10 text-base gap-2"
-              onClick={() => setCallSessionActive(true)}
-            >
-              <Phone className="h-5 w-5" /> Start Call Session
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                className="h-14 text-base gap-3 justify-start"
+                onClick={() => setVoiceRecordingActive(true)}
+              >
+                <Mic className="h-5 w-5" /> Voice Record + AI Auto-Fill
+              </Button>
+              <Button
+                variant="secondary"
+                className="h-14 text-base gap-3 justify-start"
+                onClick={() => setCallSessionActive(true)}
+              >
+                <Phone className="h-5 w-5" /> Guided Note-Taking
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
