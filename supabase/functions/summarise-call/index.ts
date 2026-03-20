@@ -150,18 +150,92 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const raw1 = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments || "";
+
+    const parseData = (d: any) => {
+      const tc = d.choices?.[0]?.message?.tool_calls?.[0];
+      if (tc) return JSON.parse(tc.function.arguments);
+      const c = d.choices?.[0]?.message?.content || "";
+      const m = c.match(/\{[\s\S]*\}/);
+      if (m) return JSON.parse(m[0]);
+      throw new Error("No parseable JSON");
+    };
 
     let summary;
-    if (toolCall) {
-      summary = JSON.parse(toolCall.function.arguments);
-    } else {
-      const content = data.choices?.[0]?.message?.content || "";
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        summary = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("Could not parse AI response");
+    try {
+      summary = parseData(data);
+    } catch {
+      console.warn("First parse failed, retrying summarise-call...");
+      // Retry once
+      try {
+        const response2 = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "structured_summary",
+                  description: "Return a structured call summary matching the SFX Development Tracker format",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      warm_opener: { type: "string" },
+                      performance: { type: "string" },
+                      lifestyle: { type: "string" },
+                      personal: { type: "string" },
+                      education: { type: "string" },
+                      brand: { type: "string" },
+                      goals: { type: "string" },
+                      suggested_focus_next_month: { type: "string" },
+                      suggested_goals: { type: "array", items: { type: "string" } },
+                      attention_required: { type: "boolean" },
+                      attention_reason: { type: "string" },
+                      athlete_email_summary_points: { type: "array", items: { type: "string" } },
+                      parent_email_summary_points: { type: "array", items: { type: "string" } },
+                    },
+                    required: [
+                      "warm_opener", "performance", "lifestyle", "personal", "education", "brand", "goals",
+                      "suggested_focus_next_month", "suggested_goals",
+                      "attention_required", "attention_reason",
+                      "athlete_email_summary_points", "parent_email_summary_points"
+                    ],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            ],
+            tool_choice: { type: "function", function: { name: "structured_summary" } },
+          }),
+        });
+        if (response2.ok) {
+          const data2 = await response2.json();
+          try {
+            summary = parseData(data2);
+          } catch {
+            const raw2 = data2.choices?.[0]?.message?.content || "";
+            return new Response(JSON.stringify({ raw_text: raw2 || raw1 || "AI returned an unparseable response." }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else {
+          return new Response(JSON.stringify({ raw_text: raw1 || "AI returned an unparseable response." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch {
+        return new Response(JSON.stringify({ raw_text: raw1 || "AI returned an unparseable response." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 

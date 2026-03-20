@@ -305,23 +305,36 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        const s = data.summary as AISummary;
-        setAiSummary(s);
-        setEditedSummary({
-          warm_opener: s.warm_opener || "",
-          performance: s.performance || "",
-          lifestyle: s.lifestyle || "",
-          personal: s.personal || "",
-          education: s.education || "",
-          brand: s.brand || "",
-          goals: s.goals || "",
-          focus: s.suggested_focus_next_month || "",
-        });
-        setEditedGoals(s.suggested_goals || []);
-        setWellbeingScore(4);
-        setAttentionRequired(s.attention_required || false);
-        setStep("review");
-        toast.success("AI review draft ready");
+        if (data?.raw_text) {
+          // AI couldn't produce structured JSON — populate notes field for manual editing
+          toast.info("AI returned unstructured text — review and edit below");
+          setEditedSummary({
+            warm_opener: "", performance: data.raw_text, lifestyle: "", personal: "",
+            education: "", brand: "", goals: "", focus: "",
+          });
+          setEditedGoals([]);
+          setWellbeingScore(4);
+          setAttentionRequired(false);
+          setStep("review");
+        } else {
+          const s = data.summary as AISummary;
+          setAiSummary(s);
+          setEditedSummary({
+            warm_opener: s.warm_opener || "",
+            performance: s.performance || "",
+            lifestyle: s.lifestyle || "",
+            personal: s.personal || "",
+            education: s.education || "",
+            brand: s.brand || "",
+            goals: s.goals || "",
+            focus: s.suggested_focus_next_month || "",
+          });
+          setEditedGoals(s.suggested_goals || []);
+          setWellbeingScore(4);
+          setAttentionRequired(s.attention_required || false);
+          setStep("review");
+          toast.success("AI review draft ready");
+        }
       } catch (e: any) {
         console.error("AI summary error:", e);
         toast.error(e.message || "AI structuring failed");
@@ -453,9 +466,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setAthleteEmailSubject(data.email.subject || "");
-      setAthleteEmailDraft(data.email.body || "");
-      toast.success("Athlete email generated");
+      if (data?.raw_text) {
+        setAthleteEmailSubject("Follow-up — " + firstName);
+        setAthleteEmailDraft(data.raw_text);
+        toast.info("AI returned unstructured text — you can edit it below");
+      } else {
+        setAthleteEmailSubject(data.email.subject || "");
+        setAthleteEmailDraft(data.email.body || "");
+        toast.success("Athlete email generated");
+      }
     } catch (e: any) {
       console.error("Athlete email error:", e);
       toast.error(e.message || "Failed to generate athlete email");
@@ -463,7 +482,6 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       setGeneratingAthleteEmail(false);
     }
   }, [athlete.name, editedSummary, editedGoals, attentionRequired, aiSummary]);
-
   const generateParentEmail = useCallback(async () => {
     const firstName = athlete.name.split(" ")[0];
     const parentName = athlete.parentName || "there";
@@ -485,9 +503,15 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setParentEmailSubject(data.email.subject || "");
-      setParentEmailDraft(data.email.body || "");
-      toast.success("Parent email generated");
+      if (data?.raw_text) {
+        setParentEmailSubject("Update — " + firstName);
+        setParentEmailDraft(data.raw_text);
+        toast.info("AI returned unstructured text — you can edit it below");
+      } else {
+        setParentEmailSubject(data.email.subject || "");
+        setParentEmailDraft(data.email.body || "");
+        toast.success("Parent email generated");
+      }
     } catch (e: any) {
       console.error("Parent email error:", e);
       toast.error(e.message || "Failed to generate parent email");
