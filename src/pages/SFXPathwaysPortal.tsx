@@ -205,7 +205,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
               <span className="text-[10px] leading-tight font-medium">More</span>
             </button>
           </div>
-        </nav>
+        </nav>}
       </div>
     </div>
   );
