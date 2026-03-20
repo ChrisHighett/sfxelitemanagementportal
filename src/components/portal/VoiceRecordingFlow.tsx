@@ -292,7 +292,13 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       setProcessingStatus("AI structuring your notes...");
       try {
         const { data, error } = await supabase.functions.invoke("summarise-call", {
-          body: { transcript: finalTranscript, athleteName: athlete.name },
+          body: {
+            transcript: finalTranscript,
+            athleteName: athlete.name,
+            athleteStage: athlete.stage,
+            callType: "monthly_review",
+            callDate: new Date().toISOString().slice(0, 10),
+          },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);

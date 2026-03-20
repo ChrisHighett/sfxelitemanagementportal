@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { transcript, athleteName } = await req.json();
+    const { transcript, athleteName, athleteStage, callType, callDate } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -53,7 +53,7 @@ Return valid JSON only. Do not wrap the JSON in markdown.`;
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Athlete: ${athleteName}\n\nCall Transcript:\n${transcript}` },
+          { role: "user", content: `Athlete: ${athleteName}\nStage: ${athleteStage || "Unknown"}\nCall type: ${callType || "monthly_review"}\nCall date: ${callDate || new Date().toISOString().slice(0, 10)}\n\nCall Transcript:\n${transcript}` },
         ],
         tools: [
           {
