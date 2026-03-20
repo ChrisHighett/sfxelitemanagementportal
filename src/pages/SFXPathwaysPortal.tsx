@@ -104,7 +104,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
 };
 
-function Shell({ role, active, onNav, children }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode }) {
+function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode; hideBottomNav?: boolean }) {
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
