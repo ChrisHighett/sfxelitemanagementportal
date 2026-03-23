@@ -137,7 +137,7 @@ export function useAthletes(restrictToIds?: string[]) {
           status,
           lastCall: lastCallDate,
           nextCall: "—",
-          commercialPotential: "Medium",
+          commercialPotential: "Not Scored",
           managementContractExpiry: athlete.management_contract_expiry || null,
           clubContractExpiry: athlete.club_contract_expiry || null,
         };

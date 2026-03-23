@@ -45,15 +45,28 @@ export default function AthleteScorecard({ athlete }: { athlete: Athlete }) {
     );
   }
 
-  const scores = latest
-    ? {
-        performance: latest.performance_score,
-        lifestyle: latest.lifestyle_score,
-        personal: latest.personal_score,
-        education: latest.education_score,
-        brand: latest.brand_score,
-      }
-    : { performance: 0, lifestyle: 0, personal: 0, education: 0, brand: 0 };
+  if (!latest) {
+    return (
+      <div className="space-y-6 p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Athlete Scorecard — {athlete.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">No scorecard saved for this athlete yet. Create one from a monthly review.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const scores = {
+    performance: latest.performance_score,
+    lifestyle: latest.lifestyle_score,
+    personal: latest.personal_score,
+    education: latest.education_score,
+    brand: latest.brand_score,
+  };
 
   const overall = latest ? Number(latest.overall_score) : 0;
   const overallPct = (overall / 5) * 100;
