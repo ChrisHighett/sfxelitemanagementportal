@@ -85,45 +85,39 @@ export default function AthleteScorecard({ athlete }: { athlete: Athlete }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {latest ? (
-            <>
-              <div className="flex items-center gap-6">
-                <div className="relative h-24 w-24 shrink-0">
-                  <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                    <circle
-                      cx="50" cy="50" r="42" fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={`${overallPct * 2.64} 264`}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold">{overall.toFixed(1)}</span>
-                  </div>
-                </div>
-                <div className="flex-1 space-y-3">
-                  <ScoreBar label="Performance" score={scores.performance} />
-                  <ScoreBar label="Lifestyle" score={scores.lifestyle} />
-                  <ScoreBar label="Personal" score={scores.personal} />
-                  <ScoreBar label="Education" score={scores.education} />
-                  <ScoreBar label="Brand" score={scores.brand} />
+            <div className="flex items-center gap-6">
+              <div className="relative h-24 w-24 shrink-0">
+                <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                  <circle
+                    cx="50" cy="50" r="42" fill="none"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${overallPct * 2.64} 264`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-bold">{overall.toFixed(1)}</span>
                 </div>
               </div>
+              <div className="flex-1 space-y-3">
+                <ScoreBar label="Performance" score={scores.performance} />
+                <ScoreBar label="Lifestyle" score={scores.lifestyle} />
+                <ScoreBar label="Personal" score={scores.personal} />
+                <ScoreBar label="Education" score={scores.education} />
+                <ScoreBar label="Brand" score={scores.brand} />
+              </div>
+            </div>
 
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
-                <div className="text-xs text-muted-foreground uppercase font-medium">
-                  Based on {new Date(latest.review_month).toISOString().slice(0, 7)} scorecard
-                </div>
-                {latest.scoring_notes && (
-                  <div><span className="font-medium">Notes:</span> {latest.scoring_notes}</div>
-                )}
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
+              <div className="text-xs text-muted-foreground uppercase font-medium">
+                Based on {new Date(latest.review_month).toISOString().slice(0, 7)} scorecard
               </div>
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">No scorecards available yet. Create one from a monthly review.</p>
-          )}
+              {latest.scoring_notes && (
+                <div><span className="font-medium">Notes:</span> {latest.scoring_notes}</div>
+              )}
+            </div>
         </CardContent>
       </Card>
     </div>
