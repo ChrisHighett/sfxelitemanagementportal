@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { publishToTracker } from "@/lib/tracker-publish";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -341,85 +342,58 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
 
     setIsPublishing(true);
     try {
-      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01"; // e.g. "2026-03-01"
-
-      // Check if a review already exists for this athlete + month
-      const { data: existing, error: fetchErr } = await supabase
-        .from("monthly_reviews")
-        .select("id")
-        .eq("athlete_id", athlete.id)
-        .eq("review_month", reviewMonth)
-        .maybeSingle();
-
-      if (fetchErr) throw fetchErr;
-
+      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01";
       const aiData = aiSummaryRef.current;
       const durationMinutes = Math.max(1, Math.round((Date.now() - callStart.getTime()) / 60000));
 
-      // Build goals array from AI summary or section notes
       const goalsArray: string[] = [];
       if (aiData?.suggested_goals && Array.isArray(aiData.suggested_goals)) {
         goalsArray.push(...aiData.suggested_goals);
       }
 
-      const reviewPayload = {
-        athlete_id: athlete.id,
-        review_month: reviewMonth,
-        performance_notes: sectionNotes.performance || null,
-        lifestyle_notes: sectionNotes.lifestyle || null,
-        personal_notes: sectionNotes.personal || null,
-        education_notes: sectionNotes.education || null,
-        brand_notes: sectionNotes.brand || null,
-        focus_next_month: aiData?.suggested_focus_next_month || sectionNotes.goals || null,
-        goals: goalsArray.length > 0 ? goalsArray : [],
-        attention_required: attentionRequired,
-        wellbeing_score: wellbeingScore,
-        call_date: new Date().toISOString().slice(0, 10),
-        call_duration: `${durationMinutes} min`,
-        training_highlights: aiData?.performance || sectionNotes.performance || null,
-        areas_for_improvement: aiData?.attention_reason || null,
-        football_goal: goalsArray[0] || null,
-        personal_goal: goalsArray[1] || null,
-        school_life_goal: goalsArray[2] || null,
-        parent_engagement_notes: aiData?.parent_email_summary_points?.join("; ") || null,
-        follow_up_actions: aiData?.suggested_focus_next_month || null,
-        created_by: user?.id ?? null,
-      };
-
-      if (existing?.id) {
-        // Update existing review
-        const { error } = await supabase
-          .from("monthly_reviews")
-          .update(reviewPayload)
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        // Create new review
-        const { error } = await supabase
-          .from("monthly_reviews")
-          .insert(reviewPayload);
-        if (error) throw error;
-      }
+      await publishToTracker({
+        athleteId: athlete.id,
+        reviewMonth,
+        performanceNotes: sectionNotes.performance || null,
+        lifestyleNotes: sectionNotes.lifestyle || null,
+        personalNotes: sectionNotes.personal || null,
+        educationNotes: sectionNotes.education || null,
+        brandNotes: sectionNotes.brand || null,
+        focusNextMonth: aiData?.suggested_focus_next_month || sectionNotes.goals || null,
+        wellbeingScore: wellbeingScore ?? 3,
+        attentionRequired,
+        callDate: new Date().toISOString().slice(0, 10),
+        callDuration: `${durationMinutes} min`,
+        trainingHighlights: aiData?.performance || sectionNotes.performance || null,
+        areasForImprovement: aiData?.attention_reason || null,
+        footballGoal: goalsArray[0] || null,
+        personalGoal: goalsArray[1] || null,
+        schoolLifeGoal: goalsArray[2] || null,
+        parentEngagementNotes: aiData?.parent_email_summary_points?.join("; ") || null,
+        followUpActions: aiData?.suggested_focus_next_month || null,
+        goals: goalsArray,
+        userId: user?.id ?? null,
+        completedBy: user?.email || user?.id || null,
+        reviewSource: "guided_call",
+      });
 
       // Invalidate all relevant queries to refresh views
       queryClient.invalidateQueries({ queryKey: ["monthly_reviews"] });
       queryClient.invalidateQueries({ queryKey: ["athletes"] });
-      queryClient.invalidateQueries({ queryKey: ["athlete_scorecards"] });
-      queryClient.invalidateQueries({ queryKey: ["athlete_alerts"] });
-      queryClient.invalidateQueries({ queryKey: ["v_athlete_score_trends"] });
-      queryClient.invalidateQueries({ queryKey: ["v_athlete_wellbeing_trends"] });
+      queryClient.invalidateQueries({ queryKey: ["goal_tracker"] });
+      queryClient.invalidateQueries({ queryKey: ["comms_log"] });
       queryClient.invalidateQueries({ queryKey: ["call_history"] });
 
       setReviewPublished(true);
       onReviewPublished?.();
-      toast.success("Monthly review published successfully");
+      toast.success("Published to Development Tracker — review, goals & comms logged");
     } catch (e: any) {
-      console.error("Publish monthly review error:", e);
-      toast.error(e.message || "Failed to publish monthly review — your summary is preserved, try again");
+      console.error("Publish error:", e);
+      toast.error(e.message || "Failed to publish — your summary is preserved, try again");
     } finally {
       setIsPublishing(false);
     }
-  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished, callStart]);
+  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, user?.email, queryClient, onReviewPublished, callStart]);
 
   // POST-CALL ACTIONS screen
   if (step === "done") {

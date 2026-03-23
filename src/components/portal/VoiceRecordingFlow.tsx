@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { publishToTracker } from "@/lib/tracker-publish";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -409,42 +410,47 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     setCreatingReview(true);
     try {
       const reviewMonth = new Date().toISOString().slice(0, 7) + "-01";
-      const durationStr = callStart
-        ? `${Math.round((Date.now() - callStart.getTime()) / 60000)}min`
-        : "—";
+      const durationMinutes = callStart
+        ? Math.round((Date.now() - callStart.getTime()) / 60000)
+        : 0;
+      const durationStr = durationMinutes > 0 ? `${durationMinutes} min` : "—";
 
-      const { error } = await supabase.from("monthly_reviews").upsert({
-        athlete_id: athlete.id,
-        review_month: reviewMonth,
-        performance_notes: editedSummary.performance || null,
-        lifestyle_notes: editedSummary.lifestyle || null,
-        personal_notes: editedSummary.personal || null,
-        education_notes: editedSummary.education || null,
-        brand_notes: editedSummary.brand || null,
-        focus_next_month: editedSummary.focus || null,
-        goals: editedGoals.filter(g => g.trim()),
-        wellbeing_score: wellbeingScore,
-        attention_required: attentionRequired,
-        created_by: user?.id ?? null,
-        call_date: new Date().toISOString().slice(0, 10),
-        call_duration: durationStr,
-        training_highlights: editedSummary.performance || null,
-        areas_for_improvement: null,
-        football_goal: null,
-        personal_goal: null,
-        school_life_goal: null,
-        parent_engagement_notes: null,
-        follow_up_actions: null,
-      } as any, { onConflict: "athlete_id,review_month" });
-      if (error) throw error;
+      const filteredGoals = editedGoals.filter(g => g.trim());
+
+      await publishToTracker({
+        athleteId: athlete.id,
+        reviewMonth,
+        performanceNotes: editedSummary.performance || null,
+        lifestyleNotes: editedSummary.lifestyle || null,
+        personalNotes: editedSummary.personal || null,
+        educationNotes: editedSummary.education || null,
+        brandNotes: editedSummary.brand || null,
+        focusNextMonth: editedSummary.focus || null,
+        wellbeingScore,
+        attentionRequired,
+        callDate: new Date().toISOString().slice(0, 10),
+        callDuration: durationStr,
+        trainingHighlights: editedSummary.performance || null,
+        areasForImprovement: aiSummary?.attention_reason || null,
+        footballGoal: filteredGoals[0] || null,
+        personalGoal: filteredGoals[1] || null,
+        schoolLifeGoal: filteredGoals[2] || null,
+        parentEngagementNotes: aiSummary?.parent_email_summary_points?.join("; ") || null,
+        followUpActions: editedSummary.focus || null,
+        goals: filteredGoals,
+        userId: user?.id ?? null,
+        completedBy: user?.email || user?.id || null,
+        reviewSource: "voice_recording",
+      });
+
       setReviewCreated(true);
-      toast.success("Monthly review created");
+      toast.success("Published to Development Tracker — review, goals & comms logged");
     } catch (e: any) {
-      toast.error(e.message || "Failed to create review");
+      toast.error(e.message || "Failed to publish review");
     } finally {
       setCreatingReview(false);
     }
-  }, [athlete.id, editedSummary, editedGoals, wellbeingScore, attentionRequired, user?.id, callStart, aiSummary]);
+  }, [athlete.id, editedSummary, editedGoals, wellbeingScore, attentionRequired, user?.id, user?.email, callStart, aiSummary]);
 
   // ── POST-SAVE: Generate emails ──
   const generateAthleteEmail = useCallback(async () => {
@@ -810,7 +816,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
             disabled={creatingReview || reviewCreated}
           >
             {creatingReview ? <Loader2 className="h-5 w-5 animate-spin" /> : <ClipboardList className="h-5 w-5" />}
-            {reviewCreated ? "Monthly Review Created ✓" : "Create Monthly Review"}
+            {reviewCreated ? "Published to Tracker ✓" : "Publish to Development Tracker"}
           </Button>
 
           <Button
