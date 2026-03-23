@@ -816,7 +816,7 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
             disabled={creatingReview || reviewCreated}
           >
             {creatingReview ? <Loader2 className="h-5 w-5 animate-spin" /> : <ClipboardList className="h-5 w-5" />}
-            {reviewCreated ? "Monthly Review Created ✓" : "Create Monthly Review"}
+            {reviewCreated ? "Published to Tracker ✓" : "Publish to Development Tracker"}
           </Button>
 
           <Button
