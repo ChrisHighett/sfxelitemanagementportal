@@ -105,6 +105,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
 
   // AI auto-fill state
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const aiSummaryRef = useRef<any>(null); // stores the raw AI structured summary
 
   const section = SECTIONS[currentIdx];
   const progress = ((currentIdx + 1) / SECTIONS.length) * 100;
@@ -263,6 +264,8 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
         setSectionNotes(prev => ({ ...prev, performance: data.raw_text }));
       } else if (data?.summary) {
         const s = data.summary;
+        aiSummaryRef.current = s; // preserve structured AI summary for publishing
+        if (s.attention_required) setAttentionRequired(true);
         setSectionNotes(prev => ({
           ...prev,
           opener: s.warm_opener || prev.opener || "",
@@ -311,6 +314,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
           conducted_by: user?.id ?? null,
           follow_up_required: false,
           parent_involved: false,
+          ai_summary_json: aiSummaryRef.current || null,
         })
         .select("id")
         .single();
@@ -349,6 +353,15 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
 
       if (fetchErr) throw fetchErr;
 
+      const aiData = aiSummaryRef.current;
+      const durationMinutes = Math.max(1, Math.round((Date.now() - callStart.getTime()) / 60000));
+
+      // Build goals array from AI summary or section notes
+      const goalsArray: string[] = [];
+      if (aiData?.suggested_goals && Array.isArray(aiData.suggested_goals)) {
+        goalsArray.push(...aiData.suggested_goals);
+      }
+
       const reviewPayload = {
         athlete_id: athlete.id,
         review_month: reviewMonth,
@@ -357,9 +370,19 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
         personal_notes: sectionNotes.personal || null,
         education_notes: sectionNotes.education || null,
         brand_notes: sectionNotes.brand || null,
-        focus_next_month: sectionNotes.goals || null,
+        focus_next_month: aiData?.suggested_focus_next_month || sectionNotes.goals || null,
+        goals: goalsArray.length > 0 ? goalsArray : [],
         attention_required: attentionRequired,
         wellbeing_score: wellbeingScore,
+        call_date: new Date().toISOString().slice(0, 10),
+        call_duration: `${durationMinutes} min`,
+        training_highlights: aiData?.performance || sectionNotes.performance || null,
+        areas_for_improvement: aiData?.attention_reason || null,
+        football_goal: goalsArray[0] || null,
+        personal_goal: goalsArray[1] || null,
+        school_life_goal: goalsArray[2] || null,
+        parent_engagement_notes: aiData?.parent_email_summary_points?.join("; ") || null,
+        follow_up_actions: aiData?.suggested_focus_next_month || null,
         created_by: user?.id ?? null,
       };
 
@@ -396,7 +419,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
     } finally {
       setIsPublishing(false);
     }
-  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished]);
+  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished, callStart]);
 
   // POST-CALL ACTIONS screen
   if (step === "done") {
