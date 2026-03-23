@@ -314,6 +314,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
           conducted_by: user?.id ?? null,
           follow_up_required: false,
           parent_involved: false,
+          ai_summary_json: aiSummaryRef.current || null,
         })
         .select("id")
         .single();
