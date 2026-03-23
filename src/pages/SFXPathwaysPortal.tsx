@@ -549,11 +549,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   {reviews.map((r) => {
                     const reviewDate = new Date(r.month + "-01");
                     const displayMonth = reviewDate.toLocaleDateString("en-AU", { year: "numeric", month: "long" });
-                    const savedDate = r.updatedAt
-                      ? new Date(r.updatedAt).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                      : r.createdAt
-                        ? new Date(r.createdAt).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                        : null;
                     return (
                       <Card key={r.id}>
                         <CardHeader className="pb-2">
