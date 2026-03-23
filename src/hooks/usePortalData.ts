@@ -18,7 +18,7 @@ export interface Athlete {
   status: "Thriving" | "Monitoring" | "Needs Support";
   lastCall: string;
   nextCall: string;
-  commercialPotential: "Low" | "Medium" | "High";
+  commercialPotential: "Low" | "Medium" | "High" | "Not Scored";
   managementContractExpiry: string | null;
   clubContractExpiry: string | null;
 }
@@ -137,7 +137,7 @@ export function useAthletes(restrictToIds?: string[]) {
           status,
           lastCall: lastCallDate,
           nextCall: "—",
-          commercialPotential: "Medium",
+          commercialPotential: "Not Scored",
           managementContractExpiry: athlete.management_contract_expiry || null,
           clubContractExpiry: athlete.club_contract_expiry || null,
         };

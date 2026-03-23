@@ -1945,7 +1945,7 @@ function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
           <Card>
             <CardContent className="p-4">
               <div className="text-xs text-muted-foreground">Wellbeing</div>
-              <div className="mt-2">{scorePill(athlete.wellbeingScore)}</div>
+              <div className="mt-2">{scorePill(latestReview?.wellbeingScore ?? 0)}</div>
             </CardContent>
           </Card>
         </div>
@@ -1998,20 +1998,36 @@ function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
               <AccordionItem value="history">
                 <AccordionTrigger className="text-sm font-semibold">Previous Reviews ({reviews.length - 1})</AccordionTrigger>
                 <AccordionContent className="space-y-3 pt-2">
-                  {reviews.slice(1).map((r) => (
-                    <Card key={r.month}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm">{r.month}</CardTitle>
-                          <span className="text-xs text-muted-foreground">Wellbeing {r.wellbeingScore}/5</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-1 text-sm">
-                        <div><span className="font-medium">Performance:</span> {r.performance}</div>
-                        <div><span className="font-medium">Focus:</span> {r.focus}</div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {reviews.slice(1).map((r) => {
+                    const prevDate = new Date(r.month + "-01");
+                    const prevMonth = prevDate.toLocaleDateString("en-AU", { year: "numeric", month: "long" });
+                    return (
+                      <Card key={r.id}>
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm">{prevMonth}</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={r.attentionRequired ? "destructive" : "default"} className="text-xs">
+                                {r.attentionRequired ? "Attention" : "On Track"}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">Wellbeing {r.wellbeingScore}/5</span>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-1 text-sm">
+                          <div><span className="font-medium">Performance:</span> {r.performance || "—"}</div>
+                          {r.trainingHighlights && <div><span className="font-medium">Training Highlights:</span> {r.trainingHighlights}</div>}
+                          <div><span className="font-medium">Lifestyle:</span> {r.lifestyle || "—"}</div>
+                          <div><span className="font-medium">Personal:</span> {r.personal || "—"}</div>
+                          <div><span className="font-medium">Education:</span> {r.education || "—"}</div>
+                          <div><span className="font-medium">Brand:</span> {r.brand || "—"}</div>
+                          <div><span className="font-medium">Focus Next Month:</span> {r.focus || "—"}</div>
+                          {r.parentEngagementNotes && <div><span className="font-medium">Parent Engagement:</span> {r.parentEngagementNotes}</div>}
+                          {r.followUpActions && <div><span className="font-medium">Follow-Up Actions:</span> {r.followUpActions}</div>}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
