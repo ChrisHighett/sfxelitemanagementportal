@@ -419,7 +419,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
     } finally {
       setIsPublishing(false);
     }
-  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished]);
+  }, [athlete.id, sectionNotes, wellbeingScore, attentionRequired, user?.id, queryClient, onReviewPublished, callStart]);
 
   // POST-CALL ACTIONS screen
   if (step === "done") {
