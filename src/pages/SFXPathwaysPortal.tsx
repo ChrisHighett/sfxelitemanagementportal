@@ -546,38 +546,72 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                 </TabsList>
                 <TabsContent value="reviews" className="space-y-4 mt-4">
                   {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
-                  {reviews.map((r) => (
-                    <Card key={r.month}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{r.month} Review</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={r.attentionRequired ? "destructive" : "default"}>
-                              {r.attentionRequired ? "Attention" : "On Track"}
-                            </Badge>
-                            <span className="text-sm">Wellbeing {r.wellbeingScore}/5</span>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-1 text-sm">
-                        <div><span className="font-medium">Performance:</span> {r.performance}</div>
-                        <div><span className="font-medium">Lifestyle:</span> {r.lifestyle}</div>
-                        <div><span className="font-medium">Personal:</span> {r.personal}</div>
-                        <div><span className="font-medium">Education:</span> {r.education}</div>
-                        <div><span className="font-medium">Brand:</span> {r.brand}</div>
-                        <Separator className="my-2" />
-                        <div><span className="font-medium">Focus:</span> {r.focus}</div>
-                        <div className="space-y-1 mt-2">
-                          {r.goals.map((g, idx) => (
-                            <div key={idx} className="flex items-start gap-2">
-                              <div className="mt-1.5 h-2 w-2 rounded-full bg-foreground/70" />
-                              <span>{g}</span>
+                  {reviews.map((r) => {
+                    const reviewDate = new Date(r.month + "-01");
+                    const displayMonth = reviewDate.toLocaleDateString("en-AU", { year: "numeric", month: "long" });
+                    return (
+                      <Card key={r.id}>
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">{displayMonth} Review</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={r.attentionRequired ? "destructive" : "default"}>
+                                {r.attentionRequired ? "Attention" : "On Track"}
+                              </Badge>
+                              <span className="text-sm">Wellbeing {r.wellbeingScore}/5</span>
                             </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </div>
+                          {r.callDate && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Call: {r.callDate}{r.callDuration ? ` (${r.callDuration})` : ""}
+                            </div>
+                          )}
+                        </CardHeader>
+                        <CardContent className="space-y-1 text-sm">
+                          <div><span className="font-medium">Performance:</span> {r.performance || "—"}</div>
+                          {r.trainingHighlights && <div><span className="font-medium">Training Highlights:</span> {r.trainingHighlights}</div>}
+                          {r.areasForImprovement && <div><span className="font-medium">Areas for Improvement:</span> {r.areasForImprovement}</div>}
+                          <div><span className="font-medium">Lifestyle:</span> {r.lifestyle || "—"}</div>
+                          <div><span className="font-medium">Personal:</span> {r.personal || "—"}</div>
+                          <div><span className="font-medium">Education:</span> {r.education || "—"}</div>
+                          <div><span className="font-medium">Brand:</span> {r.brand || "—"}</div>
+                          <Separator className="my-2" />
+                          <div><span className="font-medium">Focus Next Month:</span> {r.focus || "—"}</div>
+                          {(r.footballGoal || r.personalGoal || r.schoolLifeGoal) && (
+                            <>
+                              <Separator className="my-2" />
+                              <div className="font-medium">Goals</div>
+                              {r.footballGoal && <div className="ml-2">⚽ Football: {r.footballGoal}</div>}
+                              {r.personalGoal && <div className="ml-2">🧑 Personal: {r.personalGoal}</div>}
+                              {r.schoolLifeGoal && <div className="ml-2">📚 School/Life: {r.schoolLifeGoal}</div>}
+                            </>
+                          )}
+                          {r.goals.length > 0 && (
+                            <div className="space-y-1 mt-2">
+                              {r.goals.map((g, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <div className="mt-1.5 h-2 w-2 rounded-full bg-foreground/70" />
+                                  <span>{g}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {r.parentEngagementNotes && (
+                            <>
+                              <Separator className="my-2" />
+                              <div><span className="font-medium">Parent Engagement Notes:</span> {r.parentEngagementNotes}</div>
+                            </>
+                          )}
+                          {r.followUpActions && (
+                            <>
+                              <Separator className="my-2" />
+                              <div><span className="font-medium">Follow-Up Actions:</span> {r.followUpActions}</div>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </TabsContent>
                 <TabsContent value="comms" className="space-y-4 mt-4">
                   {comms.length === 0 && <p className="text-sm text-muted-foreground">No messages logged.</p>}
