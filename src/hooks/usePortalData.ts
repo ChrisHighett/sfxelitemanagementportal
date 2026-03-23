@@ -18,7 +18,7 @@ export interface Athlete {
   status: "Thriving" | "Monitoring" | "Needs Support";
   lastCall: string;
   nextCall: string;
-  commercialPotential: "Low" | "Medium" | "High";
+  commercialPotential: "Low" | "Medium" | "High" | "Not Scored";
   managementContractExpiry: string | null;
   clubContractExpiry: string | null;
 }
