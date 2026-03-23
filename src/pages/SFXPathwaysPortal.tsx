@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, ChevronDown, AlertTriangle, Mic, MicOff, Square, Upload, BarChart3, TrendingUp, Bell, CheckSquare, History, GitBranch, HeartHandshake, DatabaseBackup, Menu, WifiOff, MessageSquare } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, AlertTriangle, Mic, Square, Upload, Menu, WifiOff } from "lucide-react";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,14 +22,6 @@ import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type Monthly
 import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
-import AthleteScorecard from "@/components/portal/AthleteScorecard";
-import TrendTracking from "@/components/portal/TrendTracking";
-import AlertsEngine from "@/components/portal/AlertsEngine";
-import TaskFollowUpEngine from "@/components/portal/TaskFollowUpEngine";
-import CallHistory from "@/components/portal/CallHistory";
-import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
-import ParentEngagementScore from "@/components/portal/ParentEngagementScore";
-import AthleteImport from "@/components/portal/AthleteImport";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 type Role = "athlete" | "parent" | "agent" | "admin";
@@ -58,49 +50,26 @@ function scorePill(score: number) {
 const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[]> = {
   athlete: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
-    { key: "reviews", label: "My Monthly Reviews", icon: ClipboardList },
-    { key: "goals", label: "My Goals", icon: Sparkles },
+    { key: "reviews", label: "My Reviews", icon: ClipboardList },
     { key: "resources", label: "Resources", icon: Library },
-    { key: "docs", label: "Documents", icon: FileText },
   ],
   parent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "updates", label: "Updates", icon: ClipboardList },
-    { key: "resources", label: "Parent Resources", icon: Library },
-    { key: "contact", label: "Contact Manager", icon: Phone },
-    { key: "docs", label: "Documents", icon: FileText },
+    { key: "resources", label: "Resources", icon: Library },
   ],
   agent: [
-    { key: "roster", label: "Roster Dashboard", icon: Users },
+    { key: "roster", label: "Roster", icon: Users },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
-    { key: "scorecard", label: "Athlete Scorecard", icon: BarChart3 },
-    { key: "trends", label: "Trend Tracking", icon: TrendingUp },
-    { key: "alerts", label: "Alerts Engine", icon: Bell },
-    { key: "tasks", label: "Follow-Up Tasks", icon: CheckSquare },
     { key: "call", label: "Athlete Comms", icon: Phone },
-    { key: "callhistory", label: "Call History", icon: History },
-    { key: "timeline", label: "Athlete Timeline", icon: GitBranch },
-    { key: "reviews", label: "Monthly Reviews", icon: ClipboardList },
-    { key: "comms", label: "Parent Comms", icon: Mail },
-    { key: "parentengagement", label: "Parent Engagement", icon: HeartHandshake },
-    { key: "resources", label: "Resources", icon: Library },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
   ],
   admin: [
-    { key: "roster", label: "Roster Dashboard", icon: Users },
+    { key: "roster", label: "Roster", icon: Users },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
-    { key: "scorecard", label: "Athlete Scorecard", icon: BarChart3 },
-    { key: "trends", label: "Trend Tracking", icon: TrendingUp },
-    { key: "alerts", label: "Alerts Engine", icon: Bell },
-    { key: "tasks", label: "Follow-Up Tasks", icon: CheckSquare },
     { key: "call", label: "Athlete Comms", icon: Phone },
-    { key: "callhistory", label: "Call History", icon: History },
-    { key: "timeline", label: "Athlete Timeline", icon: GitBranch },
-    { key: "reviews", label: "Monthly Reviews", icon: ClipboardList },
-    { key: "comms", label: "Parent Comms", icon: Mail },
-    { key: "parentengagement", label: "Parent Engagement", icon: HeartHandshake },
-    { key: "resources", label: "Resources", icon: Library },
-    { key: "import", label: "Athlete Import", icon: DatabaseBackup },
-    { key: "admin", label: "Admin & Security", icon: Shield },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "admin", label: "Admin", icon: Shield },
   ],
 };
 
@@ -2765,39 +2734,17 @@ export default function SFXPathwaysPortal() {
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
       {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
 
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scorecard" && <AthleteScorecard athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={effectiveRole === "agent" || effectiveRole === "admin"} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={effectiveRole} />}
-      {effectiveRole === "admin" && active === "import" && <AthleteImport />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
-
-      {((effectiveRole === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
-        (effectiveRole === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((effectiveRole === "agent" || effectiveRole === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
-        <div className="p-6">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              This module is part of the architecture. Next we can build it out with live forms, templates, and database wiring.
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </Shell>
   );
 }
