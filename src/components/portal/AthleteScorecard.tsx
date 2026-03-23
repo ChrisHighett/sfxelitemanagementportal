@@ -68,7 +68,7 @@ export default function AthleteScorecard({ athlete }: { athlete: Athlete }) {
     brand: latest.brand_score,
   };
 
-  const overall = latest ? Number(latest.overall_score) : 0;
+  const overall = Number(latest.overall_score) || 0;
   const overallPct = (overall / 5) * 100;
 
   return (
