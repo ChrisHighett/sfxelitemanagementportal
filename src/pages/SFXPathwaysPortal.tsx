@@ -549,11 +549,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   {reviews.map((r) => {
                     const reviewDate = new Date(r.month + "-01");
                     const displayMonth = reviewDate.toLocaleDateString("en-AU", { year: "numeric", month: "long" });
-                    const savedDate = r.updatedAt
-                      ? new Date(r.updatedAt).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                      : r.createdAt
-                        ? new Date(r.createdAt).toLocaleDateString("en-AU", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                        : null;
                     return (
                       <Card key={r.id}>
                         <CardHeader className="pb-2">
@@ -568,17 +563,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-1 text-sm">
-                          {/* Review Metadata */}
-                          <div className="rounded-md border border-border bg-muted/40 p-3 mb-3 space-y-1 text-xs text-muted-foreground">
-                            <div className="font-medium text-foreground text-sm mb-1">Review Metadata</div>
-                            <div>📅 Review Month: {displayMonth}</div>
-                            {savedDate && <div>💾 Last Saved: {savedDate}</div>}
-                            {r.createdBy && <div>👤 Completed By: {r.createdBy}</div>}
-                            {r.callDate && (
-                              <div>📞 Linked Call: {r.callDate}{r.callDuration ? ` (${r.callDuration})` : ""}</div>
-                            )}
-                            <div className="text-[10px] opacity-60">Record ID: {r.id}</div>
-                          </div>
 
                           <div><span className="font-medium">Performance:</span> {r.performance || "—"}</div>
                           {r.trainingHighlights && <div><span className="font-medium">Training Highlights:</span> {r.trainingHighlights}</div>}
