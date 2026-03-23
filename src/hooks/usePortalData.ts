@@ -46,6 +46,9 @@ export interface MonthlyReview {
   educationTopic: string | null;
   parentEngagementNotes: string | null;
   followUpActions: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  createdBy: string | null;
 }
 
 export interface CommsLog {
