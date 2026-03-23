@@ -264,6 +264,8 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
         setSectionNotes(prev => ({ ...prev, performance: data.raw_text }));
       } else if (data?.summary) {
         const s = data.summary;
+        aiSummaryRef.current = s; // preserve structured AI summary for publishing
+        if (s.attention_required) setAttentionRequired(true);
         setSectionNotes(prev => ({
           ...prev,
           opener: s.warm_opener || prev.opener || "",
