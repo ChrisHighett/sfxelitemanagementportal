@@ -148,6 +148,7 @@ export function useAthletes(restrictToIds?: string[]) {
 export function useMonthlyReviews(athleteId?: string) {
   return useQuery({
     queryKey: ["monthly_reviews", athleteId],
+    refetchOnMount: "always",
     queryFn: async () => {
       let query = supabase
         .from("monthly_reviews")

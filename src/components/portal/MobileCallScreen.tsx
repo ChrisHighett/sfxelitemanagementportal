@@ -105,6 +105,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
 
   // AI auto-fill state
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const aiSummaryRef = useRef<any>(null); // stores the raw AI structured summary
 
   const section = SECTIONS[currentIdx];
   const progress = ((currentIdx + 1) / SECTIONS.length) * 100;
