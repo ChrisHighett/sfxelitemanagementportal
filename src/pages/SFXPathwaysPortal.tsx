@@ -1945,7 +1945,7 @@ function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
           <Card>
             <CardContent className="p-4">
               <div className="text-xs text-muted-foreground">Wellbeing</div>
-              <div className="mt-2">{scorePill(athlete.wellbeingScore)}</div>
+              <div className="mt-2">{scorePill(latestReview?.wellbeingScore ?? 0)}</div>
             </CardContent>
           </Card>
         </div>
