@@ -673,6 +673,7 @@ export type Database = {
           brand_notes: string | null
           call_date: string | null
           call_duration: string | null
+          completed_by: string | null
           created_at: string
           created_by: string | null
           education_notes: string | null
@@ -687,6 +688,7 @@ export type Database = {
           personal_goal: string | null
           personal_notes: string | null
           review_month: string
+          review_source: string | null
           school_life_goal: string | null
           training_highlights: string | null
           updated_at: string
@@ -699,6 +701,7 @@ export type Database = {
           brand_notes?: string | null
           call_date?: string | null
           call_duration?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           education_notes?: string | null
@@ -713,6 +716,7 @@ export type Database = {
           personal_goal?: string | null
           personal_notes?: string | null
           review_month: string
+          review_source?: string | null
           school_life_goal?: string | null
           training_highlights?: string | null
           updated_at?: string
@@ -725,6 +729,7 @@ export type Database = {
           brand_notes?: string | null
           call_date?: string | null
           call_duration?: string | null
+          completed_by?: string | null
           created_at?: string
           created_by?: string | null
           education_notes?: string | null
@@ -739,6 +744,7 @@ export type Database = {
           personal_goal?: string | null
           personal_notes?: string | null
           review_month?: string
+          review_source?: string | null
           school_life_goal?: string | null
           training_highlights?: string | null
           updated_at?: string
