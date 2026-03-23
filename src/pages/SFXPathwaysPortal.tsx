@@ -2734,39 +2734,17 @@ export default function SFXPathwaysPortal() {
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "goals" && <AthleteTimeline athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
       {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
 
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <ManagerCommandCentre athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scorecard" && <AthleteScorecard athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "trends" && <TrendTracking athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "alerts" && <AlertsEngine athletes={athletes} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "tasks" && <TaskFollowUpEngine athlete={athlete} athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "callhistory" && <CallHistory athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "timeline" && <ExpandedTimeline athlete={athlete} canEdit={effectiveRole === "agent" || effectiveRole === "admin"} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "comms" && <ParentTrustPortal athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "parentengagement" && <ParentEngagementScore athlete={athlete} />}
 
       {active === "resources" && <Resources athlete={athlete} role={effectiveRole} />}
-      {effectiveRole === "admin" && active === "import" && <AthleteImport />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
-
-      {((effectiveRole === "athlete" && !["dash", "goals", "resources"].includes(active)) ||
-        (effectiveRole === "parent" && !["dash", "updates", "resources"].includes(active)) ||
-        ((effectiveRole === "agent" || effectiveRole === "admin") && !["roster", "athlete", "scorecard", "trends", "alerts", "tasks", "call", "callhistory", "timeline", "reviews", "comms", "parentengagement", "resources", "import", "admin"].includes(active))) && (
-        <div className="p-6">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Module Stub</CardTitle></CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              This module is part of the architecture. Next we can build it out with live forms, templates, and database wiring.
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </Shell>
   );
 }
