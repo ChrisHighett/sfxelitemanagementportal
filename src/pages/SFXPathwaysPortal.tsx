@@ -1621,10 +1621,12 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
   const { data: commsData = [] } = useCommsLog(athlete.id);
   const [downloading, setDownloading] = useState(false);
   const [uploadingTracker, setUploadingTracker] = useState(false);
+  const [importingTracker, setImportingTracker] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
   const [savedTrackerUrl, setSavedTrackerUrl] = useState<string | null>(null);
   const [savedTrackerName, setSavedTrackerName] = useState<string | null>(null);
   const trackerInputRef = useRef<HTMLInputElement | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const isAgentOrAdmin = role === "agent" || role === "admin";
   const trackerFilePath = `development-tracker/${athlete.id}/latest.xlsx`;
 
@@ -1722,6 +1724,46 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
     }
   }
 
+  async function handleImportTracker(file: File) {
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
+      toast.error("Please upload an Excel file (.xlsx or .xls)");
+      return;
+    }
+
+    setImportingTracker(true);
+    try {
+      const { importTrackerWorkbook } = await import("@/lib/tracker-import");
+      const result = await importTrackerWorkbook(athlete.id, file);
+
+      const parts: string[] = [];
+      if (result.reviewsImported > 0) parts.push(`${result.reviewsImported} reviews imported`);
+      if (result.reviewsUpdated > 0) parts.push(`${result.reviewsUpdated} reviews updated`);
+      if (result.goalsImported > 0) parts.push(`${result.goalsImported} goals imported`);
+      if (result.commsImported > 0) parts.push(`${result.commsImported} comms imported`);
+
+      if (parts.length > 0) {
+        toast.success(parts.join(", "));
+      } else if (result.errors.length === 0) {
+        toast.info("No data found to import");
+      }
+
+      if (result.errors.length > 0) {
+        toast.error(`${result.errors.length} error(s) during import`);
+        console.error("Import errors:", result.errors);
+      }
+
+
+    } catch (e: any) {
+      console.error("Import error:", e);
+      toast.error(e.message || "Failed to import tracker data");
+    } finally {
+      setImportingTracker(false);
+      // Force page reload to refresh all data
+      window.location.reload();
+    }
+  }
+
   async function handleDownload() {
     setDownloading(true);
     try {
@@ -1737,17 +1779,45 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
 
   return (
     <Card className="border-primary/30 bg-primary/5">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between flex-wrap gap-2">
         <CardTitle className="text-base">📊 Development Tracker — {athlete.name}</CardTitle>
-        <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
-          {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-          Download .xlsx
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          {isAgentOrAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => importInputRef.current?.click()}
+              disabled={importingTracker}
+              className="gap-1.5"
+            >
+              {importingTracker ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              Import Reviews
+            </Button>
+          )}
+          <Button size="sm" onClick={handleDownload} disabled={downloading} className="gap-1.5">
+            {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+            Download .xlsx
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
           Full 5-sheet tracker: Athlete Profile, Monthly Reviews, Goal Tracker, Parent Comms, and Dashboard KPIs ({reviews.length} review{reviews.length !== 1 ? "s" : ""}).
         </p>
+
+        {isAgentOrAdmin && (
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImportTracker(file);
+              e.currentTarget.value = "";
+            }}
+          />
+        )}
 
         {(isAgentOrAdmin || savedTrackerUrl) && (
           <div className="rounded-md border bg-background p-3">
