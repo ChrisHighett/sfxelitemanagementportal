@@ -1753,8 +1753,7 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
         console.error("Import errors:", result.errors);
       }
 
-      // Refresh data
-      const { useQueryClient } = await import("@tanstack/react-query");
+
     } catch (e: any) {
       console.error("Import error:", e);
       toast.error(e.message || "Failed to import tracker data");
