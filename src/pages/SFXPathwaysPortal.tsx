@@ -1617,10 +1617,6 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
 }
 
 function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role }) {
-  const queryClient = React.useMemo(() => {
-    // Access queryClient from the module-level import
-    return null;
-  }, []);
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const { data: commsData = [] } = useCommsLog(athlete.id);
   const [downloading, setDownloading] = useState(false);
