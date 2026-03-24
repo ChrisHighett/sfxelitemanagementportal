@@ -24,6 +24,7 @@ import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
+import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
@@ -985,50 +986,36 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     try {
       const reviewMonth = new Date().toISOString().slice(0, 7) + "-01";
       const callDuration = callStartTime
-        ? `${Math.round((Date.now() - callStartTime.getTime()) / 60000)}min`
+        ? `${Math.round((Date.now() - callStartTime.getTime()) / 60000)} min`
         : "—";
-      const { error } = await supabase.from("monthly_reviews").upsert({
-        athlete_id: athlete.id,
-        review_month: reviewMonth,
-        performance_notes: aiSummary.performance,
-        lifestyle_notes: aiSummary.lifestyle,
-        personal_notes: aiSummary.personal,
-        education_notes: aiSummary.education,
-        brand_notes: aiSummary.brand,
-        focus_next_month: aiSummary.focus,
-        goals: aiSummary.goals,
-        attention_required: aiSummary.attentionRequired,
-        wellbeing_score: aiSummary.wellbeingScore ?? (aiSummary.attentionRequired ? 2 : 4),
-        created_by: user?.id ?? null,
-        call_date: new Date().toISOString().slice(0, 10),
-        call_duration: callDuration,
-        training_highlights: aiSummary.trainingHighlights,
-        areas_for_improvement: aiSummary.areasForImprovement,
-        football_goal: aiSummary.footballGoal,
-        personal_goal: aiSummary.personalGoal,
-        school_life_goal: aiSummary.schoolLifeGoal,
-        parent_engagement_notes: aiSummary.parentEngagementNotes,
-        follow_up_actions: aiSummary.followUpActions,
-      } as any, { onConflict: "athlete_id,review_month" });
-      if (error) throw error;
 
-      // Also upsert goals into goal_tracker
-      const monthLabel = new Date().toLocaleDateString("en-AU", { month: "short", year: "2-digit" }).replace(" ", "-");
-      const goalEntries = [
-        { type: "Football", desc: aiSummary.footballGoal },
-        { type: "Personal", desc: aiSummary.personalGoal },
-        { type: "School/Life", desc: aiSummary.schoolLifeGoal },
-      ].filter((g) => g.desc && g.desc !== "Not discussed this call.");
+      const goalsArray: string[] = aiSummary.goals?.filter(Boolean) || [];
 
-      for (const g of goalEntries) {
-        await supabase.from("goal_tracker").upsert({
-          athlete_id: athlete.id,
-          goal_type: g.type,
-          goal_description: g.desc,
-          month_set: monthLabel,
-          status: "In progress",
-        } as any, { onConflict: "id" });
-      }
+      await publishToTrackerUtil({
+        athleteId: athlete.id,
+        reviewMonth,
+        performanceNotes: aiSummary.performance || null,
+        lifestyleNotes: aiSummary.lifestyle || null,
+        personalNotes: aiSummary.personal || null,
+        educationNotes: aiSummary.education || null,
+        brandNotes: aiSummary.brand || null,
+        focusNextMonth: aiSummary.focus || null,
+        wellbeingScore: aiSummary.wellbeingScore ?? (aiSummary.attentionRequired ? 2 : 4),
+        attentionRequired: aiSummary.attentionRequired,
+        callDate: new Date().toISOString().slice(0, 10),
+        callDuration,
+        trainingHighlights: aiSummary.trainingHighlights || aiSummary.performance || null,
+        areasForImprovement: aiSummary.areasForImprovement || null,
+        footballGoal: aiSummary.footballGoal || null,
+        personalGoal: aiSummary.personalGoal || null,
+        schoolLifeGoal: aiSummary.schoolLifeGoal || null,
+        parentEngagementNotes: aiSummary.parentEngagementNotes || null,
+        followUpActions: aiSummary.followUpActions || null,
+        goals: goalsArray,
+        userId: user?.id ?? null,
+        completedBy: user?.email || user?.id || null,
+        reviewSource: "transcript_recording",
+      });
 
       setIsPublished(true);
       toast.success("Summary published to Development Tracker");
@@ -1038,7 +1025,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     } finally {
       setIsPublishing(false);
     }
-  }, [aiSummary, athlete.id, user?.id]);
+  }, [aiSummary, athlete.id, user?.id, user?.email, callStartTime]);
 
   const createAthleteEmail = useCallback(() => {
     if (!aiSummary) return;
