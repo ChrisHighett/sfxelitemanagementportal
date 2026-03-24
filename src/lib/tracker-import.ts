@@ -90,11 +90,11 @@ async function importReviews(
         .maybeSingle();
 
       if (existing?.id) {
-        const { error } = await supabase.from("monthly_reviews").update(data).eq("id", existing.id);
+        const { error } = await supabase.from("monthly_reviews").update(data as any).eq("id", existing.id);
         if (error) throw error;
         updated++;
       } else {
-        const { error } = await supabase.from("monthly_reviews").insert(data);
+        const { error } = await supabase.from("monthly_reviews").insert(data as any);
         if (error) throw error;
         imported++;
       }
