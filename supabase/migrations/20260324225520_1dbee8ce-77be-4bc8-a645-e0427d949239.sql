@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS unique_athlete_review_month ON public.monthly_reviews (athlete_id, review_month);
