@@ -2727,7 +2727,12 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
+        <div className="space-y-6">
+          <TrackerDownloadCard key={`tracker-${athlete.id}`} athlete={athlete} role={effectiveRole} />
+          <EditableReviews key={athlete.id} athlete={athlete} />
+        </div>
+      )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
