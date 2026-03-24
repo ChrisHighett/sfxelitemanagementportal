@@ -24,6 +24,7 @@ import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
+import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
