@@ -2662,17 +2662,17 @@ export default function SFXPathwaysPortal() {
         athletes={athletes}
       />
 
-      {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker athlete={athlete} />}
-      {effectiveRole === "parent" && active === "dash" && <ParentDashboard athlete={athlete} />}
-      {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal key={athlete.id} athlete={athlete} />}
 
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
 
-      {active === "resources" && <Resources athlete={athlete} role={effectiveRole} />}
+      {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
     </Shell>
   );
