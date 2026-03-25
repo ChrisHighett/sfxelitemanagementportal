@@ -532,21 +532,21 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
             filtered.map((a) => (
               <Card key={a.id}>
                 <CardContent className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex flex-col gap-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{a.name}</span>
                         {statusBadge(a.status)}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {a.club} • {a.position} • {a.stage} • Commercial: {a.commercialPotential}
+                        {a.club} • {a.position} • {a.stage}
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
                       <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
                       <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                      <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button>
+                      <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
                     </div>
                   </div>
                 </CardContent>
