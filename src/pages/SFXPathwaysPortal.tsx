@@ -456,7 +456,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
                       <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
                       <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
                       <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                      <Button variant="secondary" size="sm">Open Profile</Button>
+                      <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button>
                     </div>
                   </div>
                 </CardContent>
