@@ -1867,131 +1867,8 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
   );
 }
 
-function DevelopmentTracker({ athlete }: { athlete: Athlete }) {
-  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
-  const latestReview = reviews[0];
 
-  return (
-    <Card className="md:col-span-2 lg:col-span-3">
-      <CardHeader>
-        <CardTitle className="text-base">🏉 Development Tracker — {athlete.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Profile snapshot */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground">Club</div>
-              <div className="mt-1 font-medium">{athlete.club}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground">Position</div>
-              <div className="mt-1 font-medium">{athlete.position}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground">Stage</div>
-              <div className="mt-1 font-medium">{athlete.stage}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-xs text-muted-foreground">Wellbeing</div>
-              <div className="mt-2">{scorePill(latestReview?.wellbeingScore ?? 0)}</div>
-            </CardContent>
-          </Card>
-        </div>
 
-        <Separator />
-
-        {/* Latest review */}
-        {latestReview ? (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Latest Monthly Review — {latestReview.month}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardContent className="p-4 space-y-2 text-sm">
-                  <div><span className="font-medium">Performance:</span> {latestReview.performance}</div>
-                  <div><span className="font-medium">Lifestyle:</span> {latestReview.lifestyle}</div>
-                  <div><span className="font-medium">Personal:</span> {latestReview.personal}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 space-y-2 text-sm">
-                  <div><span className="font-medium">Education:</span> {latestReview.education}</div>
-                  <div><span className="font-medium">Brand:</span> {latestReview.brand}</div>
-                  <div><span className="font-medium">Focus Next Month:</span> {latestReview.focus}</div>
-                </CardContent>
-              </Card>
-            </div>
-            {latestReview.goals.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base">Goals</CardTitle></CardHeader>
-                <CardContent>
-                  {latestReview.goals.map((g, idx) => (
-                    <div key={idx} className="flex items-start gap-2 py-1">
-                      <div className="mt-1.5 h-2 w-2 rounded-full bg-primary" />
-                      <span className="text-sm">{g}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No monthly reviews recorded yet.</p>
-        )}
-
-        {/* Review history */}
-        {reviews.length > 1 && (
-          <>
-            <Separator />
-            <Accordion type="single" collapsible>
-              <AccordionItem value="history">
-                <AccordionTrigger className="text-sm font-semibold">Previous Reviews ({reviews.length - 1})</AccordionTrigger>
-                <AccordionContent className="space-y-3 pt-2">
-                  {reviews.slice(1).map((r) => {
-                    const prevDate = new Date(r.month + "-01");
-                    const prevMonth = prevDate.toLocaleDateString("en-AU", { year: "numeric", month: "long" });
-                    return (
-                      <Card key={r.id}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm">{prevMonth}</CardTitle>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={r.attentionRequired ? "destructive" : "default"} className="text-xs">
-                                {r.attentionRequired ? "Attention" : "On Track"}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">Wellbeing {r.wellbeingScore}/5</span>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-1 text-sm">
-                          <div><span className="font-medium">Performance:</span> {r.performance || "—"}</div>
-                          {r.trainingHighlights && <div><span className="font-medium">Training Highlights:</span> {r.trainingHighlights}</div>}
-                          <div><span className="font-medium">Lifestyle:</span> {r.lifestyle || "—"}</div>
-                          <div><span className="font-medium">Personal:</span> {r.personal || "—"}</div>
-                          <div><span className="font-medium">Education:</span> {r.education || "—"}</div>
-                          <div><span className="font-medium">Brand:</span> {r.brand || "—"}</div>
-                          <div><span className="font-medium">Focus Next Month:</span> {r.focus || "—"}</div>
-                          {r.parentEngagementNotes && <div><span className="font-medium">Parent Engagement:</span> {r.parentEngagementNotes}</div>}
-                          {r.followUpActions && <div><span className="font-medium">Follow-Up Actions:</span> {r.followUpActions}</div>}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
@@ -2070,11 +1947,8 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Development Tracker download + inline view */}
+      {/* Tracker download card (XLS export) */}
       {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
-      {athlete && (role === "athlete" || role === "parent") && (
-        <DevelopmentTracker athlete={athlete} />
-      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
@@ -2720,7 +2594,7 @@ export default function SFXPathwaysPortal() {
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal key={athlete.id} athlete={athlete} />}
 
