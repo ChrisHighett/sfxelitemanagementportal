@@ -742,35 +742,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     onCallActive?.(callSessionActive || voiceRecordingActive);
   }, [callSessionActive, voiceRecordingActive, onCallActive]);
 
-  const [notes, setNotes] = useState("");
-  const [aiSummary, setAiSummary] = useState<{
-    performance: string; lifestyle: string; personal: string;
-    education: string; brand: string; focus: string; goals: string[];
-    attentionRequired: boolean;
-    trainingHighlights: string; areasForImprovement: string;
-    footballGoal: string; personalGoal: string; schoolLifeGoal: string;
-    educationTopic: string; parentEngagementNotes: string;
-    followUpActions: string; wellbeingScore: number;
-  } | null>(null);
-  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [isSummarising, setIsSummarising] = useState(false);
-  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
-  const [transcriptSaved, setTranscriptSaved] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
-  const finalTranscriptRef = useRef("");
-  const isRecordingRef = useRef(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
-  const [audioSaved, setAudioSaved] = useState(false);
-  const audioFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const scriptGuides = [
     {
