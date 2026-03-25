@@ -342,8 +342,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const totalItems = plannerItems.length;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CalendarDays className="h-5 w-5 text-primary" />
@@ -359,59 +359,57 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 pb-3">
         {totalItems === 0 ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
             <CheckCircle2 className="h-4 w-4 text-primary" />
             All caught up — no pressing tasks this week.
           </div>
         ) : (
-          <div className="grid grid-cols-5 gap-3 min-h-[280px]">
+          <div className="flex gap-2 min-h-[240px]">
             {DAYS.map((day) => {
               const items = byDay[day];
               const today = new Date();
               const dayIndex = DAYS.indexOf(day);
-              const currentDayIndex = (today.getDay() + 6) % 7; // 0=Mon
+              const currentDayIndex = (today.getDay() + 6) % 7;
               const isToday = dayIndex === currentDayIndex && currentDayIndex < 5;
+              const empty = items.length === 0;
 
               return (
                 <div
                   key={day}
-                  className={`rounded-lg border p-3 flex flex-col ${
+                  className={`rounded-lg border flex flex-col transition-all ${
+                    empty ? "basis-[56px] shrink-0 grow-0" : "flex-1 min-w-0"
+                  } ${
                     isToday
-                      ? "border-primary/50 bg-primary/5"
-                      : "border-border bg-muted/20"
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-muted/10"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <p
-                      className={`text-xs font-semibold uppercase tracking-wide ${
-                        isToday ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
+                  <div className={`flex items-center justify-between px-2.5 py-2 border-b ${isToday ? "border-primary/20" : "border-border/50"}`}>
+                    <p className={`text-[11px] font-bold uppercase tracking-wider ${isToday ? "text-primary" : "text-muted-foreground"}`}>
                       {day.slice(0, 3)}
                     </p>
                     {items.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">
+                      <span className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 ${isToday ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
                         {items.length}
                       </span>
                     )}
                   </div>
-                  <div className="space-y-2 flex-1 overflow-y-auto max-h-[400px]">
-                    {items.length === 0 ? (
-                      <p className="text-[11px] text-muted-foreground/60 text-center mt-4">
-                        No tasks
-                      </p>
+
+                  <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5" style={{ maxHeight: "360px" }}>
+                    {empty ? (
+                      <p className="text-[10px] text-muted-foreground/50 text-center mt-6">—</p>
                     ) : (
                       items.map((item) => (
                         <div
                           key={item.id}
-                          className="rounded-md border bg-card p-2.5 space-y-1.5 hover:shadow-sm transition"
+                          className="rounded border bg-card p-2 hover:shadow-sm transition"
                         >
-                          <div className="flex items-start gap-2">
-                            <div className="pt-0.5 shrink-0">
+                          <div className="flex items-start gap-1.5">
+                            <div className="pt-px shrink-0">
                               {completing.has(item.id) ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                               ) : (
                                 <Checkbox
                                   onCheckedChange={() => handleComplete(item)}
@@ -419,21 +417,13 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                                 />
                               )}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-xs font-semibold leading-tight">
-                                  {item.athleteName}
-                                </span>
-                                {priorityBadge(item.priority)}
-                              </div>
-                              <p className="text-[11px] leading-snug mt-0.5">
-                                {item.title}
-                              </p>
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <p className="text-[11px] font-semibold leading-tight truncate">{item.athleteName}</p>
+                              <p className="text-[11px] leading-snug">{item.title}</p>
                               {item.reason && (
-                                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
-                                  {item.reason}
-                                </p>
+                                <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>
                               )}
+                              <div className="pt-0.5">{priorityBadge(item.priority)}</div>
                             </div>
                           </div>
                         </div>
