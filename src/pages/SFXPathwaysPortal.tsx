@@ -334,7 +334,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const hasUpdate = smart && (smart.performance !== "—" || smart.lifestyle !== "—" || smart.personal !== "—" || smart.education !== "—" || smart.focus !== "—");
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-2xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title={`${athlete.name}`}
