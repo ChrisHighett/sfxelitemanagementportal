@@ -573,7 +573,16 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={athlete.name}
+        subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
+        imageUrl={heroImage}
+        badge={statusBadge(athlete.status)}
+        size="md"
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
