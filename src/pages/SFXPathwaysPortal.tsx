@@ -2930,7 +2930,13 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
-        <div className="space-y-6">
+        <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+          <HeroBanner
+            title={`Development Tracker — ${athlete.name}`}
+            subtitle="Review history, export data, and track progress over time"
+            imageUrl={heroImage}
+            size="sm"
+          />
           <TrackerDownloadCard key={`tracker-${athlete.id}`} athlete={athlete} role={effectiveRole} />
           <EditableReviews key={athlete.id} athlete={athlete} />
         </div>
