@@ -942,7 +942,16 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         imageUrl={heroImage}
         size="sm"
       />
-      {/* Start Call Session button — prominent on mobile */}
+
+      {/* Tabs: Call Tools | Comms History */}
+      <Tabs value={commsTab} onValueChange={(v) => setCommsTab(v as "tools" | "history")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="tools" className="flex-1">Call Tools</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1">Comms History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tools" className="mt-4 space-y-5">
+          {/* Start Call Session button — prominent on mobile */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col gap-4">
