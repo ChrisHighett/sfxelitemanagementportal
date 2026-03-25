@@ -1955,6 +1955,14 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
       {/* Tracker download card (XLS export) */}
       {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
 
+      {/* Athlete-specific uploaded files */}
+      {athlete && (
+        <AthleteResourceFiles
+          athleteId={athlete.id}
+          canManage={isAgentOrAdmin}
+        />
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
           <Card key={cat} className="hover:shadow-sm transition">
