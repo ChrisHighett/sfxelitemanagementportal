@@ -1615,7 +1615,7 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
           {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => (
+            {allCategories.map((cat) => (
               <Card key={cat} className="hover:shadow-sm transition">
                 <CardHeader className="pb-2 flex flex-row items-center justify-between">
                   <CardTitle className="text-base">{cat}</CardTitle>
