@@ -447,6 +447,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
           </div>
         </CardContent>
       </Card>
+      <WeeklyPlanner athletes={athletes} />
       {q.trim().length > 0 && (
         <div className="space-y-3">
           {filtered.length === 0 ? (
