@@ -28,6 +28,11 @@ import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
+import HeroBanner from "@/components/portal/ui/HeroBanner";
+import StatCard from "@/components/portal/ui/StatCard";
+import ImageCard from "@/components/portal/ui/ImageCard";
+import ContentSection from "@/components/portal/ui/ContentSection";
+import heroImage from "@/assets/hero-sport-dark.jpg";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
