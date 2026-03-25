@@ -1954,13 +1954,15 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     setUploading(null);
   }
 
-  async function handleDelete(id: string, filePath: string, category: string) {
-    const { error: storageError } = await supabase.storage.from("resources").remove([filePath]);
+  async function handleDelete(id: string, filePath: string, category: string, source?: "global" | "athlete") {
+    const bucket = source === "athlete" ? "athlete-resources" : "resources";
+    const table = source === "athlete" ? "athlete_resources" : "resources";
+    const { error: storageError } = await supabase.storage.from(bucket).remove([filePath]);
     if (storageError) {
       toast.error(`Delete failed: ${storageError.message}`);
       return;
     }
-    const { error: dbError } = await supabase.from("resources").delete().eq("id", id);
+    const { error: dbError } = await supabase.from(table).delete().eq("id", id);
     if (dbError) {
       toast.error(`Failed to remove record: ${dbError.message}`);
     } else {
