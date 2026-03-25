@@ -2795,12 +2795,14 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
 
 export default function SFXPathwaysPortal() {
   const { data: userRoleData, isLoading: roleLoading } = useUserRole();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [role, setRole] = useState<Role | null>(null);
   const [active, setActive] = useState("roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [roleOverride, setRoleOverride] = useState<Role | null>(null);
   const [callActive, setCallActive] = useState(false);
 
+  const requestedRole = searchParams.get("view") as Role | null;
   const isAdmin = userRoleData?.role === "admin";
   const effectiveRole = roleOverride || role;
 
@@ -2817,17 +2819,25 @@ export default function SFXPathwaysPortal() {
   useEffect(() => {
     if (userRoleData?.role && !role) {
       setRole(userRoleData.role as Role);
-      const firstTab = NAV[userRoleData.role as Role]?.[0]?.key ?? "dash";
+      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete"].includes(requestedRole)
+        ? requestedRole
+        : (userRoleData.role as Role);
+      if (isAdmin && requestedRole && requestedRole !== userRoleData.role) {
+        setRoleOverride(requestedRole);
+      }
+      const firstTab = NAV[initialRole]?.[0]?.key ?? "dash";
       setActive(firstTab);
     }
-  }, [userRoleData, role]);
+  }, [userRoleData, role, isAdmin, requestedRole]);
 
   // When admin switches role preview, reset to first tab of that role
   const handleRoleSwitch = (newRole: Role) => {
     if (newRole === userRoleData?.role) {
       setRoleOverride(null);
+      setSearchParams({});
     } else {
       setRoleOverride(newRole);
+      setSearchParams({ view: newRole });
     }
     const firstTab = NAV[newRole]?.[0]?.key ?? "dash";
     setActive(firstTab);
