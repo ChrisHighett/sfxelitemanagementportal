@@ -340,7 +340,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
+function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
 
