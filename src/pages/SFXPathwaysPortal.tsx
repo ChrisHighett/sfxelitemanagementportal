@@ -610,6 +610,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                     </CardContent>
                   </Card>
                 </TabsContent>
+                <TabsContent value="files" className="mt-4">
+                  <AthleteResourceFiles athleteId={athlete.id} canManage={true} />
+                </TabsContent>
               </Tabs>
             </div>
           </div>
