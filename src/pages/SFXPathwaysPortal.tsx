@@ -1228,6 +1228,12 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
