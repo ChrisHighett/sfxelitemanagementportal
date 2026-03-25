@@ -2047,21 +2047,30 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
               ) : (
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {(resources[cat] || []).map((res) => (
-                    <div key={res.id} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
-                      <a
-                        href={getPublicUrl(res.file_path)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-primary hover:underline flex-1"
-                      >
-                        {res.file_name}
-                      </a>
+                    <div key={`${res.source}-${res.id}`} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
+                      {res.source === "athlete" ? (
+                        <button
+                          onClick={() => handleDownloadAthlete(res.file_path)}
+                          className="truncate text-primary hover:underline flex-1 text-left"
+                        >
+                          {res.file_name}
+                        </button>
+                      ) : (
+                        <a
+                          href={getPublicUrl(res.file_path, res.source) || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-primary hover:underline flex-1"
+                        >
+                          {res.file_name}
+                        </a>
+                      )}
                       {isAgentOrAdmin && (
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6 shrink-0"
-                          onClick={() => handleDelete(res.id, res.file_path, cat)}
+                          onClick={() => handleDelete(res.id, res.file_path, cat, res.source)}
                         >
                           <span className="text-xs text-destructive">✕</span>
                         </Button>
