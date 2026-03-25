@@ -907,6 +907,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `SFX Pathways`,
       ].join("\n");
       setParentEmailDraft(draft);
+      // Auto-save to comms history
+      saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: `Update — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Parent email draft created");
     }
   }, [athlete.name, athlete.parentName]);
