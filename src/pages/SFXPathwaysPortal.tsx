@@ -2461,17 +2461,6 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
             </Card>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base">Resources for Parents</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="rounded-xl border border-border p-3">Understanding pathways football</div>
-            <div className="rounded-xl border border-border p-3">Supporting recovery and school balance</div>
-            <div className="rounded-xl border border-border p-3">Social media and online reputation</div>
-            <div className="rounded-xl border border-border p-3">Managing pressure and expectations</div>
-            <Separator />
-            <Button className="w-full" variant="secondary">Contact Assigned Manager</Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
