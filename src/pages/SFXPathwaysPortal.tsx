@@ -1997,91 +1997,189 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     window.open(data.signedUrl, "_blank");
   }
 
+  const showContracts = role === "athlete" || role === "parent" || role === "agent";
+
   return (
     <div className="space-y-6 p-6">
-      {/* Tracker download card (XLS export) */}
-      {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
+      <Tabs defaultValue="materials">
+        <TabsList>
+          <TabsTrigger value="materials">Resource Materials</TabsTrigger>
+          {showContracts && <TabsTrigger value="contracts">Management &amp; Playing Contracts</TabsTrigger>}
+        </TabsList>
 
+        <TabsContent value="materials" className="mt-4 space-y-6">
+          {/* Tracker download card (XLS export) */}
+          {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {categories.map((cat) => (
-          <Card key={cat} className="hover:shadow-sm transition">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-base">{cat}</CardTitle>
-              {isAgentOrAdmin && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                  disabled={uploading === cat}
-                  onClick={() => fileInputRefs.current[cat]?.click()}
-                >
-                  {uploading === cat ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <FileText className="h-3.5 w-3.5" />
-                  )}
-                  Upload
-                </Button>
-              )}
-              {isAgentOrAdmin && (
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.jpg,.png,.webp"
-                  className="hidden"
-                  ref={(el) => { fileInputRefs.current[cat] = el; }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleUpload(cat, file);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-              )}
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {(resources[cat] || []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No files yet.</p>
-              ) : (
-                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                  {(resources[cat] || []).map((res) => (
-                    <div key={`${res.source}-${res.id}`} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
-                      {res.source === "athlete" ? (
-                        <button
-                          onClick={() => handleDownloadAthlete(res.file_path)}
-                          className="truncate text-primary hover:underline flex-1 text-left"
-                        >
-                          {res.file_name}
-                        </button>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {categories.map((cat) => (
+              <Card key={cat} className="hover:shadow-sm transition">
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-base">{cat}</CardTitle>
+                  {isAgentOrAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={uploading === cat}
+                      onClick={() => fileInputRefs.current[cat]?.click()}
+                    >
+                      {uploading === cat ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <a
-                          href={getPublicUrl(res.file_path, res.source) || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="truncate text-primary hover:underline flex-1"
-                        >
-                          {res.file_name}
-                        </a>
+                        <FileText className="h-3.5 w-3.5" />
                       )}
-                      {isAgentOrAdmin && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => handleDelete(res.id, res.file_path, cat, res.source)}
-                        >
-                          <span className="text-xs text-destructive">✕</span>
-                        </Button>
-                      )}
+                      Upload
+                    </Button>
+                  )}
+                  {isAgentOrAdmin && (
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov,.jpg,.png,.webp"
+                      className="hidden"
+                      ref={(el) => { fileInputRefs.current[cat] = el; }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUpload(cat, file);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {(resources[cat] || []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No files yet.</p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                      {(resources[cat] || []).map((res) => (
+                        <div key={`${res.source}-${res.id}`} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
+                          {res.source === "athlete" ? (
+                            <button
+                              onClick={() => handleDownloadAthlete(res.file_path)}
+                              className="truncate text-primary hover:underline flex-1 text-left"
+                            >
+                              {res.file_name}
+                            </button>
+                          ) : (
+                            <a
+                              href={getPublicUrl(res.file_path, res.source) || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="truncate text-primary hover:underline flex-1"
+                            >
+                              {res.file_name}
+                            </a>
+                          )}
+                          {isAgentOrAdmin && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 shrink-0"
+                              onClick={() => handleDelete(res.id, res.file_path, cat, res.source)}
+                            >
+                              <span className="text-xs text-destructive">✕</span>
+                            </Button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        {showContracts && (
+          <TabsContent value="contracts" className="mt-4">
+            <ContractsTab athlete={athlete} />
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
+  );
+}
+
+function ContractsTab({ athlete }: { athlete?: Athlete }) {
+  if (!athlete) {
+    return <p className="text-sm text-muted-foreground p-4">No athlete selected.</p>;
+  }
+
+  const formatDate = (d: string | null) => {
+    if (!d) return "Not set";
+    return new Date(d).toLocaleDateString("en-AU", { day: "2-digit", month: "long", year: "numeric" });
+  };
+
+  const isExpiringSoon = (d: string | null) => {
+    if (!d) return false;
+    const diff = new Date(d).getTime() - Date.now();
+    return diff > 0 && diff < 90 * 24 * 60 * 60 * 1000; // within 90 days
+  };
+
+  const isExpired = (d: string | null) => {
+    if (!d) return false;
+    return new Date(d).getTime() < Date.now();
+  };
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      {/* Management Contract */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            Management Contract
+            {isExpired(athlete.managementContractExpiry) && (
+              <Badge variant="destructive" className="text-xs">Expired</Badge>
+            )}
+            {!isExpired(athlete.managementContractExpiry) && isExpiringSoon(athlete.managementContractExpiry) && (
+              <Badge variant="secondary" className="text-xs">Expiring Soon</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Athlete</p>
+            <p className="text-sm font-medium">{athlete.name}</p>
+          </div>
+          <Separator />
+          <div>
+            <p className="text-xs text-muted-foreground">Contract Expiry Date</p>
+            <p className={`text-sm font-medium ${isExpired(athlete.managementContractExpiry) ? "text-destructive" : isExpiringSoon(athlete.managementContractExpiry) ? "text-amber-600" : ""}`}>
+              {formatDate(athlete.managementContractExpiry)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Playing / Club Contract */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            Playing Contract (Club)
+            {isExpired(athlete.clubContractExpiry) && (
+              <Badge variant="destructive" className="text-xs">Expired</Badge>
+            )}
+            {!isExpired(athlete.clubContractExpiry) && isExpiringSoon(athlete.clubContractExpiry) && (
+              <Badge variant="secondary" className="text-xs">Expiring Soon</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Club</p>
+            <p className="text-sm font-medium">{athlete.club}</p>
+          </div>
+          <Separator />
+          <div>
+            <p className="text-xs text-muted-foreground">Contract Expiry Date</p>
+            <p className={`text-sm font-medium ${isExpired(athlete.clubContractExpiry) ? "text-destructive" : isExpiringSoon(athlete.clubContractExpiry) ? "text-amber-600" : ""}`}>
+              {formatDate(athlete.clubContractExpiry)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
