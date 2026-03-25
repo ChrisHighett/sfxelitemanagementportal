@@ -25,6 +25,7 @@ import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
+import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
@@ -513,6 +514,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   <TabsTrigger value="reviews">Reviews</TabsTrigger>
                   <TabsTrigger value="comms">Comms Log</TabsTrigger>
                   <TabsTrigger value="commercial">Commercial</TabsTrigger>
+                  <TabsTrigger value="files">Files</TabsTrigger>
                 </TabsList>
                 <TabsContent value="reviews" className="space-y-4 mt-4">
                   {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
@@ -607,6 +609,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                       <p className="text-muted-foreground text-xs">Note: Commercial valuation & outreach pipeline can be added in Phase 2.</p>
                     </CardContent>
                   </Card>
+                </TabsContent>
+                <TabsContent value="files" className="mt-4">
+                  <AthleteResourceFiles athleteId={athlete.id} canManage={true} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -1949,6 +1954,14 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     <div className="space-y-6 p-6">
       {/* Tracker download card (XLS export) */}
       {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
+
+      {/* Athlete-specific uploaded files */}
+      {athlete && (
+        <AthleteResourceFiles
+          athleteId={athlete.id}
+          canManage={isAgentOrAdmin}
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
