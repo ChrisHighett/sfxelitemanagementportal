@@ -1167,200 +1167,52 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2 md:pb-4"><CardTitle className="text-base md:text-lg">Call Notes — {athlete.name}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {/* Voice Recording */}
-          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
-            {!isRecording ? (
-              <Button onClick={startRecording} variant="outline" className="gap-2">
-                <Mic className="h-4 w-4" /> Start Recording
-              </Button>
-            ) : (
-              <Button onClick={stopRecording} variant="destructive" className="gap-2">
-                <Square className="h-4 w-4" /> Stop Recording
-              </Button>
-            )}
-            {isRecording && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                Recording...
-              </div>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <input
-                ref={audioFileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAudioFileUpload(file);
-                  e.target.value = "";
+      {/* Email Drafts (generated from Call Tools) */}
+      {athleteEmailDraft && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  navigator.clipboard.writeText(athleteEmailDraft);
+                  toast.success("Copied to clipboard");
                 }}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => audioFileInputRef.current?.click()}
-                disabled={isUploadingAudio}
               >
-                <Upload className="h-4 w-4" /> Upload Audio
+                Copy
               </Button>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Audio playback + save */}
-          {audioUrl && !audioSaved && (
-            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-              <audio controls src={audioUrl} className="h-8 flex-1" />
-              <Button
-                size="sm"
-                onClick={uploadAudioToStorage}
-                disabled={isUploadingAudio || audioSaved}
-                className="gap-2"
+      {parentEmailDraft && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  navigator.clipboard.writeText(parentEmailDraft);
+                  toast.success("Copied to clipboard");
+                }}
               >
-                {isUploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {audioSaved ? "Saved ✓" : "Save Audio"}
+                Copy
               </Button>
             </div>
-          )}
-          {audioSaved && (
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              ✅ Audio recording saved to call recordings
-            </div>
-          )}
-
-          {/* Transcript */}
-          {transcript && (
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Transcript</label>
-              <div className="p-3 rounded-md border bg-background text-sm max-h-[200px] overflow-y-auto whitespace-pre-wrap">
-                {transcript}
-              </div>
-            </div>
-          )}
-
-          {/* Manual notes */}
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Type call notes here..."
-            className="min-h-[80px] md:min-h-[100px] text-base"
-          />
-          {/* Action buttons - grid on mobile for large tap targets */}
-          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-2">
-            <Button 
-              onClick={saveTranscriptToCommsLog} 
-              variant="outline" 
-              className="gap-2 h-11 md:h-9 text-sm" 
-              disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
-            >
-              {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              {transcriptSaved ? "Saved ✓" : "Save Notes"}
-            </Button>
-            <Button onClick={generateAISummary} className="gap-2 h-11 md:h-9 text-sm" disabled={isSummarising}>
-              {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isSummarising ? "Summarising..." : "AI Summary"}
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={publishToTracker} 
-              disabled={!aiSummary || isPublishing || isPublished}
-              className="gap-2 h-11 md:h-9 text-sm"
-            >
-              {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-              {isPublished ? "Published ✓" : "Publish"}
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={createAthleteEmail} 
-              disabled={!aiSummary}
-              className="gap-2 h-11 md:h-9 text-sm"
-            >
-              <Mail className="h-4 w-4" /> Athlete Email
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={createParentEmail} 
-              disabled={!aiSummary}
-              className="gap-2 h-11 md:h-9 col-span-2 md:col-span-1 text-sm"
-            >
-              <Mail className="h-4 w-4" /> Parent Email
-            </Button>
-          </div>
-          {aiSummary && (
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">Structured Summary</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div><span className="font-medium">Performance:</span> {aiSummary.performance}</div>
-                <div><span className="font-medium">Lifestyle:</span> {aiSummary.lifestyle}</div>
-                <div><span className="font-medium">Personal:</span> {aiSummary.personal}</div>
-                <div><span className="font-medium">Education:</span> {aiSummary.education}</div>
-                <div><span className="font-medium">Brand:</span> {aiSummary.brand}</div>
-                <Separator />
-                <div><span className="font-medium">Focus:</span> {aiSummary.focus}</div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {aiSummary.goals.map((g, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <div className="mt-1 h-2 w-2 rounded-full bg-foreground/70" />
-                      <div>{g}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Email Drafts */}
-          {athleteEmailDraft && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      navigator.clipboard.writeText(athleteEmailDraft);
-                      toast.success("Copied to clipboard");
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
-              </CardContent>
-            </Card>
-          )}
-
-          {parentEmailDraft && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      navigator.clipboard.writeText(parentEmailDraft);
-                      toast.success("Copied to clipboard");
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
