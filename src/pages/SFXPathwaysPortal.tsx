@@ -301,6 +301,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
 function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
+  const smart = review ? resolveSmartFields(review) : null;
   return (
     <div className="space-y-6 p-6">
       <Card>
@@ -314,16 +315,16 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           <div className="grid gap-4 md:grid-cols-3">
             <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Next Check-in</div><div className="mt-1 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{athlete.nextCall}</span></div></CardContent></Card>
             <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Wellbeing (high-level)</div><div className="mt-2">{scorePill(athlete.wellbeingScore)}</div></CardContent></Card>
-            <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Current Focus</div><div className="mt-1 font-medium">{review?.focus ?? "—"}</div></CardContent></Card>
+            <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Current Focus</div><div className="mt-1 font-medium">{smart?.focus ?? "—"}</div></CardContent></Card>
           </div>
           <Separator />
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Latest Parent Update</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div><span className="font-medium">Performance:</span> {review?.performance ?? "—"}</div>
-              <div><span className="font-medium">Lifestyle:</span> {review?.lifestyle ?? "—"}</div>
-              <div><span className="font-medium">Personal:</span> {review?.personal ?? "—"}</div>
-              <div><span className="font-medium">Next focus:</span> {review?.focus ?? "—"}</div>
+              <div><span className="font-medium">Performance:</span> {smart?.performance ?? "—"}</div>
+              <div><span className="font-medium">Lifestyle:</span> {smart?.lifestyle ?? "—"}</div>
+              <div><span className="font-medium">Personal:</span> {smart?.personal ?? "—"}</div>
+              <div><span className="font-medium">Next focus:</span> {smart?.focus ?? "—"}</div>
               <p className="text-muted-foreground mt-2">If you have questions, contact the assigned manager anytime.</p>
             </CardContent>
           </Card>
