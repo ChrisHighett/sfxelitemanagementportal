@@ -11,7 +11,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Upload, Trash2, Download, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const CATEGORIES = ["Tracker", "Program", "Report", "School", "Recovery", "Other"];
+const CATEGORIES = [
+  "Nutrition",
+  "Recovery",
+  "Mindset",
+  "Media Training",
+  "Social Media",
+  "Parent Playbook",
+  "Tracker",
+  "Program",
+  "Report",
+  "School",
+  "Other",
+];
 
 interface AthleteResource {
   id: string;
