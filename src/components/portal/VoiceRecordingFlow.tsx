@@ -476,10 +476,12 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       if (data?.raw_text) {
         setAthleteEmailSubject("Follow-up — " + firstName);
         setAthleteEmailDraft(data.raw_text);
+        saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: "Follow-up — " + firstName, body: data.raw_text, generatedFrom: "call", createdBy: user?.id });
         toast.info("AI returned unstructured text — you can edit it below");
       } else {
         setAthleteEmailSubject(data.email.subject || "");
         setAthleteEmailDraft(data.email.body || "");
+        saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: data.email.subject || "", body: data.email.body || "", generatedFrom: "call", createdBy: user?.id });
         toast.success("Athlete email generated");
       }
     } catch (e: any) {
