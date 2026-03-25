@@ -340,7 +340,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
+function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
 
@@ -456,7 +456,7 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
                       <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
                       <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
                       <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                      <Button variant="secondary" size="sm">Open Profile</Button>
+                      <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -2649,7 +2649,7 @@ export default function SFXPathwaysPortal() {
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal key={athlete.id} athlete={athlete} />}
 
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
