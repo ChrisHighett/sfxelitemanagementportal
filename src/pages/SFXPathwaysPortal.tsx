@@ -472,7 +472,15 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
   }, [athletes]);
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Athlete Roster"
+        subtitle="Manage your athletes, track wellbeing, and plan your week"
+        imageUrl={heroImage}
+        size="md"
+      />
+
       {contractAlerts.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -565,7 +573,16 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={athlete.name}
+        subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
+        imageUrl={heroImage}
+        badge={statusBadge(athlete.status)}
+        size="md"
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -710,7 +727,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActive?: (active: boolean) => void }) {
+function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActive?: (active: boolean) => void; }) {
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
@@ -1279,7 +1296,14 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   }
 
   return (
-    <div className="space-y-4 p-3 md:space-y-6 md:p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={`Comms — ${athlete.name}`}
+        subtitle="Record calls, generate summaries, and track follow-ups"
+        imageUrl={heroImage}
+        size="sm"
+      />
       {/* Start Call Session button — prominent on mobile */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-4 md:p-6">
@@ -2082,7 +2106,14 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const showContracts = role === "athlete" || role === "parent" || role === "agent";
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Resources"
+        subtitle="Training materials, guides, and development resources"
+        imageUrl={heroImage}
+        size="sm"
+      />
       <Tabs defaultValue="materials">
         <TabsList>
           <TabsTrigger value="materials">Resource Materials</TabsTrigger>
@@ -2319,7 +2350,14 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
 
 function AdminSecurity() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Admin Panel"
+        subtitle="Manage athletes, guardians, security, and access controls"
+        imageUrl={heroImage}
+        size="sm"
+      />
       <Tabs defaultValue="athletes" className="w-full">
         <TabsList>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
@@ -2709,8 +2747,16 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   return (
-    <div className="space-y-6 p-6">
-      <div className="space-y-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={`${athlete.name}'s Development`}
+        subtitle="Stay connected with your child's progress"
+        imageUrl={heroImage}
+        badge={statusBadge(athlete.status)}
+        size="md"
+      />
+      <div className="space-y-5">
         <Card>
           <CardHeader><CardTitle className="text-base">Parent Trust Portal</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -2884,7 +2930,13 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
-        <div className="space-y-6">
+        <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+          <HeroBanner
+            title={`Development Tracker — ${athlete.name}`}
+            subtitle="Review history, export data, and track progress over time"
+            imageUrl={heroImage}
+            size="sm"
+          />
           <TrackerDownloadCard key={`tracker-${athlete.id}`} athlete={athlete} role={effectiveRole} />
           <EditableReviews key={athlete.id} athlete={athlete} />
         </div>
