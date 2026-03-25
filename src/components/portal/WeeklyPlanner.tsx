@@ -359,56 +359,91 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         {totalItems === 0 ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
             <CheckCircle2 className="h-4 w-4 text-primary" />
             All caught up — no pressing tasks this week.
           </div>
         ) : (
-          DAYS.map((day) => {
-            const items = byDay[day];
-            if (items.length === 0) return null;
-            return (
-              <div key={day}>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                  {day}
-                </p>
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition"
+          <div className="grid grid-cols-5 gap-3 min-h-[280px]">
+            {DAYS.map((day) => {
+              const items = byDay[day];
+              const today = new Date();
+              const dayIndex = DAYS.indexOf(day);
+              const currentDayIndex = (today.getDay() + 6) % 7; // 0=Mon
+              const isToday = dayIndex === currentDayIndex && currentDayIndex < 5;
+
+              return (
+                <div
+                  key={day}
+                  className={`rounded-lg border p-3 flex flex-col ${
+                    isToday
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-border bg-muted/20"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-wide ${
+                        isToday ? "text-primary" : "text-muted-foreground"
+                      }`}
                     >
-                      <div className="pt-0.5">
-                        {completing.has(item.id) ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                          <Checkbox
-                            onCheckedChange={() => handleComplete(item)}
-                            className="mt-0.5"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium">{item.athleteName}</span>
-                          {priorityBadge(item.priority)}
+                      {day.slice(0, 3)}
+                    </p>
+                    {items.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">
+                        {items.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2 flex-1 overflow-y-auto max-h-[400px]">
+                    {items.length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground/60 text-center mt-4">
+                        No tasks
+                      </p>
+                    ) : (
+                      items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-md border bg-card p-2.5 space-y-1.5 hover:shadow-sm transition"
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="pt-0.5 shrink-0">
+                              {completing.has(item.id) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                              ) : (
+                                <Checkbox
+                                  onCheckedChange={() => handleComplete(item)}
+                                  className="h-3.5 w-3.5"
+                                />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-semibold leading-tight">
+                                  {item.athleteName}
+                                </span>
+                                {priorityBadge(item.priority)}
+                              </div>
+                              <p className="text-[11px] leading-snug mt-0.5">
+                                {item.title}
+                              </p>
+                              {item.reason && (
+                                <p className="text-[10px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                                  {item.reason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm mt-0.5">{item.title}</p>
-                        {item.reason && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                            {item.reason}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      ))
+                    )}
+                  </div>
                 </div>
-                <Separator className="mt-3" />
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </CardContent>
     </Card>
