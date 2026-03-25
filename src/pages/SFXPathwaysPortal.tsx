@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, AlertTriangle, Mic, Square, Upload, Menu, WifiOff } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,7 @@ import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
-import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
+
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
@@ -742,35 +742,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     onCallActive?.(callSessionActive || voiceRecordingActive);
   }, [callSessionActive, voiceRecordingActive, onCallActive]);
 
-  const [notes, setNotes] = useState("");
-  const [aiSummary, setAiSummary] = useState<{
-    performance: string; lifestyle: string; personal: string;
-    education: string; brand: string; focus: string; goals: string[];
-    attentionRequired: boolean;
-    trainingHighlights: string; areasForImprovement: string;
-    footballGoal: string; personalGoal: string; schoolLifeGoal: string;
-    educationTopic: string; parentEngagementNotes: string;
-    followUpActions: string; wellbeingScore: number;
-  } | null>(null);
-  const [callStartTime, setCallStartTime] = useState<Date | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [isSummarising, setIsSummarising] = useState(false);
-  const [isSavingTranscript, setIsSavingTranscript] = useState(false);
-  const [transcriptSaved, setTranscriptSaved] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
-  const finalTranscriptRef = useRef("");
-  const isRecordingRef = useRef(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
-  const [audioSaved, setAudioSaved] = useState(false);
-  const audioFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const scriptGuides = [
     {
@@ -877,353 +850,11 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     }
   ];
 
-  const startRecording = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Speech recognition is not supported in this browser. Try Chrome.");
-      return;
-    }
 
-    const createRecognition = () => {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-AU";
-      recognition.maxAlternatives = 3;
-
-      recognition.onresult = (event: any) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          // Pick the highest confidence alternative
-          let bestTranscript = "";
-          let bestConfidence = 0;
-          for (let j = 0; j < event.results[i].length; j++) {
-            if (event.results[i][j].confidence > bestConfidence) {
-              bestConfidence = event.results[i][j].confidence;
-              bestTranscript = event.results[i][j].transcript;
-            }
-          }
-          if (event.results[i].isFinal) {
-            finalTranscriptRef.current += bestTranscript + " ";
-          } else {
-            interim += bestTranscript;
-          }
-        }
-        setTranscript(finalTranscriptRef.current + interim);
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        if (event.error === "no-speech") {
-          // Silently restart on no-speech instead of stopping
-          if (isRecordingRef.current) {
-            try { recognition.stop(); } catch {}
-          }
-          return;
-        }
-        if (event.error === "aborted" || event.error === "network") {
-          // Auto-recover from transient errors
-          if (isRecordingRef.current) {
-            setTimeout(() => {
-              if (isRecordingRef.current) {
-                try {
-                  const newRec = createRecognition();
-                  newRec.start();
-                  recognitionRef.current = newRec;
-                } catch {}
-              }
-            }, 300);
-          }
-          return;
-        }
-        toast.error(`Microphone error: ${event.error}`);
-        isRecordingRef.current = false;
-        setIsRecording(false);
-      };
-
-      recognition.onend = () => {
-        // Use ref to avoid stale closure — always restart if still recording
-        if (isRecordingRef.current) {
-          setTimeout(() => {
-            if (isRecordingRef.current) {
-              try {
-                const newRec = createRecognition();
-                newRec.start();
-                recognitionRef.current = newRec;
-              } catch (e) {
-                console.error("Failed to restart recognition:", e);
-              }
-            }
-          }, 100);
-        }
-      };
-
-      return recognition;
-    };
-
-    finalTranscriptRef.current = transcript;
-    const recognition = createRecognition();
-    recognition.start();
-    recognitionRef.current = recognition;
-    isRecordingRef.current = true;
-    setIsRecording(true);
-    setCallStartTime(new Date());
-
-    // Start MediaRecorder for audio capture
-    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
-      .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
-        audioChunksRef.current = [];
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-          setAudioUrl(URL.createObjectURL(blob));
-          stream.getTracks().forEach((t) => t.stop());
-        };
-        mediaRecorder.start(1000); // capture in 1s chunks
-        mediaRecorderRef.current = mediaRecorder;
-      })
-      .catch((err) => console.warn("MediaRecorder unavailable:", err));
-
-    toast.success("Recording started — speak clearly into your microphone");
-  }, [transcript]);
-
-  const stopRecording = useCallback(() => {
-    isRecordingRef.current = false;
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-    setIsRecording(false);
-    setTranscript(finalTranscriptRef.current);
-    toast.info("Recording stopped");
-  }, []);
-
-  const uploadAudioToStorage = useCallback(async () => {
-    if (audioChunksRef.current.length === 0) {
-      toast.error("No audio recorded");
-      return;
-    }
-    setIsUploadingAudio(true);
-    try {
-      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-      const fileName = `${athlete.id}/${Date.now()}-call.webm`;
-      const { error } = await supabase.storage.from("call-audio").upload(fileName, blob, { contentType: "audio/webm" });
-      if (error) throw error;
-      setAudioSaved(true);
-      toast.success("Audio saved to call recordings");
-    } catch (e: any) {
-      console.error("Audio upload error:", e);
-      toast.error(e.message || "Failed to upload audio");
-    } finally {
-      setIsUploadingAudio(false);
-    }
-  }, [athlete.id]);
-
-  const handleAudioFileUpload = useCallback(async (file: File) => {
-    setIsUploadingAudio(true);
-    try {
-      const fileName = `${athlete.id}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("call-audio").upload(fileName, file, { contentType: file.type });
-      if (error) throw error;
-      setAudioSaved(true);
-      toast.success(`"${file.name}" uploaded to call recordings`);
-    } catch (e: any) {
-      console.error("Audio file upload error:", e);
-      toast.error(e.message || "Failed to upload audio file");
-    } finally {
-      setIsUploadingAudio(false);
-    }
-  }, [athlete.id]);
-
-  const generateAISummary = useCallback(async () => {
-    const textToSummarise = transcript || notes;
-    if (!textToSummarise.trim()) {
-      toast.error("No transcript or notes to summarise");
-      return;
-    }
-    setIsSummarising(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("summarise-call", {
-        body: { transcript: textToSummarise, athleteName: athlete.name },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setAiSummary(data.summary);
-      toast.success("Summary generated");
-    } catch (e: any) {
-      console.error("Summary error:", e);
-      toast.error(e.message || "Failed to generate summary");
-    } finally {
-      setIsSummarising(false);
-    }
-  }, [transcript, notes, athlete.name]);
-
-  const saveTranscriptToCommsLog = useCallback(async () => {
-    const textToSave = transcript || notes;
-    if (!textToSave.trim()) {
-      toast.error("No transcript or notes to save");
-      return;
-    }
-    setIsSavingTranscript(true);
-    try {
-      const { error } = await supabase.from("comms_log").insert({
-        athlete_id: athlete.id,
-        subject: `Call Transcript — ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`,
-        body: textToSave,
-        recipient_type: "athlete",
-        sent_by: user?.id ?? null,
-      });
-      if (error) throw error;
-      setTranscriptSaved(true);
-      toast.success("Transcript saved to Comms Log");
-    } catch (e: any) {
-      console.error("Save transcript error:", e);
-      toast.error(e.message || "Failed to save transcript");
-    } finally {
-      setIsSavingTranscript(false);
-    }
-  }, [transcript, notes, athlete.id, user?.id]);
-
-
-  const publishToTracker = useCallback(async () => {
-    if (!aiSummary) return;
-    setIsPublishing(true);
-    try {
-      const reviewMonth = new Date().toISOString().slice(0, 7) + "-01";
-      const callDuration = callStartTime
-        ? `${Math.round((Date.now() - callStartTime.getTime()) / 60000)} min`
-        : "—";
-
-      const goalsArray: string[] = aiSummary.goals?.filter(Boolean) || [];
-
-      await publishToTrackerUtil({
-        athleteId: athlete.id,
-        reviewMonth,
-        performanceNotes: aiSummary.performance || null,
-        lifestyleNotes: aiSummary.lifestyle || null,
-        personalNotes: aiSummary.personal || null,
-        educationNotes: aiSummary.education || null,
-        brandNotes: aiSummary.brand || null,
-        focusNextMonth: aiSummary.focus || null,
-        wellbeingScore: aiSummary.wellbeingScore ?? (aiSummary.attentionRequired ? 2 : 4),
-        attentionRequired: aiSummary.attentionRequired,
-        callDate: new Date().toISOString().slice(0, 10),
-        callDuration,
-        trainingHighlights: aiSummary.trainingHighlights || aiSummary.performance || null,
-        areasForImprovement: aiSummary.areasForImprovement || null,
-        footballGoal: aiSummary.footballGoal || null,
-        personalGoal: aiSummary.personalGoal || null,
-        schoolLifeGoal: aiSummary.schoolLifeGoal || null,
-        parentEngagementNotes: aiSummary.parentEngagementNotes || null,
-        followUpActions: aiSummary.followUpActions || null,
-        goals: goalsArray,
-        userId: user?.id ?? null,
-        completedBy: user?.email || user?.id || null,
-        reviewSource: "transcript_recording",
-      });
-
-      setIsPublished(true);
-      toast.success("Summary published to Development Tracker");
-    } catch (e: any) {
-      console.error("Publish error:", e);
-      toast.error(e.message || "Failed to publish to tracker");
-    } finally {
-      setIsPublishing(false);
-    }
-  }, [aiSummary, athlete.id, user?.id, user?.email, callStartTime]);
-
-  const createAthleteEmail = useCallback(() => {
-    if (!aiSummary) return;
-    const firstName = athlete.name.split(" ")[0];
-
-    // Collect non-empty positives for reinforcement
-    const positives: string[] = [];
-    if (aiSummary.performance) positives.push(aiSummary.performance);
-    if (aiSummary.lifestyle) positives.push(aiSummary.lifestyle);
-    if (aiSummary.personal) positives.push(aiSummary.personal);
-    if (aiSummary.education) positives.push(aiSummary.education);
-
-    // Build optional sections — omit blank fields naturally
-    const sections: string[] = [];
-    if (aiSummary.performance) sections.push(`**On the Pitch**\n${aiSummary.performance}`);
-    if (aiSummary.lifestyle) sections.push(`**Off the Pitch**\n${aiSummary.lifestyle}`);
-    if (aiSummary.personal) sections.push(`**Personal Development**\n${aiSummary.personal}`);
-    if (aiSummary.education) sections.push(`**Education**\n${aiSummary.education}`);
-
-    // Focus areas
-    const focusLines: string[] = [];
-    if (aiSummary.focus) focusLines.push(aiSummary.focus);
-    if (aiSummary.goals.length > 0) {
-      focusLines.push(aiSummary.goals.map((g) => `• ${g}`).join("\n"));
-    }
-
-    const draft = [
-      `Hey ${firstName},`,
-      ``,
-      `Really enjoyed our catch up today mate. It's great to see the effort you're putting in — you should be proud of how far you've come.`,
-      ``,
-      ...(positives.length > 0
-        ? [`A couple of things that stood out — ${positives.slice(0, 2).map(p => p.replace(/\.$/, "").toLowerCase()).join(", and ")}. That's all really positive mate.`]
-        : []),
-      ``,
-      ...(sections.length > 0 ? [`Here's a quick summary of what we covered:`, ``, ...sections.map(s => s + "\n")] : []),
-      ...(focusLines.length > 0 ? [`**What We're Working on Next**`, ...focusLines, ``] : []),
-      `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
-      ``,
-      `Speak soon,`,
-      `SFX Pathways`,
-    ].join("\n");
-
-    setAthleteEmailDraft(draft);
-    toast.success("Athlete email draft created");
-  }, [aiSummary, athlete.name]);
-
-  const createParentEmail = useCallback(() => {
-    if (!aiSummary) return;
-    const firstName = athlete.name.split(" ")[0];
-    const parentName = athlete.parentName || "there";
-
-    // Brief discussion points — only include non-empty fields
-    const points: string[] = [];
-    if (aiSummary.performance) points.push(`**Performance:** ${aiSummary.performance}`);
-    if (aiSummary.education) points.push(`**Education:** ${aiSummary.education}`);
-    if (aiSummary.personal) points.push(`**Wellbeing & Development:** ${aiSummary.personal}`);
-    if (aiSummary.lifestyle) points.push(`**Lifestyle:** ${aiSummary.lifestyle}`);
-
-    const draft = [
-      `Hi ${parentName},`,
-      ``,
-      `I had a really positive catch up with ${firstName} this month and wanted to share a brief update with you.`,
-      ``,
-      `${firstName} is tracking well and showing good progress. ${aiSummary.attentionRequired ? `There are a couple of areas we're keeping an eye on, but nothing to be concerned about — just part of the development process.` : `I'm really pleased with how things are going.`}`,
-      ``,
-      ...(points.length > 0 ? [`Here's a summary of the key areas we discussed:`, ``, ...points, ``] : []),
-      ...(aiSummary.focus ? [`**Next Focus**\n${aiSummary.focus}`, ``] : []),
-      `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
-      ``,
-      `Warm regards,`,
-      `SFX Pathways`,
-    ].join("\n");
-
-    setParentEmailDraft(draft);
-    toast.success("Parent email draft created");
-  }, [aiSummary, athlete.name, athlete.parentName]);
 
 
   // Handle email creation from mobile call screen
   const handleMobileCallEmail = useCallback((type: "athlete" | "parent", sectionNotes: Record<string, string>) => {
-    // Build notes string from sections for AI summary input
-    const combinedNotes = Object.entries(sectionNotes)
-      .filter(([, v]) => v.trim())
-      .map(([k, v]) => `${k}: ${v}`)
-      .join("\n");
-    setNotes(combinedNotes);
     setCallSessionActive(false);
 
     // Use section notes directly to create emails without AI summary
@@ -1536,200 +1167,52 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2 md:pb-4"><CardTitle className="text-base md:text-lg">Call Notes — {athlete.name}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {/* Voice Recording */}
-          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border bg-muted/30">
-            {!isRecording ? (
-              <Button onClick={startRecording} variant="outline" className="gap-2">
-                <Mic className="h-4 w-4" /> Start Recording
-              </Button>
-            ) : (
-              <Button onClick={stopRecording} variant="destructive" className="gap-2">
-                <Square className="h-4 w-4" /> Stop Recording
-              </Button>
-            )}
-            {isRecording && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                Recording...
-              </div>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              <input
-                ref={audioFileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleAudioFileUpload(file);
-                  e.target.value = "";
+      {/* Email Drafts (generated from Call Tools) */}
+      {athleteEmailDraft && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  navigator.clipboard.writeText(athleteEmailDraft);
+                  toast.success("Copied to clipboard");
                 }}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => audioFileInputRef.current?.click()}
-                disabled={isUploadingAudio}
               >
-                <Upload className="h-4 w-4" /> Upload Audio
+                Copy
               </Button>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Audio playback + save */}
-          {audioUrl && !audioSaved && (
-            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-              <audio controls src={audioUrl} className="h-8 flex-1" />
-              <Button
-                size="sm"
-                onClick={uploadAudioToStorage}
-                disabled={isUploadingAudio || audioSaved}
-                className="gap-2"
+      {parentEmailDraft && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  navigator.clipboard.writeText(parentEmailDraft);
+                  toast.success("Copied to clipboard");
+                }}
               >
-                {isUploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {audioSaved ? "Saved ✓" : "Save Audio"}
+                Copy
               </Button>
             </div>
-          )}
-          {audioSaved && (
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              ✅ Audio recording saved to call recordings
-            </div>
-          )}
-
-          {/* Transcript */}
-          {transcript && (
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Transcript</label>
-              <div className="p-3 rounded-md border bg-background text-sm max-h-[200px] overflow-y-auto whitespace-pre-wrap">
-                {transcript}
-              </div>
-            </div>
-          )}
-
-          {/* Manual notes */}
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Type call notes here..."
-            className="min-h-[80px] md:min-h-[100px] text-base"
-          />
-          {/* Action buttons - grid on mobile for large tap targets */}
-          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:gap-2">
-            <Button 
-              onClick={saveTranscriptToCommsLog} 
-              variant="outline" 
-              className="gap-2 h-11 md:h-9 text-sm" 
-              disabled={isSavingTranscript || transcriptSaved || (!transcript && !notes)}
-            >
-              {isSavingTranscript ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              {transcriptSaved ? "Saved ✓" : "Save Notes"}
-            </Button>
-            <Button onClick={generateAISummary} className="gap-2 h-11 md:h-9 text-sm" disabled={isSummarising}>
-              {isSummarising ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {isSummarising ? "Summarising..." : "AI Summary"}
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={publishToTracker} 
-              disabled={!aiSummary || isPublishing || isPublished}
-              className="gap-2 h-11 md:h-9 text-sm"
-            >
-              {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-              {isPublished ? "Published ✓" : "Publish"}
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={createAthleteEmail} 
-              disabled={!aiSummary}
-              className="gap-2 h-11 md:h-9 text-sm"
-            >
-              <Mail className="h-4 w-4" /> Athlete Email
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={createParentEmail} 
-              disabled={!aiSummary}
-              className="gap-2 h-11 md:h-9 col-span-2 md:col-span-1 text-sm"
-            >
-              <Mail className="h-4 w-4" /> Parent Email
-            </Button>
-          </div>
-          {aiSummary && (
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">Structured Summary</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div><span className="font-medium">Performance:</span> {aiSummary.performance}</div>
-                <div><span className="font-medium">Lifestyle:</span> {aiSummary.lifestyle}</div>
-                <div><span className="font-medium">Personal:</span> {aiSummary.personal}</div>
-                <div><span className="font-medium">Education:</span> {aiSummary.education}</div>
-                <div><span className="font-medium">Brand:</span> {aiSummary.brand}</div>
-                <Separator />
-                <div><span className="font-medium">Focus:</span> {aiSummary.focus}</div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {aiSummary.goals.map((g, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <div className="mt-1 h-2 w-2 rounded-full bg-foreground/70" />
-                      <div>{g}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Email Drafts */}
-          {athleteEmailDraft && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      navigator.clipboard.writeText(athleteEmailDraft);
-                      toast.success("Copied to clipboard");
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
-              </CardContent>
-            </Card>
-          )}
-
-          {parentEmailDraft && (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      navigator.clipboard.writeText(parentEmailDraft);
-                      toast.success("Copied to clipboard");
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
