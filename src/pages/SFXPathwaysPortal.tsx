@@ -434,31 +434,37 @@ function RosterDashboard({ athletes }: { athletes: Athlete[] }) {
           </div>
         </CardContent>
       </Card>
-      <div className="space-y-3">
-        {filtered.map((a) => (
-          <Card key={a.id}>
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{a.name}</span>
-                    {statusBadge(a.status)}
+      {q.trim().length > 0 && (
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground px-1">No athletes found matching "{q}"</p>
+          ) : (
+            filtered.map((a) => (
+              <Card key={a.id}>
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{a.name}</span>
+                        {statusBadge(a.status)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {a.club} • {a.position} • {a.stage} • Commercial: {a.commercialPotential}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
+                      <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
+                      <Button variant="secondary" size="sm">Open Profile</Button>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {a.club} • {a.position} • {a.stage} • Commercial: {a.commercialPotential}
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
-                  <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                  <Button variant="secondary" size="sm">Open Profile</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
