@@ -1877,28 +1877,52 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
 
 function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
-  const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string }[]>>({});
+  const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string; source?: "global" | "athlete" }[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const isAgentOrAdmin = role === "agent" || role === "admin";
 
   useEffect(() => {
     fetchResources();
-  }, []);
+  }, [athlete?.id]);
 
   async function fetchResources() {
-    const { data, error } = await supabase
+    // Fetch global resources
+    const { data: globalData, error: globalError } = await supabase
       .from("resources")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) {
-      console.error("Error fetching resources:", error);
-      return;
+    if (globalError) {
+      console.error("Error fetching resources:", globalError);
     }
+
+    // Fetch athlete-specific resources if athlete is selected
+    let athleteData: any[] = [];
+    if (athlete?.id) {
+      const { data, error } = await supabase
+        .from("athlete_resources")
+        .select("*")
+        .eq("athlete_id", athlete.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching athlete resources:", error);
+      } else {
+        athleteData = data || [];
+      }
+    }
+
     const grouped: typeof resources = {};
-    for (const r of data || []) {
+    // Add global resources
+    for (const r of globalData || []) {
       if (!grouped[r.category]) grouped[r.category] = [];
-      grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at });
+      grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at, source: "global" });
+    }
+    // Merge athlete-specific resources into matching categories
+    for (const r of athleteData) {
+      if (categories.includes(r.category)) {
+        if (!grouped[r.category]) grouped[r.category] = [];
+        grouped[r.category].push({ id: r.id, file_name: r.title || r.file_name, file_path: r.file_path, created_at: r.created_at, source: "athlete" });
+      }
     }
     setResources(grouped);
   }
@@ -1930,13 +1954,15 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     setUploading(null);
   }
 
-  async function handleDelete(id: string, filePath: string, category: string) {
-    const { error: storageError } = await supabase.storage.from("resources").remove([filePath]);
+  async function handleDelete(id: string, filePath: string, category: string, source?: "global" | "athlete") {
+    const bucket = source === "athlete" ? "athlete-resources" : "resources";
+    const table = source === "athlete" ? "athlete_resources" : "resources";
+    const { error: storageError } = await supabase.storage.from(bucket).remove([filePath]);
     if (storageError) {
       toast.error(`Delete failed: ${storageError.message}`);
       return;
     }
-    const { error: dbError } = await supabase.from("resources").delete().eq("id", id);
+    const { error: dbError } = await supabase.from(table).delete().eq("id", id);
     if (dbError) {
       toast.error(`Failed to remove record: ${dbError.message}`);
     } else {
@@ -1945,9 +1971,24 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     }
   }
 
-  function getPublicUrl(filePath: string) {
+  function getPublicUrl(filePath: string, source?: "global" | "athlete") {
+    if (source === "athlete") {
+      // athlete-resources bucket is private, use signed URL
+      return null; // handled via click
+    }
     const { data } = supabase.storage.from("resources").getPublicUrl(filePath);
     return data.publicUrl;
+  }
+
+  async function handleDownloadAthlete(filePath: string) {
+    const { data, error } = await supabase.storage
+      .from("athlete-resources")
+      .createSignedUrl(filePath, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Could not generate download link");
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
   }
 
   return (
@@ -2006,21 +2047,30 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
               ) : (
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {(resources[cat] || []).map((res) => (
-                    <div key={res.id} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
-                      <a
-                        href={getPublicUrl(res.file_path)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-primary hover:underline flex-1"
-                      >
-                        {res.file_name}
-                      </a>
+                    <div key={`${res.source}-${res.id}`} className="flex items-center justify-between gap-2 text-sm p-2 rounded-md bg-muted/40">
+                      {res.source === "athlete" ? (
+                        <button
+                          onClick={() => handleDownloadAthlete(res.file_path)}
+                          className="truncate text-primary hover:underline flex-1 text-left"
+                        >
+                          {res.file_name}
+                        </button>
+                      ) : (
+                        <a
+                          href={getPublicUrl(res.file_path, res.source) || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate text-primary hover:underline flex-1"
+                        >
+                          {res.file_name}
+                        </a>
+                      )}
                       {isAgentOrAdmin && (
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6 shrink-0"
-                          onClick={() => handleDelete(res.id, res.file_path, cat)}
+                          onClick={() => handleDelete(res.id, res.file_path, cat, res.source)}
                         >
                           <span className="text-xs text-destructive">✕</span>
                         </Button>
