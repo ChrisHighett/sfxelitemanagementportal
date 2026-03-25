@@ -244,7 +244,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <StatCard
           label="Check-in"
           icon={<CalendarDays className="h-4 w-4" />}
