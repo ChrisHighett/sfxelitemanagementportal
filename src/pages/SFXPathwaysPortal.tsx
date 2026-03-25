@@ -472,7 +472,15 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
   }, [athletes]);
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Athlete Roster"
+        subtitle="Manage your athletes, track wellbeing, and plan your week"
+        imageUrl={heroImage}
+        size="md"
+      />
+
       {contractAlerts.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
