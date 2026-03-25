@@ -515,10 +515,12 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       if (data?.raw_text) {
         setParentEmailSubject("Update — " + firstName);
         setParentEmailDraft(data.raw_text);
+        saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: "Update — " + firstName, body: data.raw_text, generatedFrom: "call", createdBy: user?.id });
         toast.info("AI returned unstructured text — you can edit it below");
       } else {
         setParentEmailSubject(data.email.subject || "");
         setParentEmailDraft(data.email.body || "");
+        saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: data.email.subject || "", body: data.email.body || "", generatedFrom: "call", createdBy: user?.id });
         toast.success("Parent email generated");
       }
     } catch (e: any) {
