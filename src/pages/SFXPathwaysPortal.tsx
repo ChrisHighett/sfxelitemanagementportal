@@ -330,47 +330,93 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   const smart = review ? resolveSmartFields(review) : null;
+  const hasUpdate = smart && (smart.performance !== "—" || smart.lifestyle !== "—" || smart.personal !== "—" || smart.education !== "—" || smart.focus !== "—");
+
   return (
-    <div className="space-y-6 p-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <CardTitle>{athlete.name} — Parent View</CardTitle>
-            {statusBadge(athlete.status)}
+    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={`${athlete.name}`}
+        subtitle="Parent Portal — Stay connected with your child's development"
+        imageUrl={heroImage}
+        badge={statusBadge(athlete.status)}
+        size="md"
+      />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard
+          label="Check-in"
+          icon={<CalendarDays className="h-4 w-4" />}
+          value={athlete.nextCall}
+        />
+        <StatCard
+          label="Wellbeing"
+          icon={<Sparkles className="h-4 w-4" />}
+          value={scorePill(athlete.wellbeingScore)}
+        />
+        <StatCard
+          label="Focus"
+          icon={<ClipboardList className="h-4 w-4" />}
+          value={<span className="text-xs font-medium">{smart?.focus ?? "—"}</span>}
+        />
+      </div>
+
+      {/* Latest Update */}
+      <ContentSection title="Latest Update">
+        {hasUpdate ? (
+          <div className="rounded-xl border border-border bg-card divide-y divide-border">
+            {smart!.performance !== "—" && (
+              <div className="p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Performance</p>
+                <p className="text-sm">{smart!.performance}</p>
+              </div>
+            )}
+            {smart!.lifestyle !== "—" && (
+              <div className="p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Lifestyle</p>
+                <p className="text-sm">{smart!.lifestyle}</p>
+              </div>
+            )}
+            {smart!.personal !== "—" && (
+              <div className="p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Personal</p>
+                <p className="text-sm">{smart!.personal}</p>
+              </div>
+            )}
+            {smart!.education !== "—" && (
+              <div className="p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Education</p>
+                <p className="text-sm">{smart!.education}</p>
+              </div>
+            )}
+            {smart!.focus !== "—" && (
+              <div className="p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Next Focus</p>
+                <p className="text-sm">{smart!.focus}</p>
+              </div>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Next Check-in</div><div className="mt-1 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span className="font-medium">{athlete.nextCall}</span></div></CardContent></Card>
-            <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Wellbeing (high-level)</div><div className="mt-2">{scorePill(athlete.wellbeingScore)}</div></CardContent></Card>
-            <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Current Focus</div><div className="mt-1 font-medium">{smart?.focus ?? "—"}</div></CardContent></Card>
+        ) : (
+          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            No update available yet.
           </div>
-          <Separator />
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-base">Latest Parent Update</CardTitle></CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {smart && smart.performance !== "—" && <div><span className="font-medium">Performance:</span> {smart.performance}</div>}
-              {smart && smart.lifestyle !== "—" && <div><span className="font-medium">Lifestyle:</span> {smart.lifestyle}</div>}
-              {smart && smart.personal !== "—" && <div><span className="font-medium">Personal:</span> {smart.personal}</div>}
-              {smart && smart.education !== "—" && <div><span className="font-medium">Education:</span> {smart.education}</div>}
-              {smart && smart.focus !== "—" && <div><span className="font-medium">Next Focus:</span> {smart.focus}</div>}
-              {(!smart || (smart.performance === "—" && smart.lifestyle === "—" && smart.personal === "—" && smart.education === "—" && smart.focus === "—")) && (
-                <p className="text-muted-foreground">No update available yet.</p>
-              )}
-              <p className="text-muted-foreground mt-2">If you have questions, contact the assigned manager anytime.</p>
-            </CardContent>
-          </Card>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle className="text-base">Contact</CardTitle></CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          <div>Manager: {athlete.assignedAgent}</div>
-          <div>📧 info@sfx.com.au</div>
-          <Separator className="my-3" />
-          <Button variant="secondary">Send Message</Button>
-        </CardContent>
-      </Card>
+        )}
+      </ContentSection>
+
+      {/* Contact */}
+      <ContentSection title="Contact">
+        <ImageCard
+          title={athlete.assignedAgent}
+          description="Your child's assigned manager"
+          icon={<Phone className="h-4 w-4" />}
+        >
+          <p className="text-xs text-muted-foreground mt-1">📧 info@sfx.com.au</p>
+          <Button variant="secondary" size="sm" className="mt-3 w-full">
+            Send Message
+          </Button>
+        </ImageCard>
+      </ContentSection>
     </div>
   );
 }
