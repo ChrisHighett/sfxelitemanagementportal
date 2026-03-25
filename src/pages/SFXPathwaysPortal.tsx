@@ -2350,7 +2350,14 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
 
 function AdminSecurity() {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Admin Panel"
+        subtitle="Manage athletes, guardians, security, and access controls"
+        imageUrl={heroImage}
+        size="sm"
+      />
       <Tabs defaultValue="athletes" className="w-full">
         <TabsList>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
