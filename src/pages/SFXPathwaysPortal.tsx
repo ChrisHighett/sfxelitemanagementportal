@@ -223,6 +223,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
+  const smart = review ? resolveSmartFields(review) : null;
   return (
     <div className="space-y-6 p-6">
       <Card>
@@ -252,7 +253,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
             <Card>
               <CardContent className="p-4">
                 <div className="text-xs text-muted-foreground">Focus This Month</div>
-                <div className="mt-1 font-medium">{review?.focus ?? "—"}</div>
+                <div className="mt-1 font-medium">{smart?.focus ?? "—"}</div>
               </CardContent>
             </Card>
           </div>
@@ -273,9 +274,9 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Latest Review Summary</CardTitle></CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <div><span className="font-medium">Performance:</span> {review?.performance ?? "—"}</div>
-                <div><span className="font-medium">Lifestyle:</span> {review?.lifestyle ?? "—"}</div>
-                <div><span className="font-medium">Personal:</span> {review?.personal ?? "—"}</div>
+                <div><span className="font-medium">Performance:</span> {smart?.performance ?? "—"}</div>
+                <div><span className="font-medium">Lifestyle:</span> {smart?.lifestyle ?? "—"}</div>
+                <div><span className="font-medium">Personal:</span> {smart?.personal ?? "—"}</div>
               </CardContent>
             </Card>
           </div>
