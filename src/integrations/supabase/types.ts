@@ -538,6 +538,60 @@ export type Database = {
           },
         ]
       }
+      comms_history: {
+        Row: {
+          athlete_id: string
+          body: string
+          created_at: string
+          created_by: string | null
+          email_type: string
+          generated_from: string | null
+          id: string
+          sent_status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          athlete_id: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          email_type: string
+          generated_from?: string | null
+          id?: string
+          sent_status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          email_type?: string
+          generated_from?: string | null
+          id?: string
+          sent_status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comms_history_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comms_history_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comms_log: {
         Row: {
           athlete_id: string
