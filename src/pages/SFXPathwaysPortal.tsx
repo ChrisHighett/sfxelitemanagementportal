@@ -326,10 +326,14 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Latest Parent Update</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div><span className="font-medium">Performance:</span> {smart?.performance ?? "—"}</div>
-              <div><span className="font-medium">Lifestyle:</span> {smart?.lifestyle ?? "—"}</div>
-              <div><span className="font-medium">Personal:</span> {smart?.personal ?? "—"}</div>
-              <div><span className="font-medium">Next focus:</span> {smart?.focus ?? "—"}</div>
+              {smart && smart.performance !== "—" && <div><span className="font-medium">Performance:</span> {smart.performance}</div>}
+              {smart && smart.lifestyle !== "—" && <div><span className="font-medium">Lifestyle:</span> {smart.lifestyle}</div>}
+              {smart && smart.personal !== "—" && <div><span className="font-medium">Personal:</span> {smart.personal}</div>}
+              {smart && smart.education !== "—" && <div><span className="font-medium">Education:</span> {smart.education}</div>}
+              {smart && smart.focus !== "—" && <div><span className="font-medium">Next Focus:</span> {smart.focus}</div>}
+              {(!smart || (smart.performance === "—" && smart.lifestyle === "—" && smart.personal === "—" && smart.education === "—" && smart.focus === "—")) && (
+                <p className="text-muted-foreground">No update available yet.</p>
+              )}
               <p className="text-muted-foreground mt-2">If you have questions, contact the assigned manager anytime.</p>
             </CardContent>
           </Card>
