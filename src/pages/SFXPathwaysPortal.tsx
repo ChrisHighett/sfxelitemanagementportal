@@ -233,7 +233,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
   const smart = review ? resolveSmartFields(review) : null;
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-2xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title={`Welcome back, ${athlete.name.split(" ")[0]}`}
@@ -244,7 +244,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <StatCard
           label="Check-in"
           icon={<CalendarDays className="h-4 w-4" />}
@@ -334,7 +334,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const hasUpdate = smart && (smart.performance !== "—" || smart.lifestyle !== "—" || smart.personal !== "—" || smart.education !== "—" || smart.focus !== "—");
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-2xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title={`${athlete.name}`}
@@ -345,7 +345,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         <StatCard
           label="Check-in"
           icon={<CalendarDays className="h-4 w-4" />}
@@ -473,7 +473,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
   }, [athletes]);
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-4xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title="Athlete Roster"
@@ -516,7 +516,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
         <CardHeader><CardTitle>Roster Dashboard</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4">
-            <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
+            <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-72" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Show attention required</span>
@@ -532,21 +532,21 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
             filtered.map((a) => (
               <Card key={a.id}>
                 <CardContent className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex flex-col gap-3">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{a.name}</span>
                         {statusBadge(a.status)}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {a.club} • {a.position} • {a.stage} • Commercial: {a.commercialPotential}
+                        {a.club} • {a.position} • {a.stage}
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-32">{scorePill(a.wellbeingScore)}</div></div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
                       <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
                       <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                      <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button>
+                      <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
                     </div>
                   </div>
                 </CardContent>
@@ -574,7 +574,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   }
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-4xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title={athlete.name}
@@ -598,7 +598,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+          <div className="grid gap-6 md:grid-cols-[280px_1fr]">
             <div className="space-y-2 text-sm">
               <div className="text-xl font-bold">{athlete.name}</div>
               <div>Age: {athlete.age}</div>
@@ -616,11 +616,11 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
             </div>
             <div>
               <Tabs defaultValue="reviews">
-                <TabsList>
-                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                  <TabsTrigger value="comms">Comms Log</TabsTrigger>
-                  <TabsTrigger value="commercial">Commercial</TabsTrigger>
-                  <TabsTrigger value="files">Files</TabsTrigger>
+                <TabsList className="flex flex-wrap h-auto gap-1">
+                  <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
+                  <TabsTrigger value="comms" className="text-xs sm:text-sm">Comms</TabsTrigger>
+                  <TabsTrigger value="commercial" className="text-xs sm:text-sm">Commercial</TabsTrigger>
+                  <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
                 </TabsList>
                 <TabsContent value="reviews" className="space-y-4 mt-4">
                   {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
