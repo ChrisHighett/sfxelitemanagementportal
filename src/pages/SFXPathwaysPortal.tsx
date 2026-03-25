@@ -882,6 +882,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `SFX Pathways`,
       ].join("\n");
       setAthleteEmailDraft(draft);
+      // Auto-save to comms history
+      saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: `Follow-up — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Athlete email draft created");
     } else {
       const points: string[] = [];
