@@ -28,6 +28,7 @@ import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
+import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
@@ -732,6 +733,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
+  const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
@@ -881,6 +883,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `SFX Pathways`,
       ].join("\n");
       setAthleteEmailDraft(draft);
+      // Auto-save to comms history
+      saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: `Follow-up — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Athlete email draft created");
     } else {
       const points: string[] = [];
@@ -904,6 +908,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `SFX Pathways`,
       ].join("\n");
       setParentEmailDraft(draft);
+      // Auto-save to comms history
+      saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: `Update — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Parent email draft created");
     }
   }, [athlete.name, athlete.parentName]);
@@ -936,7 +942,16 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         imageUrl={heroImage}
         size="sm"
       />
-      {/* Start Call Session button — prominent on mobile */}
+
+      {/* Tabs: Call Tools | Comms History */}
+      <Tabs value={commsTab} onValueChange={(v) => setCommsTab(v as "tools" | "history")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="tools" className="flex-1">Call Tools</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1">Comms History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tools" className="mt-4 space-y-5">
+          {/* Start Call Session button — prominent on mobile */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col gap-4">
@@ -1213,6 +1228,12 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

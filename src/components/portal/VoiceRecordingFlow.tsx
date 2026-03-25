@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { publishToTracker } from "@/lib/tracker-publish";
+import { saveCommsEmail } from "@/components/portal/CommsHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -475,10 +476,12 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       if (data?.raw_text) {
         setAthleteEmailSubject("Follow-up — " + firstName);
         setAthleteEmailDraft(data.raw_text);
+        saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: "Follow-up — " + firstName, body: data.raw_text, generatedFrom: "call", createdBy: user?.id });
         toast.info("AI returned unstructured text — you can edit it below");
       } else {
         setAthleteEmailSubject(data.email.subject || "");
         setAthleteEmailDraft(data.email.body || "");
+        saveCommsEmail({ athleteId: athlete.id, emailType: "athlete", subject: data.email.subject || "", body: data.email.body || "", generatedFrom: "call", createdBy: user?.id });
         toast.success("Athlete email generated");
       }
     } catch (e: any) {
@@ -512,10 +515,12 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
       if (data?.raw_text) {
         setParentEmailSubject("Update — " + firstName);
         setParentEmailDraft(data.raw_text);
+        saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: "Update — " + firstName, body: data.raw_text, generatedFrom: "call", createdBy: user?.id });
         toast.info("AI returned unstructured text — you can edit it below");
       } else {
         setParentEmailSubject(data.email.subject || "");
         setParentEmailDraft(data.email.body || "");
+        saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: data.email.subject || "", body: data.email.body || "", generatedFrom: "call", createdBy: user?.id });
         toast.success("Parent email generated");
       }
     } catch (e: any) {
