@@ -598,7 +598,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+          <div className="grid gap-6 md:grid-cols-[280px_1fr]">
             <div className="space-y-2 text-sm">
               <div className="text-xl font-bold">{athlete.name}</div>
               <div>Age: {athlete.age}</div>
