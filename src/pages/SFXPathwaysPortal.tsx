@@ -2106,7 +2106,14 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const showContracts = role === "athlete" || role === "parent" || role === "agent";
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title="Resources"
+        subtitle="Training materials, guides, and development resources"
+        imageUrl={heroImage}
+        size="sm"
+      />
       <Tabs defaultValue="materials">
         <TabsList>
           <TabsTrigger value="materials">Resource Materials</TabsTrigger>
