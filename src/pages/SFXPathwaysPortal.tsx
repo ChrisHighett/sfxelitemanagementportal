@@ -855,12 +855,6 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
 
   // Handle email creation from mobile call screen
   const handleMobileCallEmail = useCallback((type: "athlete" | "parent", sectionNotes: Record<string, string>) => {
-    // Build notes string from sections for AI summary input
-    const combinedNotes = Object.entries(sectionNotes)
-      .filter(([, v]) => v.trim())
-      .map(([k, v]) => `${k}: ${v}`)
-      .join("\n");
-    setNotes(combinedNotes);
     setCallSessionActive(false);
 
     // Use section notes directly to create emails without AI summary
