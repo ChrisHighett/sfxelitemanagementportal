@@ -732,6 +732,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
+  const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
