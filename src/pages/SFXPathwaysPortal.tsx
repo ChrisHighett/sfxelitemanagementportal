@@ -516,7 +516,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
         <CardHeader><CardTitle>Roster Dashboard</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-4">
-            <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
+            <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-72" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Show attention required</span>
