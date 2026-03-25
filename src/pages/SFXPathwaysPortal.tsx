@@ -2070,11 +2070,8 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Development Tracker download + inline view */}
+      {/* Tracker download card (XLS export) */}
       {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
-      {athlete && (role === "athlete" || role === "parent") && (
-        <DevelopmentTracker athlete={athlete} />
-      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => (
