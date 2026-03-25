@@ -46,10 +46,10 @@ export default function HeroBanner({
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
 
       {/* Content */}
-      <div className="relative h-full flex flex-col justify-end p-5 md:p-6">
-        {badge && <div className="mb-2">{badge}</div>}
+      <div className="relative h-full flex flex-col justify-end p-4 sm:p-5 md:p-6">
+        {badge && <div className="mb-1.5 sm:mb-2">{badge}</div>}
         <h1
-          className="text-xl md:text-2xl font-bold text-white tracking-tight leading-tight"
+          className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-tight"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           {title}
