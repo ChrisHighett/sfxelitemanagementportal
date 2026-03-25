@@ -43,7 +43,15 @@ export default function AthleteResourceFiles({ athleteId, canManage }: Props) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Reset state completely when athleteId changes to prevent cross-athlete leakage
   useEffect(() => {
+    setResources([]);
+    setLoading(true);
+    setDialogOpen(false);
+    setTitle("");
+    setDescription("");
+    setCategory("Other");
+    setSelectedFile(null);
     fetchResources();
   }, [athleteId]);
 
