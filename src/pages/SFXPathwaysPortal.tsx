@@ -1877,28 +1877,52 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
 
 function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
-  const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string }[]>>({});
+  const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string; source?: "global" | "athlete" }[]>>({});
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const isAgentOrAdmin = role === "agent" || role === "admin";
 
   useEffect(() => {
     fetchResources();
-  }, []);
+  }, [athlete?.id]);
 
   async function fetchResources() {
-    const { data, error } = await supabase
+    // Fetch global resources
+    const { data: globalData, error: globalError } = await supabase
       .from("resources")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) {
-      console.error("Error fetching resources:", error);
-      return;
+    if (globalError) {
+      console.error("Error fetching resources:", globalError);
     }
+
+    // Fetch athlete-specific resources if athlete is selected
+    let athleteData: any[] = [];
+    if (athlete?.id) {
+      const { data, error } = await supabase
+        .from("athlete_resources")
+        .select("*")
+        .eq("athlete_id", athlete.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching athlete resources:", error);
+      } else {
+        athleteData = data || [];
+      }
+    }
+
     const grouped: typeof resources = {};
-    for (const r of data || []) {
+    // Add global resources
+    for (const r of globalData || []) {
       if (!grouped[r.category]) grouped[r.category] = [];
-      grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at });
+      grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at, source: "global" });
+    }
+    // Merge athlete-specific resources into matching categories
+    for (const r of athleteData) {
+      if (categories.includes(r.category)) {
+        if (!grouped[r.category]) grouped[r.category] = [];
+        grouped[r.category].push({ id: r.id, file_name: r.title || r.file_name, file_path: r.file_path, created_at: r.created_at, source: "athlete" });
+      }
     }
     setResources(grouped);
   }
