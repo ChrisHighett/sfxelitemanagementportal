@@ -254,6 +254,7 @@ export type Database = {
           related_call_id: string | null
           related_review_id: string | null
           status: Database["public"]["Enums"]["task_status"]
+          suggested_day: string | null
           title: string
           updated_at: string
         }
@@ -273,6 +274,7 @@ export type Database = {
           related_call_id?: string | null
           related_review_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          suggested_day?: string | null
           title: string
           updated_at?: string
         }
@@ -292,6 +294,7 @@ export type Database = {
           related_call_id?: string | null
           related_review_id?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          suggested_day?: string | null
           title?: string
           updated_at?: string
         }

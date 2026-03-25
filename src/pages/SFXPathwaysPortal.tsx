@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, AlertTriangle, Mic, Square, Upload, Menu, WifiOff } from "lucide-react";
+import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -446,6 +447,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
           </div>
         </CardContent>
       </Card>
+      <WeeklyPlanner athletes={athletes} />
       {q.trim().length > 0 && (
         <div className="space-y-3">
           {filtered.length === 0 ? (

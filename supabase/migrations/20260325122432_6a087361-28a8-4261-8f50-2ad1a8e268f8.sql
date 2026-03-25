@@ -1,0 +1,1 @@
+ALTER TABLE public.athlete_tasks ADD COLUMN IF NOT EXISTS suggested_day text;
