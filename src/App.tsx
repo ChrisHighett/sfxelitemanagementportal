@@ -36,7 +36,7 @@ const App = () => (
             <Route path="/signup" element={<RedirectIfAuth><Signup /></RedirectIfAuth>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<Navigate to="/portal" replace />} />
             <Route path="/portal" element={<ProtectedRoute><SFXPathwaysPortal /></ProtectedRoute>} />
             <Route path="/install" element={<Install />} />
             <Route path="*" element={<NotFound />} />
