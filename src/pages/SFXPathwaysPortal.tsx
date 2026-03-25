@@ -1472,8 +1472,9 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
 
 
 function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
-  const categories = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
+  const BASE_CATEGORIES = ["Nutrition", "Recovery", "Mindset", "Media Training", "Social Media", "Parent Playbook"];
   const [resources, setResources] = useState<Record<string, { id: string; file_name: string; file_path: string; created_at: string; source?: "global" | "athlete" }[]>>({});
+  const [allCategories, setAllCategories] = useState<string[]>(BASE_CATEGORIES);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const isAgentOrAdmin = role === "agent" || role === "admin";
@@ -1513,13 +1514,18 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
       if (!grouped[r.category]) grouped[r.category] = [];
       grouped[r.category].push({ id: r.id, file_name: r.file_name, file_path: r.file_path, created_at: r.created_at, source: "global" });
     }
-    // Merge athlete-specific resources into matching categories
+    // Merge ALL athlete-specific resources (no category filter)
+    // Exclude contract categories as they have their own tab
+    const contractCategories = ["Management Contract", "Playing Contract"];
     for (const r of athleteData) {
-      if (categories.includes(r.category)) {
-        if (!grouped[r.category]) grouped[r.category] = [];
-        grouped[r.category].push({ id: r.id, file_name: r.title || r.file_name, file_path: r.file_path, created_at: r.created_at, source: "athlete" });
-      }
+      if (contractCategories.includes(r.category)) continue;
+      const cat = r.category || "Other";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push({ id: r.id, file_name: r.title || r.file_name, file_path: r.file_path, created_at: r.created_at, source: "athlete" });
     }
+    // Build merged category list: base categories + any extra from data
+    const extraCats = Object.keys(grouped).filter(c => !BASE_CATEGORIES.includes(c));
+    setAllCategories([...BASE_CATEGORIES, ...extraCats]);
     setResources(grouped);
   }
 
@@ -1609,7 +1615,7 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
           {athlete && <TrackerDownloadCard athlete={athlete} role={role} />}
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {categories.map((cat) => (
+            {allCategories.map((cat) => (
               <Card key={cat} className="hover:shadow-sm transition">
                 <CardHeader className="pb-2 flex flex-row items-center justify-between">
                   <CardTitle className="text-base">{cat}</CardTitle>
