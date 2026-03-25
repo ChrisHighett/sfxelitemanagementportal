@@ -2747,8 +2747,16 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   return (
-    <div className="space-y-6 p-6">
-      <div className="space-y-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={`${athlete.name}'s Development`}
+        subtitle="Stay connected with your child's progress"
+        imageUrl={heroImage}
+        badge={statusBadge(athlete.status)}
+        size="md"
+      />
+      <div className="space-y-5">
         <Card>
           <CardHeader><CardTitle className="text-base">Parent Trust Portal</CardTitle></CardHeader>
           <CardContent className="space-y-4">
