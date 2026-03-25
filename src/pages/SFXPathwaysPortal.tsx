@@ -2103,6 +2103,24 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 }
 
 function ContractsTab({ athlete }: { athlete?: Athlete }) {
+  const [mgmtFiles, setMgmtFiles] = useState<{ id: string; title: string; file_path: string }[]>([]);
+  const [playFiles, setPlayFiles] = useState<{ id: string; title: string; file_path: string }[]>([]);
+
+  useEffect(() => {
+    if (!athlete?.id) return;
+    async function load() {
+      const { data } = await supabase
+        .from("athlete_resources")
+        .select("id, title, file_name, file_path, category")
+        .eq("athlete_id", athlete!.id)
+        .in("category", ["Management Contract", "Playing Contract"])
+        .order("created_at", { ascending: false });
+      setMgmtFiles((data || []).filter(r => r.category === "Management Contract").map(r => ({ id: r.id, title: r.title || r.file_name, file_path: r.file_path })));
+      setPlayFiles((data || []).filter(r => r.category === "Playing Contract").map(r => ({ id: r.id, title: r.title || r.file_name, file_path: r.file_path })));
+    }
+    load();
+  }, [athlete?.id]);
+
   if (!athlete) {
     return <p className="text-sm text-muted-foreground p-4">No athlete selected.</p>;
   }
@@ -2115,7 +2133,7 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
   const isExpiringSoon = (d: string | null) => {
     if (!d) return false;
     const diff = new Date(d).getTime() - Date.now();
-    return diff > 0 && diff < 90 * 24 * 60 * 60 * 1000; // within 90 days
+    return diff > 0 && diff < 90 * 24 * 60 * 60 * 1000;
   };
 
   const isExpired = (d: string | null) => {
@@ -2123,9 +2141,33 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
     return new Date(d).getTime() < Date.now();
   };
 
+  async function handleDownload(filePath: string) {
+    const { data, error } = await supabase.storage
+      .from("athlete-resources")
+      .createSignedUrl(filePath, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Could not generate download link");
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
+  }
+
+  function ContractFileList({ files }: { files: { id: string; title: string; file_path: string }[] }) {
+    if (files.length === 0) return <p className="text-xs text-muted-foreground">No documents uploaded.</p>;
+    return (
+      <div className="space-y-1.5">
+        {files.map(f => (
+          <button key={f.id} onClick={() => handleDownload(f.file_path)} className="flex items-center gap-2 text-sm text-primary hover:underline w-full text-left p-1.5 rounded-md bg-muted/40">
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{f.title}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {/* Management Contract */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -2150,10 +2192,14 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
               {formatDate(athlete.managementContractExpiry)}
             </p>
           </div>
+          <Separator />
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Documents</p>
+            <ContractFileList files={mgmtFiles} />
+          </div>
         </CardContent>
       </Card>
 
-      {/* Playing / Club Contract */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -2177,6 +2223,11 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
             <p className={`text-sm font-medium ${isExpired(athlete.clubContractExpiry) ? "text-destructive" : isExpiringSoon(athlete.clubContractExpiry) ? "text-amber-600" : ""}`}>
               {formatDate(athlete.clubContractExpiry)}
             </p>
+          </div>
+          <Separator />
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Documents</p>
+            <ContractFileList files={playFiles} />
           </div>
         </CardContent>
       </Card>

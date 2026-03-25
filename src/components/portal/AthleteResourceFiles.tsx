@@ -22,7 +22,8 @@ const CATEGORIES = [
   "Program",
   "Report",
   "School",
-  "Management & Playing Contracts",
+  "Management Contract",
+  "Playing Contract",
   "Other",
 ];
 
