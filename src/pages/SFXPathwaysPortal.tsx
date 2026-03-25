@@ -26,6 +26,7 @@ import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import { publishToTracker as publishToTrackerUtil } from "@/lib/tracker-publish";
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
+import { resolveSmartFields } from "@/lib/smart-review-fields";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
