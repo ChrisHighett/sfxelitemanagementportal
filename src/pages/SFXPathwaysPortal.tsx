@@ -514,6 +514,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   <TabsTrigger value="reviews">Reviews</TabsTrigger>
                   <TabsTrigger value="comms">Comms Log</TabsTrigger>
                   <TabsTrigger value="commercial">Commercial</TabsTrigger>
+                  <TabsTrigger value="files">Files</TabsTrigger>
                 </TabsList>
                 <TabsContent value="reviews" className="space-y-4 mt-4">
                   {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
