@@ -2594,7 +2594,7 @@ export default function SFXPathwaysPortal() {
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "reviews" && <DevelopmentTracker key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal key={athlete.id} athlete={athlete} />}
 
