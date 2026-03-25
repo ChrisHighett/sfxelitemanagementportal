@@ -574,7 +574,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   }
 
   return (
-    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-4xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title={athlete.name}
