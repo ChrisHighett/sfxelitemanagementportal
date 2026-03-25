@@ -1971,9 +1971,24 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     }
   }
 
-  function getPublicUrl(filePath: string) {
+  function getPublicUrl(filePath: string, source?: "global" | "athlete") {
+    if (source === "athlete") {
+      // athlete-resources bucket is private, use signed URL
+      return null; // handled via click
+    }
     const { data } = supabase.storage.from("resources").getPublicUrl(filePath);
     return data.publicUrl;
+  }
+
+  async function handleDownloadAthlete(filePath: string) {
+    const { data, error } = await supabase.storage
+      .from("athlete-resources")
+      .createSignedUrl(filePath, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Could not generate download link");
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
   }
 
   return (
