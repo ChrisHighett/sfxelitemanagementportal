@@ -2473,8 +2473,8 @@ function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
   const review = reviews[0];
   return (
     <div className="space-y-6 p-6">
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
+      <div className="space-y-6">
+        <Card>
           <CardHeader><CardTitle className="text-base">Parent Trust Portal</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
