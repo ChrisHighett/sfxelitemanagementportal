@@ -1296,7 +1296,14 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   }
 
   return (
-    <div className="space-y-4 p-3 md:space-y-6 md:p-6">
+    <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Hero */}
+      <HeroBanner
+        title={`Comms — ${athlete.name}`}
+        subtitle="Record calls, generate summaries, and track follow-ups"
+        imageUrl={heroImage}
+        size="sm"
+      />
       {/* Start Call Session button — prominent on mobile */}
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="p-4 md:p-6">
