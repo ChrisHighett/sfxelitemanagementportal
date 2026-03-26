@@ -1603,15 +1603,32 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     return data.publicUrl;
   }
 
-  async function handleDownloadAthlete(filePath: string) {
+  async function openPrivateResource(filePath: string, fileName: string) {
     const { data, error } = await supabase.storage
       .from("athlete-resources")
-      .createSignedUrl(filePath, 60);
-    if (error || !data?.signedUrl) {
-      toast.error("Could not generate download link");
+      .download(filePath);
+
+    if (error || !data) {
+      toast.error("Could not open file");
       return;
     }
-    window.open(data.signedUrl, "_blank");
+
+    const objectUrl = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+  }
+
+  async function handleDownloadAthlete(filePath: string) {
+    const fileName = filePath.split("/").pop() || "resource";
+    await openPrivateResource(filePath, fileName);
   }
 
   const showContracts = role === "athlete" || role === "parent" || role === "agent";
@@ -1766,14 +1783,24 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
   };
 
   async function handleDownload(filePath: string) {
+    const fileName = filePath.split("/").pop() || "contract";
     const { data, error } = await supabase.storage
       .from("athlete-resources")
-      .createSignedUrl(filePath, 60);
-    if (error || !data?.signedUrl) {
-      toast.error("Could not generate download link");
+      .download(filePath);
+    if (error || !data) {
+      toast.error("Could not open file");
       return;
     }
-    window.open(data.signedUrl, "_blank");
+    const objectUrl = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
   }
 
   function ContractFileList({ files }: { files: { id: string; title: string; file_path: string }[] }) {
