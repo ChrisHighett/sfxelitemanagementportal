@@ -2294,55 +2294,6 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
   );
 }
 
-function ParentTrustPortal({ athlete }: { athlete: Athlete }) {
-  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
-  const review = reviews[0];
-  return (
-    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
-      {/* Hero */}
-      <HeroBanner
-        title={`${athlete.name}'s Development`}
-        subtitle="Stay connected with your child's progress"
-        imageUrl={heroImage}
-        badge={statusBadge(athlete.status)}
-        size="md"
-      />
-      <div className="space-y-5">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Parent Trust Portal</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Athlete</div><div className="mt-1 font-medium">{athlete.name}</div></CardContent></Card>
-              <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Current Status</div><div className="mt-1">{statusBadge(athlete.status)}</div></CardContent></Card>
-              <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Next Review</div><div className="mt-1 font-medium">{athlete.nextCall}</div></CardContent></Card>
-            </div>
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">Latest Manager Summary</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div><span className="font-medium">Performance:</span> {review?.performance ?? "—"}</div>
-                <div><span className="font-medium">Lifestyle:</span> {review?.lifestyle ?? "—"}</div>
-                <div><span className="font-medium">Personal Development:</span> {review?.personal ?? "—"}</div>
-                <div><span className="font-medium">Focus Next Month:</span> {review?.focus ?? "—"}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">How SFX Supports Your Athlete</CardTitle></CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-2 text-sm">
-                <div>• Monthly athlete development calls</div>
-                <div>• Structured tracker updates</div>
-                <div>• Parent communication summaries</div>
-                <div>• Guidance on performance and lifestyle habits</div>
-                <div>• Support during setbacks and pressure periods</div>
-                <div>• Long-term career and character development</div>
-              </CardContent>
-            </Card>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 export default function SFXPathwaysPortal() {
   const { data: userRoleData, isLoading: roleLoading } = useUserRole();
   const [searchParams, setSearchParams] = useSearchParams();
