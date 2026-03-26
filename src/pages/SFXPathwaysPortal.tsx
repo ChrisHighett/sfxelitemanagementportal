@@ -66,7 +66,6 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   parent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
-    { key: "updates", label: "Updates", icon: ClipboardList },
     { key: "resources", label: "Resources", icon: Library },
   ],
   agent: [
@@ -418,6 +417,20 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
             Send Message
           </Button>
         </ImageCard>
+      </ContentSection>
+
+      {/* How SFX Supports Your Athlete */}
+      <ContentSection title="How SFX Supports Your Athlete">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="grid gap-3 md:grid-cols-2 text-sm">
+            <div>• Monthly athlete development calls</div>
+            <div>• Structured tracker updates</div>
+            <div>• Parent communication summaries</div>
+            <div>• Guidance on performance and lifestyle habits</div>
+            <div>• Support during setbacks and pressure periods</div>
+            <div>• Long-term career and character development</div>
+          </div>
+        </div>
       </ContentSection>
     </div>
   );
@@ -2472,7 +2485,6 @@ export default function SFXPathwaysPortal() {
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "parent" && active === "updates" && <ParentTrustPortal key={athlete.id} athlete={athlete} />}
 
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
