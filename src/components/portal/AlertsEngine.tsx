@@ -1,14 +1,13 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Loader2, CheckCircle2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
-
-type Severity = "low" | "medium" | "high" | "critical";
 
 function severityBadge(severity: string) {
   const map: Record<string, "destructive" | "secondary" | "default"> = {
@@ -40,6 +39,59 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
     enabled: athleteIds.length > 0,
   });
 
+  const { data: clubCalls = [] } = useQuery({
+    queryKey: ["club_calls_for_alerts", athleteIds],
+    queryFn: async () => {
+      if (athleteIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("call_history")
+        .select("athlete_id, call_date")
+        .in("athlete_id", athleteIds)
+        .eq("call_type", "club_conversation" as any)
+        .order("call_date", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: athleteIds.length > 0,
+  });
+
+  const clubCheckInAlerts = useMemo(() => {
+    const latestPerAthlete: Record<string, string> = {};
+    for (const call of clubCalls) {
+      if (!latestPerAthlete[call.athlete_id]) {
+        latestPerAthlete[call.athlete_id] = call.call_date;
+      }
+    }
+
+    return athletes
+      .map((a) => {
+        const lastCall = latestPerAthlete[a.id];
+        if (!lastCall) return null;
+        const days = Math.floor((Date.now() - new Date(lastCall).getTime()) / (1000 * 60 * 60 * 24));
+        if (days < 56) return null;
+        return {
+          id: `club-${a.id}`,
+          athleteId: a.id,
+          athleteName: a.name,
+          severity: days >= 84 ? "high" : "medium",
+          title: `Club check-in overdue — ${a.name}`,
+          description: `Last club conversation was ${days} days ago (${Math.floor(days / 7)} weeks). Call ${a.name}'s club for a development update.`,
+          alert_type: "club_check_in",
+          isClientSide: true,
+        };
+      })
+      .filter(Boolean) as Array<{
+        id: string;
+        athleteId: string;
+        athleteName: string;
+        severity: string;
+        title: string;
+        description: string;
+        alert_type: string;
+        isClientSide: boolean;
+      }>;
+  }, [athletes, clubCalls]);
+
   const resolveAlert = useMutation({
     mutationFn: async (alertId: string) => {
       const { error } = await supabase
@@ -55,8 +107,9 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const critical = alerts.filter((a) => a.severity === "critical" || a.severity === "high");
-  const warnings = alerts.filter((a) => a.severity === "medium");
+  const allAlerts = [...alerts, ...clubCheckInAlerts];
+  const critical = allAlerts.filter((a) => a.severity === "critical" || a.severity === "high");
+  const warnings = allAlerts.filter((a) => a.severity === "medium");
 
   if (isLoading) {
     return (
@@ -88,17 +141,18 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
           </div>
         </CardHeader>
         <CardContent>
-          {alerts.length === 0 ? (
+          {allAlerts.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-2xl mb-2">✅</div>
               <p className="text-sm text-muted-foreground">All athletes are tracking well. No open alerts.</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {alerts.map((alert) => {
+              {allAlerts.map((alert) => {
                 const athleteName = (alert as any).athletes
                   ? `${(alert as any).athletes.first_name} ${(alert as any).athletes.last_name}`
-                  : "Unknown";
+                  : (alert as any).athleteName || "Unknown";
+                const isClientSide = (alert as any).isClientSide;
                 return (
                   <div
                     key={alert.id}
@@ -114,7 +168,11 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm">{athleteName}</span>
                         {severityBadge(alert.severity)}
-                        <Badge variant="outline" className="text-xs">{alert.alert_type.replace("_", " ")}</Badge>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {(alert as any).alert_type === "club_check_in"
+                            ? "club check-in"
+                            : String((alert as any).alert_type).replace(/_/g, " ")}
+                        </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-0.5">{alert.title}</p>
                       {alert.description && (
@@ -124,10 +182,21 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => resolveAlert.mutate(alert.id)}
+                      onClick={() => {
+                        if (isClientSide) {
+                          window.location.hash = `athlete-${(alert as any).athleteId}-comms`;
+                          toast.info("Open the athlete's Comms tab to log a club conversation.");
+                        } else {
+                          resolveAlert.mutate(alert.id);
+                        }
+                      }}
                       className="gap-1 shrink-0"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                      {isClientSide ? (
+                        <><Building2 className="h-3.5 w-3.5" /> Log call</>
+                      ) : (
+                        <><CheckCircle2 className="h-3.5 w-3.5" /> Resolve</>
+                      )}
                     </Button>
                   </div>
                 );
