@@ -585,6 +585,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
               <CardContent>
                 <AdminAthleteManager
                   lockedAgentName={agentDisplayName}
+                  lockedAgentId={user?.id}
                   onBack={() => setAddingAthlete(false)}
                 />
               </CardContent>

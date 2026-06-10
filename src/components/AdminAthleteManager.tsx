@@ -77,13 +77,13 @@ function useGuardians(athleteId?: string) {
   });
 }
 
-function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName }: {
-  initial?: AthleteForm; athleteId?: string; onClose: () => void; lockedAgentName?: string;
+function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, lockedAgentId }: {
+  initial?: AthleteForm; athleteId?: string; onClose: () => void; lockedAgentName?: string; lockedAgentId?: string;
 }) {
   const { user } = useAuth();
   const [form, setForm] = useState<AthleteForm>(() => ({
     ...(initial || emptyAthlete),
-    assigned_agent: lockedAgentName ? (user?.id ?? "") : (initial?.assigned_agent ?? ""),
+    assigned_agent: lockedAgentName ? (lockedAgentId ?? user?.id ?? "") : (initial?.assigned_agent ?? ""),
   }));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
@@ -109,7 +109,7 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName }: {
       email: form.email || null,
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
-      assigned_agent_user_id: form.assigned_agent || null,
+      assigned_agent_user_id: lockedAgentId || form.assigned_agent || null,
       assigned_agent_name: lockedAgentName ||
         (agentList || []).find((a) => a.id === form.assigned_agent)?.display_name ||
         (agentList || []).find((a) => a.id === form.assigned_agent)?.email ||
@@ -445,8 +445,8 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   );
 }
 
-export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName }: {
-  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string;
+export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName, lockedAgentId }: {
+  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string; lockedAgentId?: string;
 } = {}) {
   const { data: athletes = [], isLoading } = useAthletes();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(initialAthleteId || null);
@@ -481,7 +481,7 @@ export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAg
         <Card className="border-dashed">
           <CardHeader><CardTitle className="text-base">New Athlete</CardTitle></CardHeader>
           <CardContent>
-            <AthleteFormDialog onClose={() => setAddingNew(false)} lockedAgentName={lockedAgentName} />
+            <AthleteFormDialog onClose={() => setAddingNew(false)} lockedAgentName={lockedAgentName} lockedAgentId={lockedAgentId} />
           </CardContent>
         </Card>
       )}
