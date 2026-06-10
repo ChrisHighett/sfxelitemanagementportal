@@ -32,6 +32,7 @@ import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
+import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
@@ -1262,7 +1263,11 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CardContent>
         </Card>
       )}
+      <div className="border-t border-border pt-4 mt-4">
+            <ClubConversationLogger athlete={athlete} />
+          </div>
         </TabsContent>
+
 
         <TabsContent value="history" className="mt-4">
           <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />

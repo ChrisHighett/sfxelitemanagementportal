@@ -1237,6 +1237,7 @@ export type Database = {
         | "issue_followup"
         | "commercial"
         | "other"
+        | "club_conversation"
       parent_engagement_level: "low" | "moderate" | "high"
       task_owner_type: "agent" | "athlete" | "parent" | "admin"
       task_status: "open" | "pending" | "done" | "cancelled"
@@ -1385,6 +1386,7 @@ export const Constants = {
         "issue_followup",
         "commercial",
         "other",
+        "club_conversation",
       ],
       parent_engagement_level: ["low", "moderate", "high"],
       task_owner_type: ["agent", "athlete", "parent", "admin"],

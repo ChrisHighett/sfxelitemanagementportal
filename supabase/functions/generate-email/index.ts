@@ -175,7 +175,18 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { type, athleteFirstName, parentName, structuredReview, summaryPoints, agentName } = await req.json();
+    const {
+      type,
+      athleteFirstName,
+      parentName,
+      structuredReview,
+      summaryPoints,
+      agentName,
+      clubName,
+      conversationType,
+      agentNotes,
+      outcome,
+    } = await req.json();
     const senderName = agentName || "Your TGI Sport Manager";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -191,7 +202,35 @@ serve(async (req) => {
       ? summaryPoints.filter(Boolean).map((p: string) => `- ${p}`).join("\n")
       : "";
 
-    if (type === "athlete") {
+    if (type === "club_feedback") {
+      systemPrompt = `You are writing a short email from a sports agent to a young elite athlete summarising a conversation the agent just had with an NRL club about the athlete.
+
+Tone: encouraging, warm, professional, forward-looking. Make the athlete feel valued and excited.
+
+Rules:
+- Use the athlete's first name
+- Reference the specific club by name
+- Mention the positive feedback specifically
+- If there's a next step (trial, follow-up), mention it clearly
+- Keep it concise — 3 short paragraphs maximum
+- End with encouragement
+- Return valid JSON only with: subject, body
+- Do not wrap JSON in markdown`;
+
+      userPrompt = [
+        `Please write a club feedback email.`,
+        ``,
+        `Sender (agent): ${senderName}`,
+        `Athlete first name: ${athleteFirstName || "Athlete"}`,
+        `Club: ${clubName || "the club"}`,
+        `Conversation type: ${conversationType || "recruitment"}`,
+        ``,
+        `Agent's notes from the conversation:`,
+        agentNotes || "",
+        ``,
+        outcome ? `Outcome / next steps: ${outcome}` : "",
+      ].filter(l => l !== undefined && l !== null).join("\n");
+    } else if (type === "athlete") {
       systemPrompt = buildAthleteSystemPrompt(senderName);
       userPrompt = [
         "Please write the athlete follow-up email using the TGI Sport athlete tone.",
@@ -238,7 +277,7 @@ serve(async (req) => {
         "- close with appreciation and invitation to reach out",
       ].join("\n");
     } else {
-      return new Response(JSON.stringify({ error: "Invalid type. Use 'athlete' or 'parent'." }), {
+      return new Response(JSON.stringify({ error: "Invalid type. Use 'athlete', 'parent', or 'club_feedback'." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
