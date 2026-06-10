@@ -1,0 +1,1 @@
+ALTER TYPE public.call_type ADD VALUE IF NOT EXISTS 'club_conversation';
