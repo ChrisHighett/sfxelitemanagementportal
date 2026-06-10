@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface Athlete {
   id: string;
+  photoUrl: string | null;
   athleteCode: string | null;
   name: string;
   age: number;
@@ -122,6 +123,7 @@ export function useAthletes(restrictToIds?: string[]) {
 
         return {
           id: athlete.id,
+          photoUrl: (athlete as any).avatar_url || null,
           athleteCode: athlete.athlete_code || null,
           name: `${athlete.first_name} ${athlete.last_name}`,
           age: age ?? 0,
@@ -136,8 +138,14 @@ export function useAthletes(restrictToIds?: string[]) {
           wellbeingScore,
           status,
           lastCall: lastCallDate,
-          nextCall: "—",
-          commercialPotential: "Not Scored",
+          nextCall: latestCall
+            ? (() => {
+                const next = new Date(latestCall.call_date);
+                next.setDate(next.getDate() + 30);
+                return next.toISOString().slice(0, 10);
+              })()
+            : "—",
+          commercialPotential: ((athlete as any).commercial_potential as "Low" | "Medium" | "High" | "Not Scored") || "Not Scored",
           managementContractExpiry: athlete.management_contract_expiry || null,
           clubContractExpiry: athlete.club_contract_expiry || null,
         };

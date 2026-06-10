@@ -238,7 +238,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
       <HeroBanner
         title={`Welcome back, ${athlete.name.split(" ")[0]}`}
         subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-        imageUrl={heroImage}
+        imageUrl={athlete.photoUrl || heroImage}
         badge={statusBadge(athlete.status)}
         size="md"
       />
@@ -318,7 +318,16 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
           <div className="space-y-1 text-sm text-muted-foreground pt-1">
             <div>Agent: {athlete.assignedAgent}</div>
           </div>
-          <Button variant="secondary" size="sm" className="mt-3 w-full">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-3 w-full"
+            onClick={() => {
+              const subject = encodeURIComponent(`Message from ${athlete.name}`);
+              const body = encodeURIComponent(`Hi ${athlete.assignedAgent},\n\n`);
+              window.location.href = `mailto:info@sfx.com.au?subject=${subject}&body=${body}`;
+            }}
+          >
             Message My Manager
           </Button>
         </ImageCard>
@@ -413,7 +422,16 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           icon={<Phone className="h-4 w-4" />}
         >
           <p className="text-xs text-muted-foreground mt-1">📧 info@sfx.com.au</p>
-          <Button variant="secondary" size="sm" className="mt-3 w-full">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-3 w-full"
+            onClick={() => {
+              const subject = encodeURIComponent(`Message re: ${athlete.name}`);
+              const body = encodeURIComponent(`Hi,\n\nI wanted to reach out regarding ${athlete.name}.\n\n`);
+              window.location.href = `mailto:info@sfx.com.au?subject=${subject}&body=${body}`;
+            }}
+          >
             Send Message
           </Button>
         </ImageCard>
@@ -538,37 +556,37 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
           </div>
         </CardContent>
       </Card>
-      {q.trim().length > 0 && (
-        <div className="space-y-3">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground px-1">No athletes found matching "{q}"</p>
-          ) : (
-            filtered.map((a) => (
-              <Card key={a.id}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{a.name}</span>
-                        {statusBadge(a.status)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {a.club} • {a.position} • {a.stage}
-                      </div>
+      <div className="space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">
+            {q.trim().length > 0 ? `No athletes found matching "${q}"` : "No athletes in roster yet."}
+          </p>
+        ) : (
+          filtered.map((a) => (
+            <Card key={a.id}>
+              <CardContent className="p-4">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{a.name}</span>
+                      {statusBadge(a.status)}
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                      <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
-                      <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
-                      <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
-                      <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {a.club} • {a.position} • {a.stage}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                    <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
+                    <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
+                    <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
+                    <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
       <WeeklyPlanner athletes={athletes} />
     </div>
   );
@@ -593,7 +611,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
       <HeroBanner
         title={athlete.name}
         subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-        imageUrl={heroImage}
+        imageUrl={athlete.photoUrl || heroImage}
         badge={statusBadge(athlete.status)}
         size="md"
       />
