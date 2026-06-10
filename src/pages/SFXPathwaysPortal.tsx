@@ -1263,7 +1263,11 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CardContent>
         </Card>
       )}
+      <div className="border-t border-border pt-4 mt-4">
+            <ClubConversationLogger athlete={athlete} />
+          </div>
         </TabsContent>
+
 
         <TabsContent value="history" className="mt-4">
           <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />
