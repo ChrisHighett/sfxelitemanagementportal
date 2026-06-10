@@ -13,6 +13,7 @@ import { useAthletes } from "@/hooks/usePortalData";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, UserPlus, Users, ChevronRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AthleteForm {
   first_name: string;
@@ -76,10 +77,14 @@ function useGuardians(athleteId?: string) {
   });
 }
 
-function AthleteFormDialog({ initial, athleteId, onClose }: {
-  initial?: AthleteForm; athleteId?: string; onClose: () => void;
+function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName }: {
+  initial?: AthleteForm; athleteId?: string; onClose: () => void; lockedAgentName?: string;
 }) {
-  const [form, setForm] = useState<AthleteForm>(initial || emptyAthlete);
+  const { user } = useAuth();
+  const [form, setForm] = useState<AthleteForm>(() => ({
+    ...(initial || emptyAthlete),
+    assigned_agent: lockedAgentName ? (user?.id ?? "") : (initial?.assigned_agent ?? ""),
+  }));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
   const isEdit = !!athleteId;
@@ -105,7 +110,7 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
       assigned_agent_user_id: form.assigned_agent || null,
-      assigned_agent_name:
+      assigned_agent_name: lockedAgentName ||
         (agentList || []).find((a) => a.id === form.assigned_agent)?.display_name ||
         (agentList || []).find((a) => a.id === form.assigned_agent)?.email ||
         null,
@@ -168,16 +173,23 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
         </div>
         <div className="space-y-2">
           <Label>Assigned Agent</Label>
-          <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
-            <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
-            <SelectContent>
-              {(agentList || []).map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.display_name || a.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {lockedAgentName ? (
+            <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
+              {lockedAgentName}
+              <span className="ml-auto text-xs">(you)</span>
+            </div>
+          ) : (
+            <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
+              <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
+              <SelectContent>
+                {(agentList || []).map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.display_name || a.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Management Contract Expiry</Label>
@@ -433,8 +445,8 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   );
 }
 
-export default function AdminAthleteManager({ initialAthleteId, onBack }: {
-  initialAthleteId?: string; onBack?: () => void;
+export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName }: {
+  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string;
 } = {}) {
   const { data: athletes = [], isLoading } = useAthletes();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(initialAthleteId || null);
@@ -469,7 +481,7 @@ export default function AdminAthleteManager({ initialAthleteId, onBack }: {
         <Card className="border-dashed">
           <CardHeader><CardTitle className="text-base">New Athlete</CardTitle></CardHeader>
           <CardContent>
-            <AthleteFormDialog onClose={() => setAddingNew(false)} />
+            <AthleteFormDialog onClose={() => setAddingNew(false)} lockedAgentName={lockedAgentName} />
           </CardContent>
         </Card>
       )}

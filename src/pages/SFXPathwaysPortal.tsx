@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
@@ -459,8 +459,11 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
 }
 
 function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
+  const [addingAthlete, setAddingAthlete] = useState(false);
+  const agentDisplayName = user?.user_metadata?.display_name || user?.email || "";
 
   const filtered = useMemo(() => {
     return athletes
@@ -549,8 +552,38 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
         </Alert>
       )}
       <Card>
-        <CardHeader><CardTitle>Roster Dashboard</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle>Roster Dashboard</CardTitle>
+            <Button
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => setAddingAthlete((v) => !v)}
+            >
+              <Plus className="h-4 w-4" />
+              Add athlete
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-4">
+          {addingAthlete && (
+            <Card className="border-dashed border-primary/40 bg-primary/5">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">New athlete</CardTitle>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setAddingAthlete(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <AdminAthleteManager
+                  lockedAgentName={agentDisplayName}
+                  onBack={() => setAddingAthlete(false)}
+                />
+              </CardContent>
+            </Card>
+          )}
           <div className="flex flex-wrap items-center gap-4">
             <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-72" />
           </div>
