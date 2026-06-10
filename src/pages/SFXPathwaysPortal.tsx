@@ -623,7 +623,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                     <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
                     <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
-                    <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
+                    <div><div className="text-xs text-muted-foreground">Next Due</div><div className={`text-sm ${a.nextCall === "Overdue" ? "text-destructive font-semibold" : ""}`}>{a.nextCall}</div></div>
                     <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
                   </div>
                 </div>
