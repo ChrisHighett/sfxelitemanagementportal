@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
@@ -2112,13 +2112,217 @@ function PendingApprovals() {
   );
 }
 
+function AgentRow({ agent, onToggleApproved, onUpdateName }: {
+  agent: { id: string; display_name: string | null; email: string | null; approved: boolean; created_at: string };
+  onToggleApproved: (id: string, current: boolean) => void;
+  onUpdateName: (id: string, name: string) => void;
+}) {
+  const [editingName, setEditingName] = useState(false);
+  const [nameVal, setNameVal] = useState(agent.display_name || "");
+
+  return (
+    <Card>
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold shrink-0">
+          {(agent.display_name || agent.email || "?")[0].toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          {editingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={nameVal}
+                onChange={(e) => setNameVal(e.target.value)}
+                autoFocus
+                className="h-8"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { onUpdateName(agent.id, nameVal); setEditingName(false); }
+                  if (e.key === "Escape") { setEditingName(false); setNameVal(agent.display_name || ""); }
+                }}
+              />
+              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => { onUpdateName(agent.id, nameVal); setEditingName(false); }}>
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="font-medium truncate">{agent.display_name || "Name not set"}</div>
+              <button onClick={() => setEditingName(true)} className="text-muted-foreground hover:text-foreground">
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+          <div className="text-xs text-muted-foreground truncate">{agent.email || "No email"}</div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant={agent.approved ? "default" : "secondary"}>
+            {agent.approved ? "Active" : "Inactive"}
+          </Badge>
+          <Button size="sm" variant="outline" onClick={() => onToggleApproved(agent.id, agent.approved)}>
+            {agent.approved ? "Deactivate" : "Reactivate"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AgentManager() {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+
+  const { data: agents = [], isLoading, refetch } = useQuery({
+    queryKey: ["portal_agents"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portal_users" as any)
+        .select("id, role, approved, display_name, email, created_at")
+        .eq("role", "agent")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  async function handleInvite() {
+    if (!inviteEmail.trim() || !inviteName.trim()) {
+      toast.error("Name and email are both required");
+      return;
+    }
+    setInviting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-agent", {
+        body: { email: inviteEmail.trim(), displayName: inviteName.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`Invite sent to ${inviteEmail} — they'll receive an email to set up their account.`);
+      setInviteEmail("");
+      setInviteName("");
+      setShowInviteForm(false);
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to send invite");
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function handleToggleApproved(agentId: string, currentApproved: boolean) {
+    const { error } = await supabase
+      .from("portal_users" as any)
+      .update({ approved: !currentApproved })
+      .eq("id", agentId);
+    if (error) { toast.error(error.message); return; }
+    toast.success(currentApproved ? "Agent deactivated" : "Agent reactivated");
+    refetch();
+  }
+
+  async function handleUpdateName(agentId: string, newName: string) {
+    const { error } = await supabase
+      .from("portal_users" as any)
+      .update({ display_name: newName })
+      .eq("id", agentId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Name updated");
+    refetch();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold">Agent Accounts</h3>
+          <p className="text-sm text-muted-foreground">
+            Invite new agents and manage existing accounts. Invited agents receive an email to set their password.
+          </p>
+        </div>
+        <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setShowInviteForm((v) => !v)}>
+          <UserPlus className="h-4 w-4" />
+          Invite agent
+        </Button>
+      </div>
+
+      {showInviteForm && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Invite new agent</CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowInviteForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Full name *</Label>
+                <Input
+                  placeholder="Jane Smith"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Work email address *</Label>
+                <Input
+                  type="email"
+                  placeholder="jane@tgisport.com.au"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              An invite email will be sent to this address. The agent clicks the link, sets their password, and their account is ready — already approved and set to agent role.
+            </p>
+            <Button size="sm" disabled={inviting} onClick={handleInvite}>
+              {inviting ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Sending invite…</>
+              ) : (
+                "Send invite email"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading agents…
+        </div>
+      ) : agents.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground text-center">
+            No agent accounts yet. Use the Invite button to add your first agent.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {agents.map((agent: any) => (
+            <AgentRow
+              key={agent.id}
+              agent={agent}
+              onToggleApproved={handleToggleApproved}
+              onUpdateName={handleUpdateName}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminSecurity() {
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
       {/* Hero */}
       <HeroBanner
         title="Admin Panel"
-        subtitle="Manage athletes, guardians, security, and access controls"
+        subtitle="Manage athletes, guardians, agents, security, and access controls"
         imageUrl={heroImage}
         size="sm"
       />
@@ -2126,6 +2330,7 @@ function AdminSecurity() {
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="analytics">Agent Analytics</TabsTrigger>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
+          <TabsTrigger value="agents">Agent Accounts</TabsTrigger>
           <TabsTrigger value="security">Security & Access</TabsTrigger>
         </TabsList>
         <TabsContent value="analytics" className="mt-4">
@@ -2133,6 +2338,9 @@ function AdminSecurity() {
         </TabsContent>
         <TabsContent value="athletes" className="mt-4">
           <AdminAthleteManager />
+        </TabsContent>
+        <TabsContent value="agents" className="mt-4">
+          <AgentManager />
         </TabsContent>
         <TabsContent value="security" className="mt-4 space-y-6">
           <PendingApprovals />
