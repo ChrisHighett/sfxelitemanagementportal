@@ -670,7 +670,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
           <div className="grid gap-6 md:grid-cols-[280px_1fr]">
             <div className="space-y-2 text-sm">
               <div className="text-xl font-bold">{athlete.name}</div>
-              <div>Age: {athlete.age}</div>
+              <div>Age: {athlete.age || <span className="text-muted-foreground">Not set</span>}</div>
               <div>Club: {athlete.club}</div>
               <div>School: {athlete.school}</div>
               <div>Position: {athlete.position}</div>
@@ -680,14 +680,18 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
               <div>Club Contract Expiry: {athlete.clubContractExpiry || "—"}</div>
               <Separator className="my-3" />
               <div className="font-medium">Primary contact</div>
-              <div>📧 {athlete.parentEmail}</div>
+              <div>📧 {athlete.parentEmail || <span className="text-muted-foreground">No parent email recorded</span>}</div>
               <div>Parent: {athlete.parentName}</div>
+              <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
             </div>
             <div>
               <Tabs defaultValue="reviews">
                 <TabsList className="flex flex-wrap h-auto gap-1">
                   <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
                   <TabsTrigger value="comms" className="text-xs sm:text-sm">Comms</TabsTrigger>
+                  <TabsTrigger value="scorecard" className="text-xs sm:text-sm">Scorecard</TabsTrigger>
+                  <TabsTrigger value="trends" className="text-xs sm:text-sm">Trends</TabsTrigger>
+                  <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
                   <TabsTrigger value="commercial" className="text-xs sm:text-sm">Commercial</TabsTrigger>
                   <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
                 </TabsList>
