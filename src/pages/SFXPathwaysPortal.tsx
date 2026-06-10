@@ -2668,7 +2668,15 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
-      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      {effectiveRole === "admin" && active === "admin" && (
+        <>
+          <ManagerCommandCentre
+            athletes={athletes}
+            onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
+          />
+          <AdminSecurity />
+        </>
+      )}
     </Shell>
   );
 }
