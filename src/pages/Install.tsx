@@ -42,7 +42,7 @@ export default function Install() {
               <Check className="h-8 w-8 text-primary" />
             </div>
             <h2 className="text-xl font-bold">App Installed!</h2>
-            <p className="text-sm text-muted-foreground">SFX Pathways is installed on your device. You can access it from your home screen.</p>
+            <p className="text-sm text-muted-foreground">TGI Pathways is installed on your device. You can access it from your home screen.</p>
             <Button onClick={() => window.location.href = "/portal"} className="w-full h-12">
               Open Portal
             </Button>
@@ -57,9 +57,9 @@ export default function Install() {
       <Card className="max-w-sm w-full">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto">
-            <img src="/pwa-icon-192.png" alt="SFX Pathways" className="w-20 h-20 rounded-2xl shadow-lg" />
+            <img src="/pwa-icon-192.png" alt="TGI Pathways" className="w-20 h-20 rounded-2xl shadow-lg" />
           </div>
-          <CardTitle className="text-xl">Install SFX Pathways</CardTitle>
+          <CardTitle className="text-xl">Install TGI Pathways</CardTitle>
           <p className="text-sm text-muted-foreground">
             Get the full app experience — fast access, offline support, and no browser UI.
           </p>
