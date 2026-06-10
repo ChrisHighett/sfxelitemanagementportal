@@ -13,6 +13,7 @@ import { useAthletes } from "@/hooks/usePortalData";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, UserPlus, Users, ChevronRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AthleteForm {
   first_name: string;
