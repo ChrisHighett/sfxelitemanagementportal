@@ -1918,6 +1918,81 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
   );
 }
 
+function PendingApprovals() {
+  const [pending, setPending] = React.useState<{ id: string; email: string | null; role: string; created_at: string }[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [approving, setApproving] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("portal_users")
+        .select("id, role, created_at, email")
+        .eq("approved", false)
+        .order("created_at", { ascending: false });
+      setPending((data || []) as any);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  async function handleApprove(userId: string) {
+    setApproving(userId);
+    const { error } = await supabase
+      .from("portal_users")
+      .update({ approved: true })
+      .eq("id", userId);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("User approved");
+      setPending((prev) => prev.filter((p) => p.id !== userId));
+    }
+    setApproving(null);
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          Pending Approvals
+          {pending.length > 0 && <Badge variant="destructive">{pending.length}</Badge>}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : pending.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No pending approvals.</p>
+        ) : (
+          <div className="space-y-2">
+            {pending.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.email || p.id}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Role: {p.role} · Requested: {new Date(p.created_at).toLocaleDateString("en-AU")}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleApprove(p.id)}
+                  disabled={approving === p.id}
+                >
+                  {approving === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminSecurity() {
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
