@@ -469,6 +469,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
           athleteFirstName: firstName,
           structuredReview,
           summaryPoints: aiSummary?.athlete_email_summary_points || [],
+          agentName:
+            user?.user_metadata?.display_name || user?.email || "Your TGI Sport Manager",
         },
       });
       if (error) throw error;
@@ -508,6 +510,8 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
           parentName,
           structuredReview,
           summaryPoints: aiSummary?.parent_email_summary_points || [],
+          agentName:
+            user?.user_metadata?.display_name || user?.email || "Your TGI Sport Manager",
         },
       });
       if (error) throw error;

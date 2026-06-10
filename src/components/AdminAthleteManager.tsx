@@ -30,12 +30,21 @@ interface AthleteForm {
   avatar_url: string;
 }
 
-const AGENTS = [
-  { label: "George Mimis", value: "George Mimis" },
-  { label: "Chris Highett", value: "Chris Highett" },
-  { label: "Chase Stanley", value: "Chase Stanley" },
-  { label: "Paul Sutton", value: "Paul Sutton" },
-];
+function useAgents() {
+  return useQuery({
+    queryKey: ["agents"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true)
+        .order("display_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
 
 interface GuardianForm {
   parent_name: string;
@@ -74,6 +83,7 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
   const isEdit = !!athleteId;
+  const { data: agentList } = useAgents();
 
   const set = (k: keyof AthleteForm, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -94,7 +104,11 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
       email: form.email || null,
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
-      assigned_agent_name: form.assigned_agent || null,
+      assigned_agent_user_id: form.assigned_agent || null,
+      assigned_agent_name:
+        (agentList || []).find((a) => a.id === form.assigned_agent)?.display_name ||
+        (agentList || []).find((a) => a.id === form.assigned_agent)?.email ||
+        null,
       commercial_potential: form.commercial_potential || "Not Scored",
       avatar_url: form.avatar_url || null,
     } as any;
@@ -157,8 +171,10 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
           <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
             <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
             <SelectContent>
-              {AGENTS.map((a) => (
-                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+              {(agentList || []).map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.display_name || a.email}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

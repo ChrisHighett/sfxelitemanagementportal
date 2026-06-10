@@ -4,6 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 
@@ -15,6 +22,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState("athlete");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -27,14 +35,18 @@ export function AuthForm({ mode }: AuthFormProps) {
     const { error } =
       mode === "login"
         ? await signIn(email, password)
-        : await signUp(email, password, displayName);
+        : await signUp(email, password, displayName, role);
 
     setLoading(false);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else if (mode === "signup") {
-      toast({ title: "Check your email", description: "We sent you a confirmation link." });
+      toast({
+        title: "Account created",
+        description:
+          "Your account is pending approval. Your TGI Sport manager will activate your access within 24 hours.",
+      });
     } else {
       navigate("/dashboard");
     }
@@ -42,47 +54,69 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left decorative panel */}
       <div className="hidden lg:flex lg:w-1/2 auth-gradient items-center justify-center p-12">
         <div className="max-w-md space-y-6">
-          <h1 className="text-5xl font-bold tracking-tight text-primary-foreground" style={{ fontFamily: "var(--font-heading)" }}>
+          <h1
+            className="text-5xl font-bold tracking-tight text-primary-foreground"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
             {mode === "login" ? "Welcome back." : "Get started."}
           </h1>
           <p className="text-lg text-primary-foreground/80">
             {mode === "login"
-              ? "Sign in to access your dashboard and continue where you left off."
-              : "Create your account and start building something great today."}
+              ? "Sign in to your TGI Sport portal."
+              : "Create your account to access your TGI Sport portal."}
           </p>
         </div>
       </div>
 
-      {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-sm space-y-8">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+            <h2
+              className="text-3xl font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-heading)" }}
+            >
               {mode === "login" ? "Sign in" : "Create account"}
             </h2>
             <p className="text-muted-foreground">
-              {mode === "login" ? "Enter your credentials to continue" : "Fill in your details to get started"}
+              {mode === "login"
+                ? "Enter your credentials to continue"
+                : "Fill in your details to get started"}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {mode === "signup" && (
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="displayName"
-                    placeholder="Your name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="pl-10"
-                  />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Full name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="displayName"
+                      placeholder="Your name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">I am a…</Label>
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger id="role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="athlete">Athlete</SelectItem>
+                      <SelectItem value="parent">Parent / Guardian</SelectItem>
+                      <SelectItem value="agent">Agent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
