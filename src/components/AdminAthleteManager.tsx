@@ -173,16 +173,23 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName }: {
         </div>
         <div className="space-y-2">
           <Label>Assigned Agent</Label>
-          <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
-            <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
-            <SelectContent>
-              {(agentList || []).map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.display_name || a.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {lockedAgentName ? (
+            <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-muted text-sm text-muted-foreground">
+              {lockedAgentName}
+              <span className="ml-auto text-xs">(you)</span>
+            </div>
+          ) : (
+            <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
+              <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
+              <SelectContent>
+                {(agentList || []).map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.display_name || a.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <div className="space-y-2">
           <Label>Management Contract Expiry</Label>
