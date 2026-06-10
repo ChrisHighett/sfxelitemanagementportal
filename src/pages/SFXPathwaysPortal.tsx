@@ -18,6 +18,8 @@ import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
@@ -1919,77 +1921,141 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
 }
 
 function PendingApprovals() {
-  const [pending, setPending] = React.useState<{ id: string; email: string | null; role: string; created_at: string }[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [approving, setApproving] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const { data } = await supabase
+  const qc = useQueryClient();
+  const { data: pending, isLoading } = useQuery({
+    queryKey: ["pending_users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("portal_users")
-        .select("id, role, created_at, email")
+        .select("id, role, approved, created_at, display_name, email")
         .eq("approved", false)
         .order("created_at", { ascending: false });
-      setPending((data || []) as any);
-      setLoading(false);
-    }
-    load();
-  }, []);
+      if (error) throw error;
+      return data || [];
+    },
+    refetchInterval: 30000,
+  });
 
-  async function handleApprove(userId: string) {
-    setApproving(userId);
+  const { data: athletes } = useQuery({
+    queryKey: ["athletes_for_allocation"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("athletes")
+        .select("id, first_name, last_name")
+        .order("last_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const [allocations, setAllocations] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function approveUser(userId: string, role: string) {
+    setBusyId(userId);
     const { error } = await supabase
       .from("portal_users")
       .update({ approved: true })
       .eq("id", userId);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("User approved");
-      setPending((prev) => prev.filter((p) => p.id !== userId));
+    if (error) { setBusyId(null); toast.error(error.message); return; }
+
+    if ((role === "parent" || role === "athlete") && allocations[userId]) {
+      const { error: accessError } = await supabase
+        .from("user_athlete_access")
+        .insert({
+          user_id: userId,
+          athlete_id: allocations[userId],
+          relationship_type: role,
+          approved_at: new Date().toISOString(),
+        });
+      if (accessError) {
+        toast.error("Approved but allocation failed: " + accessError.message);
+      }
     }
-    setApproving(null);
+
+    toast.success("User approved");
+    setBusyId(null);
+    qc.invalidateQueries({ queryKey: ["pending_users"] });
+  }
+
+  async function rejectUser(userId: string) {
+    setBusyId(userId);
+    const { error } = await supabase.from("portal_users").delete().eq("id", userId);
+    setBusyId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("User removed");
+    qc.invalidateQueries({ queryKey: ["pending_users"] });
+  }
+
+  if (isLoading) {
+    return (
+      <Card><CardContent className="p-4 text-sm text-muted-foreground flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading pending users…
+      </CardContent></Card>
+    );
+  }
+  if (!pending?.length) {
+    return (
+      <Card><CardContent className="p-4 text-sm text-muted-foreground">
+        No pending approvals. All users are approved.
+      </CardContent></Card>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          Pending Approvals
-          {pending.length > 0 && <Badge variant="destructive">{pending.length}</Badge>}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </div>
-        ) : pending.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pending approvals.</p>
-        ) : (
-          <div className="space-y-2">
-            {pending.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{p.email || p.id}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Role: {p.role} · Requested: {new Date(p.created_at).toLocaleDateString("en-AU")}
-                  </div>
+    <div className="space-y-3">
+      {pending.map((u) => (
+        <Card key={u.id}>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="font-medium truncate">{u.display_name || "No name set"}</div>
+                <div className="text-xs text-muted-foreground truncate">{u.email || u.id}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Role: {u.role} · Signed up {new Date(u.created_at).toLocaleDateString("en-AU")}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => handleApprove(p.id)}
-                  disabled={approving === p.id}
-                >
-                  {approving === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
-                </Button>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <Badge variant="outline">{u.role}</Badge>
+            </div>
+
+            {(u.role === "parent" || u.role === "athlete") && (
+              <div className="space-y-1">
+                <Label className="text-xs">Allocate to athlete</Label>
+                <Select
+                  value={allocations[u.id] || ""}
+                  onValueChange={(v) => setAllocations((a) => ({ ...a, [u.id]: v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select athlete…" /></SelectTrigger>
+                  <SelectContent>
+                    {(athletes || []).map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.first_name} {a.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                onClick={() => approveUser(u.id, u.role)}
+                disabled={
+                  busyId === u.id ||
+                  ((u.role === "parent" || u.role === "athlete") && !allocations[u.id])
+                }
+              >
+                {busyId === u.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Approve"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => rejectUser(u.id)} disabled={busyId === u.id}>
+                Reject
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
 

@@ -5,7 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ATHLETE_SYSTEM_PROMPT = `You are writing a follow-up email from Chris Highett at SFX Sports to a young elite pathways athlete.
+function buildAthleteSystemPrompt(agentName: string): string {
+  return `You are writing a follow-up email from ${agentName} at TGI Sport to a young elite pathways athlete.
 
 Your job is to write a short, supportive, personal athlete development follow-up email based on structured review notes.
 
@@ -41,8 +42,10 @@ Output requirements:
 - return valid JSON only
 - include: subject, body
 Do not wrap the JSON in markdown.`;
+}
 
-const PARENT_SYSTEM_PROMPT = `You are writing a parent update email from Chris Highett at SFX Sports following a monthly athlete development check-in.
+function buildParentSystemPrompt(agentName: string): string {
+  return `You are writing a parent update email from ${agentName} at TGI Sport following a monthly athlete development check-in.
 
 Your job is to write a short, warm, reassuring and professional email to a parent or guardian based on structured athlete review notes.
 
@@ -54,11 +57,6 @@ The tone must feel:
 - concise
 - confidence-building
 
-The email should sound like:
-- a trusted advisor
-- a calm and organised professional
-- someone genuinely looking after the athlete
-
 Writing rules:
 - address the parent by name where available
 - refer to the athlete by first name
@@ -69,7 +67,7 @@ Writing rules:
 - invite them to reach out anytime
 - keep the email concise
 - do not sound too casual
-- do not use slang like "mate"
+- do not use slang
 - do not sound too formal or legal
 - do not use bullet points unless clearly necessary
 - do not mention anything not contained in the input
@@ -79,6 +77,7 @@ Output requirements:
 - return valid JSON only
 - include: subject, body
 Do not wrap the JSON in markdown.`;
+}
 
 async function callAIWithRetry(
   apiKey: string,
@@ -176,7 +175,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { type, athleteFirstName, parentName, structuredReview, summaryPoints } = await req.json();
+    const { type, athleteFirstName, parentName, structuredReview, summaryPoints, agentName } = await req.json();
+    const senderName = agentName || "Your TGI Sport Manager";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -192,11 +192,11 @@ serve(async (req) => {
       : "";
 
     if (type === "athlete") {
-      systemPrompt = ATHLETE_SYSTEM_PROMPT;
+      systemPrompt = buildAthleteSystemPrompt(senderName);
       userPrompt = [
-        "Please write the athlete follow-up email using the SFX athlete tone.",
+        "Please write the athlete follow-up email using the TGI Sport athlete tone.",
         "",
-        "Sender name: Chris",
+        "Sender name: " + senderName,
         "Athlete first name: " + (athleteFirstName || "Athlete"),
         "",
         "Structured review data:",
@@ -214,11 +214,11 @@ serve(async (req) => {
         "- end with encouragement and support",
       ].join("\n");
     } else if (type === "parent") {
-      systemPrompt = PARENT_SYSTEM_PROMPT;
+      systemPrompt = buildParentSystemPrompt(senderName);
       userPrompt = [
-        "Please write the parent update email using the SFX parent tone.",
+        "Please write the parent update email using the TGI Sport parent tone.",
         "",
-        "Sender name: Chris",
+        "Sender name: " + senderName,
         "Parent name: " + (parentName || "there"),
         "Athlete first name: " + (athleteFirstName || "Athlete"),
         "",
