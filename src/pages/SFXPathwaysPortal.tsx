@@ -75,6 +75,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "resources", label: "Resources", icon: Library },
   ],
   agent: [
+    { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "roster", label: "Roster", icon: Users },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
@@ -2855,6 +2856,12 @@ export default function SFXPathwaysPortal() {
       {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
 
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "dash" && (
+        <ManagerCommandCentre
+          athletes={athletes}
+          onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
+        />
+      )}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
@@ -2871,15 +2878,7 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
-      {effectiveRole === "admin" && active === "admin" && (
-        <>
-          <ManagerCommandCentre
-            athletes={athletes}
-            onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
-          />
-          <AdminSecurity />
-        </>
-      )}
+      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
     </Shell>
   );
 }
