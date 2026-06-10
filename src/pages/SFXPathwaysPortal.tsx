@@ -265,7 +265,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
         <StatCard
           label="Focus"
           icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus ?? "—"}</span>}
+          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
         />
       </div>
 
