@@ -995,7 +995,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
       saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: `Update — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Parent email draft created");
     }
-  }, [athlete.name, athlete.parentName]);
+  }, [athlete.name, athlete.parentName, athlete.id, user?.id, user?.user_metadata?.display_name]);
 
   if (voiceRecordingActive) {
     return (
