@@ -961,7 +961,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
         ``,
         `Speak soon,`,
-        `TGI Pathways`,
+        user?.user_metadata?.display_name || "Your TGI Sport Manager",
+        `TGI Sport`,
       ].join("\n");
       setAthleteEmailDraft(draft);
       // Auto-save to comms history
