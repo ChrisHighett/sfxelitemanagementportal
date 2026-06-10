@@ -33,6 +33,9 @@ import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
 import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
+import TrendTracking from "@/components/portal/TrendTracking";
+import AthleteScorecard from "@/components/portal/AthleteScorecard";
+import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
@@ -262,7 +265,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
         <StatCard
           label="Focus"
           icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus ?? "—"}</span>}
+          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
         />
       </div>
 
@@ -443,15 +446,20 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
 
       {/* How TGI Sport Supports Your Athlete */}
       <ContentSection title="How TGI Sport Supports Your Athlete">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="grid gap-3 md:grid-cols-2 text-sm">
-            <div>• Monthly athlete development calls</div>
-            <div>• Structured tracker updates</div>
-            <div>• Parent communication summaries</div>
-            <div>• Guidance on performance and lifestyle habits</div>
-            <div>• Support during setbacks and pressure periods</div>
-            <div>• Long-term career and character development</div>
-          </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            "Monthly athlete development calls",
+            "Structured development tracker updates",
+            "Professional parent communication summaries",
+            "Guidance on performance and lifestyle habits",
+            "Support during setbacks and pressure periods",
+            "Long-term career and character development",
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-xl border border-border bg-card p-3">
+              <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+              <span className="text-sm">{item}</span>
+            </div>
+          ))}
         </div>
       </ContentSection>
     </div>
@@ -615,7 +623,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
                     <div><div className="text-xs text-muted-foreground">Wellbeing</div><div className="w-full max-w-[8rem]">{scorePill(a.wellbeingScore)}</div></div>
                     <div><div className="text-xs text-muted-foreground">Last Call</div><div className="text-sm">{a.lastCall}</div></div>
-                    <div><div className="text-xs text-muted-foreground">Next Due</div><div className="text-sm">{a.nextCall}</div></div>
+                    <div><div className="text-xs text-muted-foreground">Next Due</div><div className={`text-sm ${a.nextCall === "Overdue" ? "text-destructive font-semibold" : ""}`}>{a.nextCall}</div></div>
                     <div className="flex items-end"><Button variant="secondary" size="sm" className="w-full sm:w-auto" onClick={() => onOpenProfile?.(a.id)}>Open Profile</Button></div>
                   </div>
                 </div>
@@ -670,7 +678,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
           <div className="grid gap-6 md:grid-cols-[280px_1fr]">
             <div className="space-y-2 text-sm">
               <div className="text-xl font-bold">{athlete.name}</div>
-              <div>Age: {athlete.age}</div>
+              <div>Age: {athlete.age || <span className="text-muted-foreground">Not set</span>}</div>
               <div>Club: {athlete.club}</div>
               <div>School: {athlete.school}</div>
               <div>Position: {athlete.position}</div>
@@ -680,14 +688,18 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
               <div>Club Contract Expiry: {athlete.clubContractExpiry || "—"}</div>
               <Separator className="my-3" />
               <div className="font-medium">Primary contact</div>
-              <div>📧 {athlete.parentEmail}</div>
+              <div>📧 {athlete.parentEmail || <span className="text-muted-foreground">No parent email recorded</span>}</div>
               <div>Parent: {athlete.parentName}</div>
+              <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
             </div>
             <div>
               <Tabs defaultValue="reviews">
                 <TabsList className="flex flex-wrap h-auto gap-1">
                   <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
                   <TabsTrigger value="comms" className="text-xs sm:text-sm">Comms</TabsTrigger>
+                  <TabsTrigger value="scorecard" className="text-xs sm:text-sm">Scorecard</TabsTrigger>
+                  <TabsTrigger value="trends" className="text-xs sm:text-sm">Trends</TabsTrigger>
+                  <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
                   <TabsTrigger value="commercial" className="text-xs sm:text-sm">Commercial</TabsTrigger>
                   <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
                 </TabsList>
@@ -757,31 +769,32 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   })}
                 </TabsContent>
                 <TabsContent value="comms" className="space-y-4 mt-4">
-                  {comms.length === 0 && <p className="text-sm text-muted-foreground">No messages logged.</p>}
-                  {comms.map((c, idx) => (
-                    <Card key={idx}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{c.subject}</CardTitle>
-                          <Badge variant="secondary">{c.recipient}</Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="text-sm space-y-1">
-                        <div className="text-muted-foreground">Sent: {c.sentAt}</div>
-                        <div>{c.body}</div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />
+                </TabsContent>
+                <TabsContent value="scorecard" className="mt-4">
+                  <AthleteScorecard athlete={athlete} />
+                </TabsContent>
+                <TabsContent value="trends" className="mt-4">
+                  <TrendTracking athlete={athlete} />
+                </TabsContent>
+                <TabsContent value="timeline" className="mt-4">
+                  <ExpandedTimeline athlete={athlete} canEdit={true} />
                 </TabsContent>
                 <TabsContent value="commercial" className="mt-4">
                   <Card>
                     <CardHeader className="pb-2"><CardTitle className="text-base">Commercial Snapshot</CardTitle></CardHeader>
                     <CardContent className="space-y-3 text-sm">
-                      <div><span className="text-muted-foreground">Potential:</span> <span className="font-medium">{athlete.commercialPotential}</span></div>
-                      <div><span className="text-muted-foreground">Brand Pillars:</span> <span className="font-medium">Fitness • Community • Training</span></div>
-                      <div><span className="text-muted-foreground">Next Action:</span> <span className="font-medium">Monitor content consistency</span></div>
+                      <div>
+                        <span className="text-muted-foreground">Commercial Potential:</span>{" "}
+                        <span className="font-medium">
+                          {athlete.commercialPotential !== "Not Scored" ? athlete.commercialPotential : "Not yet assessed"}
+                        </span>
+                      </div>
                       <Separator />
-                      <p className="text-muted-foreground text-xs">Note: Commercial valuation & outreach pipeline can be added in Phase 2.</p>
+                      <p className="text-muted-foreground text-xs">
+                        Use this section to track brand partnerships, social media milestones, and commercial opportunities.
+                        Log notes in the athlete's monthly review under Brand & Social.
+                      </p>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -948,7 +961,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
         ``,
         `Speak soon,`,
-        `TGI Pathways`,
+        user?.user_metadata?.display_name || "Your TGI Sport Manager",
+        `TGI Sport`,
       ].join("\n");
       setAthleteEmailDraft(draft);
       // Auto-save to comms history
@@ -973,14 +987,15 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
         ``,
         `Warm regards,`,
-        `TGI Pathways`,
+        user?.user_metadata?.display_name || "Your TGI Sport Manager",
+        `TGI Sport`,
       ].join("\n");
       setParentEmailDraft(draft);
       // Auto-save to comms history
       saveCommsEmail({ athleteId: athlete.id, emailType: "parent", subject: `Update — ${firstName}`, body: draft, generatedFrom: "call", createdBy: user?.id });
       toast.success("Parent email draft created");
     }
-  }, [athlete.name, athlete.parentName]);
+  }, [athlete.name, athlete.parentName, athlete.id, user?.id, user?.user_metadata?.display_name]);
 
   if (voiceRecordingActive) {
     return (
@@ -2200,7 +2215,7 @@ function AthleteTimeline({ athlete }: { athlete: Athlete }) {
 
 type CommandFilter = "all" | "calls_due_7" | "wellbeing_low" | "parent_followup" | "injury_setback" | "commercial_watch";
 
-function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
+function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
   const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
   const { data: allComms = [] } = useCommsLog();
 
@@ -2381,7 +2396,7 @@ function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
                 <div className="flex items-center gap-2">
                   {statusBadge(a.status)}
                   {activeFilter === "commercial_watch" && <Badge variant="secondary">{a.commercialPotential}</Badge>}
-                  <Button variant="secondary" size="sm">Open</Button>
+                  <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open</Button>
                 </div>
               </div>
             ))}
@@ -2655,7 +2670,15 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
-      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      {effectiveRole === "admin" && active === "admin" && (
+        <>
+          <ManagerCommandCentre
+            athletes={athletes}
+            onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
+          />
+          <AdminSecurity />
+        </>
+      )}
     </Shell>
   );
 }

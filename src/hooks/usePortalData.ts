@@ -126,7 +126,7 @@ export function useAthletes(restrictToIds?: string[]) {
           photoUrl: (athlete as any).avatar_url || null,
           athleteCode: athlete.athlete_code || null,
           name: `${athlete.first_name} ${athlete.last_name}`,
-          age: age ?? 0,
+          age: (age ?? null) as number,
           dateOfBirth: dob || null,
           club: athlete.club || "—",
           school: athlete.school || "—",
@@ -134,17 +134,18 @@ export function useAthletes(restrictToIds?: string[]) {
           stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
           assignedAgent: athlete.assigned_agent_name || "Unassigned",
           parentName: guardian?.parent_name || "Guardian",
-          parentEmail: guardian?.parent_email || "guardian@example.com",
+          parentEmail: guardian?.parent_email || "",
           wellbeingScore,
           status,
           lastCall: lastCallDate,
-          nextCall: latestCall
-            ? (() => {
-                const next = new Date(latestCall.call_date);
-                next.setDate(next.getDate() + 30);
-                return next.toISOString().slice(0, 10);
-              })()
-            : "—",
+          nextCall: (() => {
+            if (!latestCall?.call_date) return "Not started";
+            const nextDate = new Date(latestCall.call_date);
+            nextDate.setDate(nextDate.getDate() + 30);
+            const today = new Date();
+            if (nextDate < today) return "Overdue";
+            return nextDate.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+          })(),
           commercialPotential: ((athlete as any).commercial_potential as "Low" | "Medium" | "High" | "Not Scored") || "Not Scored",
           managementContractExpiry: athlete.management_contract_expiry || null,
           clubContractExpiry: athlete.club_contract_expiry || null,
