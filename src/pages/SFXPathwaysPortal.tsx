@@ -459,8 +459,11 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
 }
 
 function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
+  const [addingAthlete, setAddingAthlete] = useState(false);
+  const agentDisplayName = user?.user_metadata?.display_name || user?.email || "";
 
   const filtered = useMemo(() => {
     return athletes
