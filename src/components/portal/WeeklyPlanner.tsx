@@ -82,6 +82,31 @@ function generateTasks(
     if (a.status === "Monitoring" && a.wellbeingScore > 2) {
       items.push({ athleteId: a.id, athleteName: a.name, title: "Monitor status review", reason: "Athlete in monitoring — assess if support needed", suggestedDay: "Wednesday", priority: 3 });
     }
+
+    // ── Club check-in alert (every 8 weeks) ──
+    const lastClubCall = latestClubCalls[a.id];
+    if (lastClubCall) {
+      const daysSinceClub = Math.floor((Date.now() - new Date(lastClubCall).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceClub >= 56) {
+        items.push({
+          athleteId: a.id,
+          athleteName: a.name,
+          title: "Club check-in overdue",
+          reason: `Last club conversation was ${daysSinceClub} days ago — call the club for an update`,
+          suggestedDay: "Tuesday",
+          priority: 2,
+        });
+      }
+    } else {
+      items.push({
+        athleteId: a.id,
+        athleteName: a.name,
+        title: "Log first club conversation",
+        reason: "No club contact recorded yet — call the club and log the conversation",
+        suggestedDay: "Wednesday",
+        priority: 3,
+      });
+    }
   }
 
   return items;
