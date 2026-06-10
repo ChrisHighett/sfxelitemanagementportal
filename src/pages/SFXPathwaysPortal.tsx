@@ -32,6 +32,7 @@ import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
+import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
