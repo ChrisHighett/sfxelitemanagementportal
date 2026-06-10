@@ -2394,7 +2394,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
                 <div className="flex items-center gap-2">
                   {statusBadge(a.status)}
                   {activeFilter === "commercial_watch" && <Badge variant="secondary">{a.commercialPotential}</Badge>}
-                  <Button variant="secondary" size="sm">Open</Button>
+                  <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open</Button>
                 </div>
               </div>
             ))}
