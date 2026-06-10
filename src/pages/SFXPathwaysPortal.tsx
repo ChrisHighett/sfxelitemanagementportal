@@ -2538,7 +2538,9 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   function daysSinceContact(athleteId: string) {
     const last = lastContactMap[athleteId];
     if (!last) return "No contact recorded";
-    const days = Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000));
+    const ms = Date.now() - last.getTime();
+    if (!isFinite(ms) || isNaN(ms) || ms < 0) return "No contact recorded";
+    const days = Math.floor(ms / (24 * 60 * 60 * 1000));
     return days === 0 ? "Today" : `${days} day${days !== 1 ? "s" : ""} ago`;
   }
 
