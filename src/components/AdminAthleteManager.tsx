@@ -77,10 +77,14 @@ function useGuardians(athleteId?: string) {
   });
 }
 
-function AthleteFormDialog({ initial, athleteId, onClose }: {
-  initial?: AthleteForm; athleteId?: string; onClose: () => void;
+function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName }: {
+  initial?: AthleteForm; athleteId?: string; onClose: () => void; lockedAgentName?: string;
 }) {
-  const [form, setForm] = useState<AthleteForm>(initial || emptyAthlete);
+  const { user } = useAuth();
+  const [form, setForm] = useState<AthleteForm>(() => ({
+    ...(initial || emptyAthlete),
+    assigned_agent: lockedAgentName ? (user?.id ?? "") : (initial?.assigned_agent ?? ""),
+  }));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
   const isEdit = !!athleteId;
