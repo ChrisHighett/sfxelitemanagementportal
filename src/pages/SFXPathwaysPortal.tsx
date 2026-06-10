@@ -2213,7 +2213,7 @@ function AthleteTimeline({ athlete }: { athlete: Athlete }) {
 
 type CommandFilter = "all" | "calls_due_7" | "wellbeing_low" | "parent_followup" | "injury_setback" | "commercial_watch";
 
-function ManagerCommandCentre({ athletes }: { athletes: Athlete[] }) {
+function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
   const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
   const { data: allComms = [] } = useCommsLog();
 
