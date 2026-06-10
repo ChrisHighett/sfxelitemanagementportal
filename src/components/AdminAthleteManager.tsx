@@ -481,7 +481,7 @@ export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAg
         <Card className="border-dashed">
           <CardHeader><CardTitle className="text-base">New Athlete</CardTitle></CardHeader>
           <CardContent>
-            <AthleteFormDialog onClose={() => setAddingNew(false)} lockedAgentName={lockedAgentName} />
+            <AthleteFormDialog onClose={() => setAddingNew(false)} lockedAgentName={lockedAgentName} lockedAgentId={lockedAgentId} />
           </CardContent>
         </Card>
       )}
