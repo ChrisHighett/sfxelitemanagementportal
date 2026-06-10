@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_activity: {
+        Row: {
+          action_type: string
+          agent_id: string | null
+          athlete_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          action_type: string
+          agent_id?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          action_type?: string
+          agent_id?: string | null
+          athlete_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_activity_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_activity_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       athlete_alerts: {
         Row: {
           alert_type: Database["public"]["Enums"]["alert_type"]
@@ -967,6 +1009,8 @@ export type Database = {
         Row: {
           approved: boolean
           created_at: string
+          display_name: string | null
+          email: string | null
           id: string
           role: string
           updated_at: string
@@ -974,6 +1018,8 @@ export type Database = {
         Insert: {
           approved?: boolean
           created_at?: string
+          display_name?: string | null
+          email?: string | null
           id: string
           role: string
           updated_at?: string
@@ -981,6 +1027,8 @@ export type Database = {
         Update: {
           approved?: boolean
           created_at?: string
+          display_name?: string | null
+          email?: string | null
           id?: string
           role?: string
           updated_at?: string

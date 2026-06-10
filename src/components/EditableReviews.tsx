@@ -87,6 +87,12 @@ function EditableReviewCard({
       if (error) throw error;
       toast.success("Review saved");
       setEditing(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        import("@/lib/activity-logger").then(({ logActivity }) => {
+          logActivity(user.id, "review_saved", athleteId);
+        });
+      }
       onSaved();
     } catch (e: any) {
       toast.error(e.message || "Failed to save");
