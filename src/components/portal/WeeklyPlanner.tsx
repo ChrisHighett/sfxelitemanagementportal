@@ -44,7 +44,8 @@ function priorityBadge(p: number) {
 function generateTasks(
   athletes: Athlete[],
   reviews: { athlete_id: string; review_month: string; follow_up_actions: string | null; wellbeing_score: number | null; parent_engagement_notes: string | null }[],
-  existingTaskAthleteIds: Set<string>
+  existingTaskAthleteIds: Set<string>,
+  latestClubCalls: Record<string, string>
 ): Omit<PlannerItem, "id" | "source">[] {
   const items: Omit<PlannerItem, "id" | "source">[] = [];
   const currentMonth = new Date().toISOString().slice(0, 7) + "-01";
@@ -80,6 +81,31 @@ function generateTasks(
 
     if (a.status === "Monitoring" && a.wellbeingScore > 2) {
       items.push({ athleteId: a.id, athleteName: a.name, title: "Monitor status review", reason: "Athlete in monitoring — assess if support needed", suggestedDay: "Wednesday", priority: 3 });
+    }
+
+    // ── Club check-in alert (every 8 weeks) ──
+    const lastClubCall = latestClubCalls[a.id];
+    if (lastClubCall) {
+      const daysSinceClub = Math.floor((Date.now() - new Date(lastClubCall).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceClub >= 56) {
+        items.push({
+          athleteId: a.id,
+          athleteName: a.name,
+          title: "Club check-in overdue",
+          reason: `Last club conversation was ${daysSinceClub} days ago — call the club for an update`,
+          suggestedDay: "Tuesday",
+          priority: 2,
+        });
+      }
+    } else {
+      items.push({
+        athleteId: a.id,
+        athleteName: a.name,
+        title: "Log first club conversation",
+        reason: "No club contact recorded yet — call the club and log the conversation",
+        suggestedDay: "Wednesday",
+        priority: 3,
+      });
     }
   }
 
@@ -165,6 +191,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
+  const [latestClubCalls, setLatestClubCalls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -177,9 +204,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
       mon.setHours(0, 0, 0, 0);
 
-      const [tasksRes, reviewsRes] = await Promise.all([
+      const [tasksRes, reviewsRes, clubCallsRes] = await Promise.all([
         supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status").in("athlete_id", athleteIds).eq("owner_type", "agent").gte("created_at", mon.toISOString()).order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
+        supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
       ]);
 
       setSavedTasks(tasksRes.data || []);
@@ -190,6 +218,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         return true;
       });
       setReviews(latestReviews);
+
+      const clubMap: Record<string, string> = {};
+      for (const call of (clubCallsRes.data || [])) {
+        if (!clubMap[call.athlete_id]) clubMap[call.athlete_id] = call.call_date;
+      }
+      setLatestClubCalls(clubMap);
       setLoading(false);
     }
     load();
@@ -206,14 +240,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
       }));
 
-    const generated = generateTasks(athletes, reviews, existingIds);
+    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls);
     const newGenerated: PlannerItem[] = generated
       .filter((g) => !savedIds.has(`${g.athleteId}:${g.title}`))
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
     return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews]);
+  }, [savedTasks, athletes, reviews, latestClubCalls]);
 
   const handleComplete = useCallback(
     async (item: PlannerItem) => {
