@@ -1230,6 +1230,7 @@ export type Database = {
         | "selection_setback"
         | "low_engagement"
         | "custom"
+        | "club_check_in"
       call_type:
         | "monthly_review"
         | "check_in"
@@ -1378,6 +1379,7 @@ export const Constants = {
         "selection_setback",
         "low_engagement",
         "custom",
+        "club_check_in",
       ],
       call_type: [
         "monthly_review",
