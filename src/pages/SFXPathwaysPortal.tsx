@@ -987,7 +987,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
         ``,
         `Warm regards,`,
-        `TGI Pathways`,
+        user?.user_metadata?.display_name || "Your TGI Sport Manager",
+        `TGI Sport`,
       ].join("\n");
       setParentEmailDraft(draft);
       // Auto-save to comms history
