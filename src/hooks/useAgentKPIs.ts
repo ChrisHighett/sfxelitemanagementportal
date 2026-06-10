@@ -81,7 +81,11 @@ export function useAgentKPIs() {
 
       const kpis: AgentKPI[] = agents.map((agent: any) => {
         const agentAthletes = (athletes || []).filter(
-          (a: any) => a.assigned_agent_id === agent.id
+          (a: any) =>
+            a.assigned_agent_user_id === agent.id ||
+            (a.assigned_agent_name &&
+              (a.assigned_agent_name === agent.display_name ||
+               a.assigned_agent_name === agent.email))
         );
         const athleteIds = agentAthletes.map((a: any) => a.id);
 
