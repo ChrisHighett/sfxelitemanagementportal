@@ -446,15 +446,20 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
 
       {/* How TGI Sport Supports Your Athlete */}
       <ContentSection title="How TGI Sport Supports Your Athlete">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="grid gap-3 md:grid-cols-2 text-sm">
-            <div>• Monthly athlete development calls</div>
-            <div>• Structured tracker updates</div>
-            <div>• Parent communication summaries</div>
-            <div>• Guidance on performance and lifestyle habits</div>
-            <div>• Support during setbacks and pressure periods</div>
-            <div>• Long-term career and character development</div>
-          </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            "Monthly athlete development calls",
+            "Structured development tracker updates",
+            "Professional parent communication summaries",
+            "Guidance on performance and lifestyle habits",
+            "Support during setbacks and pressure periods",
+            "Long-term career and character development",
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-xl border border-border bg-card p-3">
+              <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+              <span className="text-sm">{item}</span>
+            </div>
+          ))}
         </div>
       </ContentSection>
     </div>
