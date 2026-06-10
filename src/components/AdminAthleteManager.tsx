@@ -26,6 +26,8 @@ interface AthleteForm {
   management_contract_expiry: string;
   club_contract_expiry: string;
   assigned_agent: string;
+  commercial_potential: string;
+  avatar_url: string;
 }
 
 const AGENTS = [
@@ -45,6 +47,7 @@ interface GuardianForm {
 const emptyAthlete: AthleteForm = {
   first_name: "", last_name: "", date_of_birth: "", club: "", school: "",
   position: "", stage: "Emerging", email: "", management_contract_expiry: "", club_contract_expiry: "", assigned_agent: "",
+  commercial_potential: "Not Scored", avatar_url: "",
 };
 
 const emptyGuardian: GuardianForm = {
@@ -92,6 +95,8 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
       management_contract_expiry: form.management_contract_expiry || null,
       club_contract_expiry: form.club_contract_expiry || null,
       assigned_agent_name: form.assigned_agent || null,
+      commercial_potential: form.commercial_potential || "Not Scored",
+      avatar_url: form.avatar_url || null,
     } as any;
 
     const { error } = isEdit
@@ -165,6 +170,26 @@ function AthleteFormDialog({ initial, athleteId, onClose }: {
         <div className="space-y-2">
           <Label>Club Contract Expiry</Label>
           <Input type="date" value={form.club_contract_expiry} onChange={(e) => set("club_contract_expiry", e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label>Commercial Potential</Label>
+          <Select value={form.commercial_potential} onValueChange={(v) => set("commercial_potential", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Not Scored">Not Scored</SelectItem>
+              <SelectItem value="Low">Low</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Photo URL (optional)</Label>
+          <Input
+            placeholder="https://…"
+            value={form.avatar_url}
+            onChange={(e) => set("avatar_url", e.target.value)}
+          />
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-2">
@@ -268,6 +293,8 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
     management_contract_expiry: athlete.managementContractExpiry || "",
     club_contract_expiry: athlete.clubContractExpiry || "",
     assigned_agent: athlete.assignedAgent || "",
+    commercial_potential: athlete.commercialPotential || "Not Scored",
+    avatar_url: athlete.photoUrl || "",
   };
 
   async function handleDeleteGuardian(id: string) {
