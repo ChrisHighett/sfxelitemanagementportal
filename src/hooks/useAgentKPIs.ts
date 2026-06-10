@@ -45,7 +45,7 @@ export function useAgentKPIs() {
 
       const { data: athletes } = await supabase
         .from("athletes")
-        .select("id, assigned_agent_id, monthly_reviews(wellbeing_score, review_month)");
+        .select("id, assigned_agent_user_id, assigned_agent_name, monthly_reviews(wellbeing_score, review_month)");
 
       const { data: calls } = await supabase
         .from("call_history")
