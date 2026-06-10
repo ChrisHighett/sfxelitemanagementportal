@@ -447,6 +447,7 @@ export type Database = {
         Row: {
           assigned_agent_id: string | null
           assigned_agent_name: string | null
+          assigned_agent_user_id: string | null
           athlete_code: string | null
           avatar_url: string | null
           club: string | null
@@ -467,6 +468,7 @@ export type Database = {
         Insert: {
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
+          assigned_agent_user_id?: string | null
           athlete_code?: string | null
           avatar_url?: string | null
           club?: string | null
@@ -487,6 +489,7 @@ export type Database = {
         Update: {
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
+          assigned_agent_user_id?: string | null
           athlete_code?: string | null
           avatar_url?: string | null
           club?: string | null
@@ -508,6 +511,13 @@ export type Database = {
           {
             foreignKeyName: "athletes_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athletes_assigned_agent_user_id_fkey"
+            columns: ["assigned_agent_user_id"]
             isOneToOne: false
             referencedRelation: "portal_users"
             referencedColumns: ["id"]
