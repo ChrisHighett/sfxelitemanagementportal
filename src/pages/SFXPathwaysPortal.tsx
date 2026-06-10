@@ -25,6 +25,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
+import AdminAnalytics from "@/components/portal/AdminAnalytics";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
@@ -1927,23 +1928,26 @@ function AdminSecurity() {
         imageUrl={heroImage}
         size="sm"
       />
-      <Tabs defaultValue="athletes" className="w-full">
-        <TabsList>
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="analytics">Agent Analytics</TabsTrigger>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
           <TabsTrigger value="security">Security & Access</TabsTrigger>
         </TabsList>
+        <TabsContent value="analytics" className="mt-4">
+          <AdminAnalytics />
+        </TabsContent>
         <TabsContent value="athletes" className="mt-4">
           <AdminAthleteManager />
         </TabsContent>
         <TabsContent value="security" className="mt-4 space-y-6">
+          <PendingApprovals />
           <Card>
-            <CardHeader><CardTitle className="text-base">Admin & Security</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Access Control Overview</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="grid gap-3 md:grid-cols-2">
-                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Role-Based Access Control</div><div className="text-muted-foreground">Athletes/Parents only see their own records. Agents see assigned athletes. Admin sees all.</div></CardContent></Card>
-                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Audit Log</div><div className="text-muted-foreground">Track edits to reviews, contact details, and documents with timestamps and user IDs.</div></CardContent></Card>
-                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Consent & Permissions</div><div className="text-muted-foreground">Store guardian consent flags; control whether parents can view goals and brand notes.</div></CardContent></Card>
-                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Data Retention</div><div className="text-muted-foreground">Policies for call audio retention, exports, and backups. Essential for C-suite and governance.</div></CardContent></Card>
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Role-Based Access</div><div className="text-muted-foreground">Athletes/Parents only see their own records. Agents see assigned athletes. Admin sees all.</div></CardContent></Card>
+                <Card><CardContent className="p-4 space-y-2"><div className="font-medium">Activity Logging</div><div className="text-muted-foreground">All logins, calls, reviews, and emails are tracked per agent in the Analytics tab.</div></CardContent></Card>
               </div>
             </CardContent>
           </Card>

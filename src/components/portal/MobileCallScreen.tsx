@@ -324,6 +324,13 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
       setSavedCallId(data.id);
       setStep("done");
       toast.success("Call saved successfully");
+      if (user?.id) {
+        import("@/lib/activity-logger").then(({ logActivity }) => {
+          logActivity(user.id, "call_logged", athlete.id, {
+            duration_minutes: durationMinutes,
+          });
+        });
+      }
     } catch (e: any) {
       console.error("Save call error:", e);
       toast.error(e.message || "Failed to save call");
