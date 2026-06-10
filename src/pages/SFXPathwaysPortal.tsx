@@ -761,31 +761,32 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   })}
                 </TabsContent>
                 <TabsContent value="comms" className="space-y-4 mt-4">
-                  {comms.length === 0 && <p className="text-sm text-muted-foreground">No messages logged.</p>}
-                  {comms.map((c, idx) => (
-                    <Card key={idx}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">{c.subject}</CardTitle>
-                          <Badge variant="secondary">{c.recipient}</Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="text-sm space-y-1">
-                        <div className="text-muted-foreground">Sent: {c.sentAt}</div>
-                        <div>{c.body}</div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <CommsHistory athleteId={athlete.id} />
+                </TabsContent>
+                <TabsContent value="scorecard" className="mt-4">
+                  <AthleteScorecard athlete={athlete} />
+                </TabsContent>
+                <TabsContent value="trends" className="mt-4">
+                  <TrendTracking athlete={athlete} />
+                </TabsContent>
+                <TabsContent value="timeline" className="mt-4">
+                  <ExpandedTimeline athlete={athlete} canEdit={true} />
                 </TabsContent>
                 <TabsContent value="commercial" className="mt-4">
                   <Card>
                     <CardHeader className="pb-2"><CardTitle className="text-base">Commercial Snapshot</CardTitle></CardHeader>
                     <CardContent className="space-y-3 text-sm">
-                      <div><span className="text-muted-foreground">Potential:</span> <span className="font-medium">{athlete.commercialPotential}</span></div>
-                      <div><span className="text-muted-foreground">Brand Pillars:</span> <span className="font-medium">Fitness • Community • Training</span></div>
-                      <div><span className="text-muted-foreground">Next Action:</span> <span className="font-medium">Monitor content consistency</span></div>
+                      <div>
+                        <span className="text-muted-foreground">Commercial Potential:</span>{" "}
+                        <span className="font-medium">
+                          {athlete.commercialPotential !== "Not Scored" ? athlete.commercialPotential : "Not yet assessed"}
+                        </span>
+                      </div>
                       <Separator />
-                      <p className="text-muted-foreground text-xs">Note: Commercial valuation & outreach pipeline can be added in Phase 2.</p>
+                      <p className="text-muted-foreground text-xs">
+                        Use this section to track brand partnerships, social media milestones, and commercial opportunities.
+                        Log notes in the athlete's monthly review under Brand & Social.
+                      </p>
                     </CardContent>
                   </Card>
                 </TabsContent>
