@@ -761,7 +761,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   })}
                 </TabsContent>
                 <TabsContent value="comms" className="space-y-4 mt-4">
-                  <CommsHistory athleteId={athlete.id} />
+                  <CommsHistory athleteId={athlete.id} athleteName={athlete.name} />
                 </TabsContent>
                 <TabsContent value="scorecard" className="mt-4">
                   <AthleteScorecard athlete={athlete} />
