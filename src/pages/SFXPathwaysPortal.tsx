@@ -41,7 +41,6 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-import heroImage from "@/assets/hero-sport-dark.jpg";
 type Role = "athlete" | "parent" | "agent" | "admin";
 
 function statusBadge(status: string) {
@@ -245,7 +244,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
       <HeroBanner
         title={`Welcome back, ${athlete.name.split(" ")[0]}`}
         subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-        imageUrl={athlete.photoUrl || heroImage}
+        imageUrl={athlete.photoUrl}
         badge={statusBadge(athlete.status)}
         size="md"
       />
@@ -355,7 +354,6 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
       <HeroBanner
         title={`${athlete.name}`}
         subtitle="Parent Portal — Stay connected with your child's development"
-        imageUrl={heroImage}
         badge={statusBadge(athlete.status)}
         size="md"
       />
@@ -525,7 +523,6 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
       <HeroBanner
         title="Athlete Roster"
         subtitle="Manage your athletes, track wellbeing, and plan your week"
-        imageUrl={heroImage}
         size="md"
       />
 
@@ -656,7 +653,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
       <HeroBanner
         title={athlete.name}
         subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-        imageUrl={athlete.photoUrl || heroImage}
+        imageUrl={athlete.photoUrl}
         badge={statusBadge(athlete.status)}
         size="md"
       />
@@ -1022,7 +1019,6 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
       <HeroBanner
         title={`Comms — ${athlete.name}`}
         subtitle="Record calls, generate summaries, and track follow-ups"
-        imageUrl={heroImage}
         size="sm"
       />
 
@@ -1726,7 +1722,6 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
       <HeroBanner
         title="Resources"
         subtitle="Training materials, guides, and development resources"
-        imageUrl={heroImage}
         size="sm"
       />
       <Tabs defaultValue="materials">
@@ -2323,7 +2318,6 @@ function AdminSecurity() {
       <HeroBanner
         title="Admin Panel"
         subtitle="Manage athletes, guardians, agents, security, and access controls"
-        imageUrl={heroImage}
         size="sm"
       />
       <Tabs defaultValue="analytics" className="w-full">
@@ -2869,7 +2863,6 @@ export default function SFXPathwaysPortal() {
           <HeroBanner
             title={`Development Tracker — ${athlete.name}`}
             subtitle="Review history, export data, and track progress over time"
-            imageUrl={heroImage}
             size="sm"
           />
           <TrackerDownloadCard key={`tracker-${athlete.id}`} athlete={athlete} role={effectiveRole} />
