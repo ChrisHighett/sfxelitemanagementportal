@@ -99,7 +99,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
         <div className="space-y-6 flex-1">
           <div>
-            <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways Hub</h2>
+            <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
             <p className="text-xs text-muted-foreground">Role-based portal + CRM</p>
           </div>
           <nav className="space-y-1">
@@ -124,7 +124,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-30">
-          <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+          <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
           <div className="flex items-center gap-2">
             {!isOnline && (
               <Badge variant="destructive" className="gap-1 text-xs">
@@ -139,7 +139,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-4">
-                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>SFX Pathways</h2>
+                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
                 <nav className="space-y-1">
                   {items.map((it) => {
                     const Icon = it.icon;
@@ -329,7 +329,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
             onClick={() => {
               const subject = encodeURIComponent(`Message from ${athlete.name}`);
               const body = encodeURIComponent(`Hi ${athlete.assignedAgent},\n\n`);
-              window.location.href = `mailto:info@sfx.com.au?subject=${subject}&body=${body}`;
+              window.location.href = `mailto:info@tgisport.com.au?subject=${subject}&body=${body}`;
             }}
           >
             Message My Manager
@@ -425,7 +425,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           description="Your child's assigned manager"
           icon={<Phone className="h-4 w-4" />}
         >
-          <p className="text-xs text-muted-foreground mt-1">📧 info@sfx.com.au</p>
+          <p className="text-xs text-muted-foreground mt-1">📧 info@tgisport.com.au</p>
           <Button
             variant="secondary"
             size="sm"
@@ -433,7 +433,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
             onClick={() => {
               const subject = encodeURIComponent(`Message re: ${athlete.name}`);
               const body = encodeURIComponent(`Hi,\n\nI wanted to reach out regarding ${athlete.name}.\n\n`);
-              window.location.href = `mailto:info@sfx.com.au?subject=${subject}&body=${body}`;
+              window.location.href = `mailto:info@tgisport.com.au?subject=${subject}&body=${body}`;
             }}
           >
             Send Message
@@ -441,8 +441,8 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
         </ImageCard>
       </ContentSection>
 
-      {/* How SFX Supports Your Athlete */}
-      <ContentSection title="How SFX Supports Your Athlete">
+      {/* How TGI Sport Supports Your Athlete */}
+      <ContentSection title="How TGI Sport Supports Your Athlete">
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="grid gap-3 md:grid-cols-2 text-sm">
             <div>• Monthly athlete development calls</div>
@@ -915,7 +915,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Keep backing yourself ${firstName}. You're on the right track and I'm here whenever you need me. If anything comes up between now and our next chat, just give me a call mate.`,
         ``,
         `Speak soon,`,
-        `SFX Pathways`,
+        `TGI Pathways`,
       ].join("\n");
       setAthleteEmailDraft(draft);
       // Auto-save to comms history
@@ -940,7 +940,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         `Please feel free to reach out anytime if you'd like to discuss anything further — I'm always happy to chat.`,
         ``,
         `Warm regards,`,
-        `SFX Pathways`,
+        `TGI Pathways`,
       ].join("\n");
       setParentEmailDraft(draft);
       // Auto-save to comms history

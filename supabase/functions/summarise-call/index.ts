@@ -14,11 +14,11 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = [
-      "You are an athlete development assistant for SFX Sports.",
+      "You are an athlete development assistant for TGI Sport.",
       "",
       "Your role is to convert raw athlete call transcripts into structured development notes for elite pathways athletes.",
       "",
-      "You must organise the conversation into these 7 SFX call sections:",
+      "You must organise the conversation into these 7 TGI Pathways call sections:",
       "1. Warm Opener",
       "2. Performance",
       "3. Lifestyle",
@@ -64,7 +64,7 @@ serve(async (req) => {
     const athleteLastName = (athleteName || "").split(" ").slice(1).join(" ") || "";
 
     const userPrompt = [
-      "Please convert the following athlete call transcript into the SFX structured development format.",
+      "Please convert the following athlete call transcript into the TGI Pathways structured development format.",
       "",
       "Athlete name: " + athleteFirstName + " " + athleteLastName,
       "Athlete stage: " + (athleteStage || "Unknown"),
@@ -95,7 +95,7 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "structured_summary",
-              description: "Return a structured call summary matching the SFX Development Tracker format",
+              description: "Return a structured call summary matching the TGI Pathways Development Tracker format",
               parameters: {
                 type: "object",
                 properties: {
@@ -185,7 +185,7 @@ serve(async (req) => {
                 type: "function",
                 function: {
                   name: "structured_summary",
-                  description: "Return a structured call summary matching the SFX Development Tracker format",
+                  description: "Return a structured call summary matching the TGI Pathways Development Tracker format",
                   parameters: {
                     type: "object",
                     properties: {
