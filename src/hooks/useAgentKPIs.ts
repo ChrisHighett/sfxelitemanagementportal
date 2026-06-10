@@ -45,7 +45,7 @@ export function useAgentKPIs() {
 
       const { data: athletes } = await supabase
         .from("athletes")
-        .select("id, assigned_agent_id, monthly_reviews(wellbeing_score, review_month)");
+        .select("id, assigned_agent_user_id, assigned_agent_name, monthly_reviews(wellbeing_score, review_month)");
 
       const { data: calls } = await supabase
         .from("call_history")
@@ -81,7 +81,11 @@ export function useAgentKPIs() {
 
       const kpis: AgentKPI[] = agents.map((agent: any) => {
         const agentAthletes = (athletes || []).filter(
-          (a: any) => a.assigned_agent_id === agent.id
+          (a: any) =>
+            a.assigned_agent_user_id === agent.id ||
+            (a.assigned_agent_name &&
+              (a.assigned_agent_name === agent.display_name ||
+               a.assigned_agent_name === agent.email))
         );
         const athleteIds = agentAthletes.map((a: any) => a.id);
 
