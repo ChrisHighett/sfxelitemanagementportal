@@ -177,10 +177,15 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
-    toast.success("Club conversation saved to athlete file.");
+    toast.success("Club conversation saved — generating athlete email…");
     qc.invalidateQueries({ queryKey: ["call_history", athlete.id] });
     setSaved(true);
     onSaved?.();
+
+    // Auto-generate the athlete email and write it to Comms History
+    // so it appears in the Comms inbox without an extra click.
+    await handleGenerateEmail();
+    qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
   };
 
   const handleGenerateEmail = async () => {
