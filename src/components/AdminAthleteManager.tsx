@@ -445,8 +445,8 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   );
 }
 
-export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName }: {
-  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string;
+export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName, lockedAgentId }: {
+  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string; lockedAgentId?: string;
 } = {}) {
   const { data: athletes = [], isLoading } = useAthletes();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(initialAthleteId || null);
