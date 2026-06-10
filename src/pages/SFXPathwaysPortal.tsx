@@ -2470,7 +2470,9 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   const lastContactMap = useMemo(() => {
     const map: Record<string, Date> = {};
     allComms.forEach((c) => {
+      if (!c.sentAt) return;
       const d = new Date(c.sentAt);
+      if (isNaN(d.getTime())) return;
       if (!map[c.athleteId] || d > map[c.athleteId]) {
         map[c.athleteId] = d;
       }
