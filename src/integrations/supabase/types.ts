@@ -406,8 +406,10 @@ export type Database = {
           assigned_agent_id: string | null
           assigned_agent_name: string | null
           athlete_code: string | null
+          avatar_url: string | null
           club: string | null
           club_contract_expiry: string | null
+          commercial_potential: string | null
           created_at: string
           date_of_birth: string | null
           email: string | null
@@ -424,8 +426,10 @@ export type Database = {
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           athlete_code?: string | null
+          avatar_url?: string | null
           club?: string | null
           club_contract_expiry?: string | null
+          commercial_potential?: string | null
           created_at?: string
           date_of_birth?: string | null
           email?: string | null
@@ -442,8 +446,10 @@ export type Database = {
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           athlete_code?: string | null
+          avatar_url?: string | null
           club?: string | null
           club_contract_expiry?: string | null
+          commercial_potential?: string | null
           created_at?: string
           date_of_birth?: string | null
           email?: string | null
