@@ -169,7 +169,10 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-4">
-                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+                <div className="flex items-center gap-2 mb-4">
+                  <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-8 w-auto" />
+                  <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+                </div>
                 <nav className="space-y-1">
                   {items.map((it) => {
                     const Icon = it.icon;
