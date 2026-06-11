@@ -74,11 +74,12 @@ function getWeekRange(offset: number = 0): { start: Date; end: Date; label: stri
 }
 
 function priorityBadge(p: number) {
+  const base = "text-[10px] px-1.5 py-0 border-0";
   if (p === 1)
-    return <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Urgent</Badge>;
+    return <Badge className={base} style={{ background: "var(--danger-soft)", color: "var(--danger-deep)" }}>Urgent</Badge>;
   if (p === 2)
-    return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">High</Badge>;
-  return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Normal</Badge>;
+    return <Badge className={base} style={{ background: "var(--win-soft)", color: "var(--win-deep)" }}>High</Badge>;
+  return <Badge className={base} style={{ background: "var(--border-hex)", color: "var(--muted-fg)" }}>Normal</Badge>;
 }
 
 function generateTasks(
