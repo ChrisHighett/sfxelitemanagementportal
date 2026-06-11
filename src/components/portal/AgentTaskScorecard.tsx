@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, CheckCircle2, Clock, RotateCcw, XCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, RotateCcw, XCircle, ChevronDown, ChevronRight } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
 import { cn } from "@/lib/utils";
 
 interface ScorecardRow {
@@ -155,7 +156,7 @@ function AgentRow({
           <td colSpan={7} className="p-4">
             {loadingDrill ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading details…
+                <ArcLoader size={14} /> Loading details…
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
@@ -283,7 +284,7 @@ export default function AgentTaskScorecard() {
       <CardContent className="p-0">
         {loading ? (
           <div className="flex justify-center items-center gap-2 p-8 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading scorecard…
+            <ArcLoader size={18} /> Loading scorecard…
           </div>
         ) : error ? (
           <div className="p-6 text-sm text-destructive">{error}</div>

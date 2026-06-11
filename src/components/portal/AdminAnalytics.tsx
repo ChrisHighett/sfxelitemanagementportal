@@ -2,7 +2,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
+import { TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
 
@@ -126,7 +127,7 @@ export default function AdminAnalytics() {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <ArcLoader size={28} />
       </div>
     );
   }

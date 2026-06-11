@@ -213,13 +213,14 @@ function TaskRow({
       className={cn(
         "flex items-start gap-2.5 py-2 px-2 rounded border bg-card",
         item.isOverdue
-          ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
+          ? "border-danger/40 overdue-border-l"
           : "border-border/40"
       )}
+      style={item.isOverdue ? { background: "var(--danger-soft)" } : undefined}
     >
       <div className="pt-0.5 shrink-0">
         {completing ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <ArcLoader size={16} />
         ) : completed ? (
           <div className="h-4 w-4 rounded-sm bg-emerald-500 flex items-center justify-center">
             <Check className="h-3 w-3 text-white" />
@@ -683,7 +684,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     return (
       <Card>
         <CardContent className="p-6 flex items-center justify-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <ArcLoader size={16} />
           <span className="text-sm">Loading weekly planner…</span>
         </CardContent>
       </Card>
@@ -845,7 +846,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                         <div className="flex items-start gap-1.5">
                           <div className="pt-px shrink-0">
                             {completing.has(item.id) ? (
-                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                              <ArcLoader size={12} />
                             ) : done ? (
                               <div className="h-3.5 w-3.5 rounded-sm bg-emerald-500 flex items-center justify-center">
                                 <Check className="h-2.5 w-2.5 text-white" />
@@ -938,14 +939,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           <div className="pt-2">
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-muted-foreground">
-                {todayDone} of {todayTotal} task{todayTotal !== 1 ? "s" : ""} done today
+                <span className="num">{todayDone}</span> of <span className="num">{todayTotal}</span> task{todayTotal !== 1 ? "s" : ""} done today
               </span>
-              <span className="font-medium text-foreground">{progressPct}%</span>
+              <span className="num font-medium text-foreground">{progressPct}%</span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "var(--border-strong)" }}>
               <div
-                className="h-full bg-teal-500 transition-all"
-                style={{ width: `${progressPct}%` }}
+                className="h-full transition-all"
+                style={{ width: `${progressPct}%`, background: "var(--brand-gradient)" }}
               />
             </div>
           </div>
