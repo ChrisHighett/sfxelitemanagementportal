@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
@@ -21,6 +21,21 @@ interface PlannerItem {
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const DAY_SHORT: Record<string, string> = {
+  Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu", Friday: "Fri",
+};
+
+type FilterType = "All" | "Urgent" | "Calls" | "Reviews" | "Scout" | "Parent";
+const FILTERS: FilterType[] = ["All", "Urgent", "Calls", "Reviews", "Scout", "Parent"];
+
+function classifyTask(item: PlannerItem): Exclude<FilterType, "All" | "Urgent"> | "Other" {
+  const t = item.title.toLowerCase();
+  if (t.includes("scout") || t.includes("pursue") || t.includes("lead")) return "Scout";
+  if (t.includes("parent")) return "Parent";
+  if (t.includes("review")) return "Reviews";
+  if (t.includes("call") || t.includes("check-in") || t.includes("club")) return "Calls";
+  return "Other";
+}
 
 function getWeekLabel(): string {
   const now = new Date();
@@ -85,7 +100,6 @@ function generateTasks(
       items.push({ athleteId: a.id, athleteName: a.name, title: "Monitor status review", reason: "Athlete in monitoring — assess if support needed", suggestedDay: "Wednesday", priority: 3 });
     }
 
-    // ── Club check-in alert (every 8 weeks) ──
     const lastClubCall = latestClubCalls[a.id];
     if (lastClubCall) {
       const daysSinceClub = Math.floor((Date.now() - new Date(lastClubCall).getTime()) / (1000 * 60 * 60 * 24));
@@ -111,7 +125,6 @@ function generateTasks(
     }
   }
 
-  // ── Scout lead tasks ──
   for (const lead of pursueLeads) {
     if (lead.assigned_agent_id !== currentUserId) continue;
     const name = `${lead.first_name} ${lead.last_name}`;
@@ -151,24 +164,40 @@ function generateTasks(
   return items;
 }
 
-
-/* ── Mobile task row ── */
-function MobileTaskRow({ item, completing, onComplete }: { item: PlannerItem; completing: boolean; onComplete: () => void }) {
+/* ── Task row used in band view ── */
+function TaskRow({
+  item,
+  completing,
+  completed,
+  onComplete,
+}: {
+  item: PlannerItem;
+  completing: boolean;
+  completed: boolean;
+  onComplete: () => void;
+}) {
   return (
-    <div className="flex items-start gap-2.5 py-2.5 px-1 border-b border-border/40 last:border-0">
+    <div className="flex items-start gap-2.5 py-2 px-2 rounded border border-border/40 bg-card">
       <div className="pt-0.5 shrink-0">
         {completing ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : completed ? (
+          <div className="h-4 w-4 rounded-sm bg-emerald-500 flex items-center justify-center">
+            <Check className="h-3 w-3 text-white" />
+          </div>
         ) : (
           <Checkbox onCheckedChange={onComplete} className="h-4 w-4" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-bold text-foreground truncate">{item.athleteName}</span>
-          {priorityBadge(item.priority)}
+          <span className={`text-xs font-bold truncate ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+            {item.athleteName}
+          </span>
         </div>
-        <p className="text-sm font-medium text-foreground leading-snug">{item.title}</p>
+        <p className={`text-sm font-medium leading-snug ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+          {item.title}
+        </p>
         {item.reason && (
           <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{item.reason}</p>
         )}
@@ -177,43 +206,63 @@ function MobileTaskRow({ item, completing, onComplete }: { item: PlannerItem; co
   );
 }
 
-/* ── Mobile day accordion ── */
-function MobileDaySection({ day, items, isToday, completing, onComplete }: {
-  day: string; items: PlannerItem[]; isToday: boolean; completing: Set<string>; onComplete: (item: PlannerItem) => void;
+/* ── Priority band ── */
+function PriorityBand({
+  label,
+  items,
+  bandClass,
+  countClass,
+  defaultOpen,
+  completing,
+  completedIds,
+  onComplete,
+  cap = 5,
+}: {
+  label: string;
+  items: PlannerItem[];
+  bandClass: string;
+  countClass: string;
+  defaultOpen: boolean;
+  completing: Set<string>;
+  completedIds: Set<string>;
+  onComplete: (item: PlannerItem) => void;
+  cap?: number;
 }) {
-  const [open, setOpen] = useState(isToday || items.length > 0);
-  const empty = items.length === 0;
+  const [open, setOpen] = useState(defaultOpen);
+  if (items.length === 0) return null;
+  const visible = items.slice(0, cap);
+  const overflow = items.length - visible.length;
 
   return (
-    <div className={`rounded-lg border ${isToday ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+    <div className={`rounded-lg border ${bandClass}`}>
       <button
-        onClick={() => !empty && setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2.5"
-        disabled={empty}
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-2"
       >
         <div className="flex items-center gap-2">
-          {!empty && (open ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />)}
-          <span className={`text-sm font-bold ${isToday ? "text-primary" : empty ? "text-muted-foreground/50" : "text-foreground"}`}>
-            {day}
-          </span>
-          {isToday && <Badge className="text-[10px] px-1.5 py-0">Today</Badge>}
-        </div>
-        {items.length > 0 && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          <span className="text-sm font-bold">{label}</span>
+          <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${countClass}`}>
             {items.length}
-          </Badge>
-        )}
+          </span>
+        </div>
       </button>
-      {open && !empty && (
-        <div className="px-2 pb-2">
-          {items.map((item) => (
-            <MobileTaskRow
+      {open && (
+        <div className="px-2 pb-2 space-y-1.5">
+          {visible.map((item) => (
+            <TaskRow
               key={item.id}
               item={item}
               completing={completing.has(item.id)}
+              completed={completedIds.has(item.id)}
               onComplete={() => onComplete(item)}
             />
           ))}
+          {overflow > 0 && (
+            <p className="text-[11px] text-muted-foreground px-1 pt-1">
+              +{overflow} more in this band
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -231,8 +280,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
+  const [sessionCompleted, setSessionCompleted] = useState<Set<string>>(new Set());
   const [latestClubCalls, setLatestClubCalls] = useState<Record<string, string>>({});
   const [pursueLeads, setPursueLeads] = useState<any[]>([]);
+
+  const today = new Date();
+  const currentDayIndex = (today.getDay() + 6) % 7;
+  const todayName = currentDayIndex < 5 ? DAYS[currentDayIndex] : "Monday";
+
+  const [selectedDay, setSelectedDay] = useState<string>("today"); // "today" | "Monday".. | "all"
+  const [activeFilter, setActiveFilter] = useState<FilterType>("All");
 
   useEffect(() => {
     async function load() {
@@ -282,7 +339,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     const existingIds = new Set(savedTasks.map((t) => t.athlete_id));
 
     const active: PlannerItem[] = savedTasks
-      .filter((t) => t.status !== "done" && t.status !== "cancelled")
+      .filter((t) => t.status !== "cancelled")
       .map((t) => ({
         id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
         title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
@@ -296,6 +353,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
     return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
   }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id]);
+
+  // Saved-task completion lookup
+  const savedDoneIds = useMemo(
+    () => new Set(savedTasks.filter((t) => t.status === "done").map((t) => t.id)),
+    [savedTasks]
+  );
+  const isCompleted = useCallback(
+    (item: PlannerItem) => sessionCompleted.has(item.id) || savedDoneIds.has(item.id),
+    [sessionCompleted, savedDoneIds]
+  );
 
   const handleComplete = useCallback(
     async (item: PlannerItem) => {
@@ -315,6 +382,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           if (item.source === "saved") return prev.map((t) => (t.id === item.id ? { ...t, status: "done" } : t));
           return [...prev, { id: crypto.randomUUID(), athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority, suggested_day: item.suggestedDay, status: "done" }];
         });
+        setSessionCompleted((prev) => new Set(prev).add(item.id));
         toast.success(`"${item.title}" completed`);
       } catch {
         toast.error("Failed to complete task");
@@ -325,6 +393,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     [user?.id]
   );
 
+  // Group by day (no dedup yet)
   const byDay = useMemo(() => {
     const map: Record<string, PlannerItem[]> = {};
     for (const day of DAYS) map[day] = [];
@@ -334,6 +403,42 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     }
     return map;
   }, [plannerItems]);
+
+  // Smart dedup per athlete per day — keep only highest priority (lowest number)
+  const dedupedByDay = useMemo(() => {
+    const map: Record<string, PlannerItem[]> = {};
+    for (const day of DAYS) {
+      const sorted = [...byDay[day]].sort((a, b) => a.priority - b.priority);
+      const seen = new Set<string>();
+      const out: PlannerItem[] = [];
+      for (const it of sorted) {
+        if (seen.has(it.athleteId)) continue;
+        seen.add(it.athleteId);
+        out.push(it);
+      }
+      map[day] = out;
+    }
+    return map;
+  }, [byDay]);
+
+  // Apply filter
+  const applyFilter = useCallback(
+    (items: PlannerItem[]) => {
+      if (activeFilter === "All") return items;
+      if (activeFilter === "Urgent") return items.filter((i) => i.priority === 1);
+      return items.filter((i) => classifyTask(i) === activeFilter);
+    },
+    [activeFilter]
+  );
+
+  const resolvedDay = selectedDay === "today" ? todayName : selectedDay;
+  const showFullWeek = selectedDay === "all";
+
+  // Header progress — today only
+  const todayItems = dedupedByDay[todayName] || [];
+  const todayDone = todayItems.filter(isCompleted).length;
+  const todayTotal = todayItems.length;
+  const progressPct = todayTotal > 0 ? Math.round((todayDone / todayTotal) * 100) : 0;
 
   if (loading) {
     return (
@@ -347,8 +452,174 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   }
 
   const totalItems = plannerItems.length;
-  const today = new Date();
-  const currentDayIndex = (today.getDay() + 6) % 7;
+
+  /* ── Day-view bands ── */
+  const renderDayBands = (day: string) => {
+    const filtered = applyFilter(dedupedByDay[day] || []);
+    const urgent = filtered.filter((i) => i.priority === 1);
+    const high = filtered.filter((i) => i.priority === 2);
+    const normal = filtered.filter((i) => i.priority === 3);
+
+    // overflow across week for this filter
+    let weekOverflow = 0;
+    for (const d of DAYS) {
+      if (d === day) continue;
+      weekOverflow += applyFilter(dedupedByDay[d] || []).length;
+    }
+
+    const empty = urgent.length === 0 && high.length === 0 && normal.length === 0;
+    if (empty) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+          Nothing for {day} on this filter.
+        </div>
+      );
+    }
+
+    const hasUrgentOrHigh = urgent.length > 0 || high.length > 0;
+
+    return (
+      <div className="space-y-2">
+        <PriorityBand
+          label="Urgent"
+          items={urgent}
+          bandClass="border-red-300/60 bg-red-50 dark:bg-red-950/20 dark:border-red-900/40"
+          countClass="bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-200"
+          defaultOpen
+          completing={completing}
+          completedIds={sessionCompleted}
+          onComplete={handleComplete}
+        />
+        <PriorityBand
+          label="High"
+          items={high}
+          bandClass="border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40"
+          countClass="bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+          defaultOpen
+          completing={completing}
+          completedIds={sessionCompleted}
+          onComplete={handleComplete}
+        />
+        <PriorityBand
+          label="Normal"
+          items={normal}
+          bandClass="border-border bg-muted/30"
+          countClass="bg-muted text-muted-foreground"
+          defaultOpen={!hasUrgentOrHigh}
+          completing={completing}
+          completedIds={sessionCompleted}
+          onComplete={handleComplete}
+        />
+        {weekOverflow > 0 && (
+          <p className="text-xs text-muted-foreground text-center pt-1">
+            {weekOverflow} more task{weekOverflow !== 1 ? "s" : ""} this week — switch to Full week to see all
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  /* ── Full-week column view (original layout, filter applied) ── */
+  const renderFullWeek = () => (
+    <div className={isMobile ? "space-y-2" : "flex gap-2 min-h-[240px]"}>
+      {DAYS.map((day, i) => {
+        const items = applyFilter(dedupedByDay[day]);
+        const isToday = i === currentDayIndex && currentDayIndex < 5;
+        const empty = items.length === 0;
+
+        if (isMobile) {
+          return (
+            <div
+              key={day}
+              className={`rounded-lg border ${isToday ? "border-primary/40 bg-primary/5" : "border-border"}`}
+            >
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-bold ${isToday ? "text-primary" : "text-foreground"}`}>{day}</span>
+                  {isToday && <Badge className="text-[10px] px-1.5 py-0">Today</Badge>}
+                </div>
+                {items.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{items.length}</Badge>
+                )}
+              </div>
+              <div className="p-2 space-y-1.5">
+                {empty ? (
+                  <p className="text-[11px] text-muted-foreground/60 text-center py-2">—</p>
+                ) : (
+                  items.slice(0, 5).map((item) => (
+                    <TaskRow
+                      key={item.id}
+                      item={item}
+                      completing={completing.has(item.id)}
+                      completed={isCompleted(item)}
+                      onComplete={() => handleComplete(item)}
+                    />
+                  ))
+                )}
+                {items.length > 5 && (
+                  <p className="text-[10px] text-muted-foreground px-1">+{items.length - 5} more</p>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={day}
+            className={`rounded-lg border flex flex-col transition-all ${
+              empty ? "basis-[56px] shrink-0 grow-0" : "flex-1 min-w-0"
+            } ${isToday ? "border-primary/40 bg-primary/5" : "border-border bg-muted/10"}`}
+          >
+            <div className={`flex items-center justify-between px-2.5 py-2 border-b ${isToday ? "border-primary/20" : "border-border/50"}`}>
+              <p className={`text-[11px] font-bold uppercase tracking-wider ${isToday ? "text-primary" : "text-muted-foreground"}`}>{day.slice(0, 3)}</p>
+              {items.length > 0 && (
+                <span className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 ${isToday ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{items.length}</span>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5" style={{ maxHeight: "360px" }}>
+              {empty ? (
+                <p className="text-[10px] text-muted-foreground/50 text-center mt-6">—</p>
+              ) : (
+                <>
+                  {items.slice(0, 5).map((item) => {
+                    const done = isCompleted(item);
+                    return (
+                      <div key={item.id} className="rounded border bg-card p-2 hover:shadow-sm transition">
+                        <div className="flex items-start gap-1.5">
+                          <div className="pt-px shrink-0">
+                            {completing.has(item.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : done ? (
+                              <div className="h-3.5 w-3.5 rounded-sm bg-emerald-500 flex items-center justify-center">
+                                <Check className="h-2.5 w-2.5 text-white" />
+                              </div>
+                            ) : (
+                              <Checkbox onCheckedChange={() => handleComplete(item)} className="h-3.5 w-3.5" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
+                            <p className={`text-[11px] leading-snug ${done ? "line-through text-muted-foreground" : ""}`}>{item.title}</p>
+                            {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
+                            <div className="pt-0.5">{priorityBadge(item.priority)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {items.length > 5 && (
+                    <p className="text-[10px] text-muted-foreground px-1">+{items.length - 5} more</p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <Card className="overflow-hidden">
@@ -365,78 +636,93 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
             )}
           </div>
         </div>
+
+        {/* Progress for today */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-muted-foreground">
+              {todayDone} of {todayTotal} task{todayTotal !== 1 ? "s" : ""} done today
+            </span>
+            <span className="font-medium text-foreground">{progressPct}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-teal-500 transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="px-3 pb-3">
+      <CardContent className="px-3 pb-3 space-y-3">
+        {/* Day selector */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => setSelectedDay("today")}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition ${
+              selectedDay === "today"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:text-foreground"
+            }`}
+          >
+            Today
+          </button>
+          {DAYS.map((d, i) => {
+            const isCurrent = selectedDay === d;
+            const isToday = i === currentDayIndex && currentDayIndex < 5;
+            return (
+              <button
+                key={d}
+                onClick={() => setSelectedDay(d)}
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition ${
+                  isCurrent
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : isToday
+                    ? "bg-primary/10 text-primary border-primary/30"
+                    : "bg-background text-muted-foreground border-border hover:text-foreground"
+                }`}
+              >
+                {DAY_SHORT[d]}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => setSelectedDay("all")}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition ${
+              selectedDay === "all"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-muted-foreground border-border hover:text-foreground"
+            }`}
+          >
+            Full week
+          </button>
+        </div>
+
+        {/* Filter pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`text-[11px] font-medium px-2 py-0.5 rounded-full border transition ${
+                activeFilter === f
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
         {totalItems === 0 ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
             <CheckCircle2 className="h-4 w-4 text-primary" />
             All caught up — no pressing tasks this week.
           </div>
-        ) : isMobile ? (
-          /* ── MOBILE: stacked accordion view ── */
-          <div className="space-y-2">
-            {DAYS.map((day, i) => (
-              <MobileDaySection
-                key={day}
-                day={day}
-                items={byDay[day]}
-                isToday={i === currentDayIndex && currentDayIndex < 5}
-                completing={completing}
-                onComplete={handleComplete}
-              />
-            ))}
-          </div>
+        ) : showFullWeek ? (
+          renderFullWeek()
         ) : (
-          /* ── DESKTOP: column view ── */
-          <div className="flex gap-2 min-h-[240px]">
-            {DAYS.map((day) => {
-              const items = byDay[day];
-              const dayIndex = DAYS.indexOf(day);
-              const isToday = dayIndex === currentDayIndex && currentDayIndex < 5;
-              const empty = items.length === 0;
-
-              return (
-                <div
-                  key={day}
-                  className={`rounded-lg border flex flex-col transition-all ${
-                    empty ? "basis-[56px] shrink-0 grow-0" : "flex-1 min-w-0"
-                  } ${isToday ? "border-primary/40 bg-primary/5" : "border-border bg-muted/10"}`}
-                >
-                  <div className={`flex items-center justify-between px-2.5 py-2 border-b ${isToday ? "border-primary/20" : "border-border/50"}`}>
-                    <p className={`text-[11px] font-bold uppercase tracking-wider ${isToday ? "text-primary" : "text-muted-foreground"}`}>{day.slice(0, 3)}</p>
-                    {items.length > 0 && (
-                      <span className={`text-[10px] font-medium rounded-full px-1.5 py-0.5 ${isToday ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{items.length}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5" style={{ maxHeight: "360px" }}>
-                    {empty ? (
-                      <p className="text-[10px] text-muted-foreground/50 text-center mt-6">—</p>
-                    ) : (
-                      items.map((item) => (
-                        <div key={item.id} className="rounded border bg-card p-2 hover:shadow-sm transition">
-                          <div className="flex items-start gap-1.5">
-                            <div className="pt-px shrink-0">
-                              {completing.has(item.id) ? (
-                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                              ) : (
-                                <Checkbox onCheckedChange={() => handleComplete(item)} className="h-3.5 w-3.5" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1 space-y-0.5">
-                              <p className="text-[11px] font-semibold leading-tight truncate">{item.athleteName}</p>
-                              <p className="text-[11px] leading-snug">{item.title}</p>
-                              {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
-                              <div className="pt-0.5">{priorityBadge(item.priority)}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          renderDayBands(resolvedDay)
         )}
       </CardContent>
     </Card>
