@@ -779,7 +779,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
                   })}
                 </div>
                 {isMinor && (format === "sms" || format === "whatsapp") && audience === "athlete" && (
-                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                  <p className="text-[11px] rounded px-2 py-1 border" style={{ color: "var(--win-deep)", background: "var(--win-soft)", borderColor: "var(--win-soft)" }}>
                     {athlete.name.split(" ")[0]} is under 18 — consider sending this to their parent.
                   </p>
                 )}
@@ -805,10 +805,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">Message</Label>
                       {format === "sms" && (
-                        <span className={cn(
-                          "text-[10px]",
-                          (emailDraft?.length ?? 0) > 160 ? "text-amber-600" : "text-muted-foreground"
-                        )}>
+                        <span className="text-[10px] num" style={{ color: (emailDraft?.length ?? 0) > 160 ? "var(--win-deep)" : "hsl(var(--muted-foreground))" }}>
                           {emailDraft?.length ?? 0} chars
                         </span>
                       )}

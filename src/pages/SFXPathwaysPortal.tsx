@@ -2011,7 +2011,7 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
           <Separator />
           <div>
             <p className="text-xs text-muted-foreground">Contract Expiry Date</p>
-            <p className={`text-sm font-medium ${isExpired(athlete.managementContractExpiry) ? "text-destructive" : isExpiringSoon(athlete.managementContractExpiry) ? "text-amber-600" : ""}`}>
+            <p className="text-sm font-medium" style={{ color: isExpired(athlete.managementContractExpiry) ? "hsl(var(--destructive))" : isExpiringSoon(athlete.managementContractExpiry) ? "var(--win-deep)" : undefined }}>
               {formatDate(athlete.managementContractExpiry)}
             </p>
           </div>
@@ -2043,7 +2043,7 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
           <Separator />
           <div>
             <p className="text-xs text-muted-foreground">Contract Expiry Date</p>
-            <p className={`text-sm font-medium ${isExpired(athlete.clubContractExpiry) ? "text-destructive" : isExpiringSoon(athlete.clubContractExpiry) ? "text-amber-600" : ""}`}>
+            <p className="text-sm font-medium" style={{ color: isExpired(athlete.clubContractExpiry) ? "hsl(var(--destructive))" : isExpiringSoon(athlete.clubContractExpiry) ? "var(--win-deep)" : undefined }}>
               {formatDate(athlete.clubContractExpiry)}
             </p>
           </div>
@@ -3683,18 +3683,18 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
               <div className="text-2xl font-semibold">{highCompetition.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Competition active</div>
             </div>
-            <div className="rounded-lg border border-amber-500/30 p-3">
-              <div className="text-2xl font-semibold">{stalledLeads.length}</div>
+            <div className="rounded-lg border p-3" style={{ borderColor: "var(--win)" }}>
+              <div className="text-2xl font-semibold num">{stalledLeads.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stalled</div>
             </div>
-            <div className="rounded-lg border border-emerald-500/30 p-3">
-              <div className="text-2xl font-semibold">{signedThisYear.length}</div>
+            <div className="rounded-lg border p-3" style={{ borderColor: "var(--success)" }}>
+              <div className="text-2xl font-semibold num">{signedThisYear.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signed {new Date().getFullYear()}</div>
             </div>
           </div>
           {stalledLeads.length > 0 && (
             <div className="space-y-1">
-              <div className="text-xs font-semibold text-amber-600 dark:text-amber-400">Stalled — action needed</div>
+              <div className="text-xs font-semibold" style={{ color: "var(--win-deep)" }}>Stalled — action needed</div>
               {stalledLeads.slice(0, 3).map((lead: any) => {
                 const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
                 return (
@@ -3754,16 +3754,20 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
         const chipTone: Record<Exclude<CommandFilter, "all">, string> = {
           calls_due_7: "border-destructive/40 text-destructive",
           wellbeing_low: "border-destructive/40 text-destructive",
-          parent_followup: "border-amber-500/40 text-amber-600 dark:text-amber-400",
+          parent_followup: "",
           injury_setback: "border-destructive/40 text-destructive",
-          commercial_watch: "border-emerald-500/40 text-emerald-600 dark:text-emerald-400",
+          commercial_watch: "",
+        };
+        const chipToneStyle: Partial<Record<Exclude<CommandFilter, "all">, React.CSSProperties>> = {
+          parent_followup: { borderColor: "var(--win)", color: "var(--win-deep)" },
+          commercial_watch: { borderColor: "var(--success)", color: "var(--success-deep)" },
         };
 
         return (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <AlertTriangle className="h-4 w-4" style={{ color: "var(--win)" }} />
                 Needs Attention
                 <Badge variant="secondary" className="ml-1 text-[10px]">{total}</Badge>
               </CardTitle>
@@ -3779,6 +3783,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
                       key={f.key}
                       onClick={() => setActiveFilter(active ? "all" : f.key)}
                       className={`text-xs rounded-full border px-2.5 py-1 transition-colors ${chipTone[f.key as Exclude<CommandFilter, "all">]} ${active ? "bg-secondary" : "hover:bg-secondary/60"}`}
+                      style={chipToneStyle[f.key as Exclude<CommandFilter, "all">]}
                     >
                       {f.label} · {n}
                     </button>

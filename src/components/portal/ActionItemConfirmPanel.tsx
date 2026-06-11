@@ -174,10 +174,8 @@ export default function ActionItemConfirmPanel({
           return (
             <div
               key={row._key}
-              className={cn(
-                "rounded-md border bg-background p-2.5 space-y-2",
-                added ? "border-green-300 bg-green-50/50" : "border-border",
-              )}
+              className="rounded-md border bg-background p-2.5 space-y-2"
+              style={added ? { borderColor: "var(--success)", background: "var(--success-soft)" } : undefined}
             >
               <Input
                 className="h-8 text-sm"
@@ -193,11 +191,8 @@ export default function ActionItemConfirmPanel({
                   </Label>
                   <Input
                     type="date"
-                    className={cn(
-                      "h-8 text-xs",
-                      needsDate &&
-                        "border-amber-400 bg-amber-50 placeholder:text-amber-700",
-                    )}
+                    className="h-8 text-xs"
+                    style={needsDate ? { borderColor: "var(--win)", background: "var(--win-soft)" } : undefined}
                     value={row.due_date || ""}
                     placeholder="Set a date"
                     onChange={(e) =>
@@ -216,22 +211,19 @@ export default function ActionItemConfirmPanel({
                   <div className="flex gap-1">
                     {PRIORITY_OPTIONS.map((p) => {
                       const sel = row.priority === p;
+                      const selStyle: React.CSSProperties = p === "high"
+                        ? { background: "var(--danger)", borderColor: "var(--danger)", color: "#fff" }
+                        : p === "medium"
+                        ? { background: "var(--win)", borderColor: "var(--win)", color: "#fff" }
+                        : { background: "var(--muted-fg)", borderColor: "var(--muted-fg)", color: "#fff" };
                       return (
                         <button
                           key={p}
                           type="button"
                           disabled={added || adding}
                           onClick={() => updateRow(row._key, { priority: p })}
-                          className={cn(
-                            "flex-1 rounded border px-1.5 py-1 text-[10px] font-medium uppercase transition",
-                            sel
-                              ? p === "high"
-                                ? "border-red-500 bg-red-500 text-white"
-                                : p === "medium"
-                                ? "border-amber-500 bg-amber-500 text-white"
-                                : "border-slate-500 bg-slate-500 text-white"
-                              : "border-border bg-background hover:bg-muted",
-                          )}
+                          className="flex-1 rounded border px-1.5 py-1 text-[10px] font-medium uppercase transition"
+                          style={sel ? selStyle : undefined}
                         >
                           {p === "high" ? "H" : p === "medium" ? "M" : "L"}
                         </button>
@@ -242,7 +234,7 @@ export default function ActionItemConfirmPanel({
               </div>
 
               {needsDate && !added && (
-                <p className="text-[10px] text-amber-700">
+                <p className="text-[10px]" style={{ color: "var(--win-deep)" }}>
                   Set a date before adding — the planner needs one to place it.
                 </p>
               )}
@@ -255,7 +247,7 @@ export default function ActionItemConfirmPanel({
 
               <div className="flex gap-1.5 justify-end">
                 {added ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-green-700 font-medium">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: "var(--success-deep)" }}>
                     <CheckCircle2 className="h-3.5 w-3.5" /> Added to planner
                   </span>
                 ) : (

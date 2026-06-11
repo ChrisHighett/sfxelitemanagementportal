@@ -10,26 +10,24 @@ const STAGES = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost
 
 function ratingBadge(rating?: string | null) {
   if (!rating) return null;
-  const cls =
+  const style: React.CSSProperties =
     rating === "A"
-      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+      ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
       : rating === "B"
-      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
-      : "bg-muted text-muted-foreground border-border";
-  return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cls}`}>{rating}</span>;
+      ? { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }
+      : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" };
+  return <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border" style={style}>{rating}</span>;
 }
 
 function triageBadge(t?: string | null) {
   if (!t) return null;
-  const cls =
+  const style: React.CSSProperties =
     t === "Pursue"
-      ? "bg-primary/15 text-primary border-primary/30"
+      ? { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" }
       : t === "Watch"
-      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
-      : t === "Pass"
-      ? "bg-muted text-muted-foreground border-border"
-      : "bg-muted/50 text-muted-foreground border-border";
-  return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${cls}`}>{t}</span>;
+      ? { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }
+      : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" };
+  return <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border" style={style}>{t}</span>;
 }
 
 interface Props {
@@ -99,15 +97,16 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
             <div key={s} className="flex items-center gap-1">
               <button
                 onClick={() => onStageChange(lead.id, s)}
-                className={`text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-md border transition ${
+                className="text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-md border transition"
+                style={
                   active
                     ? s === "Signed"
-                      ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
+                      ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
                       : s === "Lost"
-                      ? "bg-muted text-muted-foreground border-border"
-                      : "bg-primary text-primary-foreground border-primary"
-                    : "border-border text-muted-foreground hover:bg-secondary"
-                }`}
+                      ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                      : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" }
+                    : undefined
+                }
               >
                 {s}
               </button>
