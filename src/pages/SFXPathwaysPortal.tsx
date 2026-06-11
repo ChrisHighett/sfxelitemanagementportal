@@ -2520,9 +2520,10 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
   );
 }
 
-function ScoutLeadCardSimple({ lead, onEdit, onStageChange, onTriageChange }: {
+function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageChange }: {
   lead: any;
   onEdit: () => void;
+  onReview: () => void;
   onStageChange: (id: string, stage: string) => void;
   onTriageChange: (id: string, triage: string) => void;
 }) {
@@ -2544,7 +2545,15 @@ function ScoutLeadCardSimple({ lead, onEdit, onStageChange, onTriageChange }: {
               {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={onEdit}>Edit</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 shrink-0 gap-1 text-xs"
+            onClick={onReview}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            View
+          </Button>
         </div>
         {lead.competitor_interest && (
           <div className="text-xs text-destructive font-medium bg-destructive/10 rounded-md px-3 py-1.5">⚠️ {lead.competitor_interest}</div>
@@ -2579,6 +2588,7 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
+  const [reviewingLead, setReviewingLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
 
@@ -2667,12 +2677,245 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
               key={lead.id}
               lead={lead}
               onEdit={() => { setEditingLead(lead); setShowForm(true); }}
+              onReview={() => setReviewingLead(lead)}
               onStageChange={handleStageChange}
               onTriageChange={handleTriageChange}
             />
           ))}
         </div>
       )}
+
+      {reviewingLead && (
+        <ScoutLeadReviewPanel
+          lead={reviewingLead}
+          onClose={() => setReviewingLead(null)}
+          onEdit={() => {
+            setEditingLead(reviewingLead);
+            setShowForm(true);
+            setReviewingLead(null);
+          }}
+          onStageChange={(id, stage) => {
+            handleStageChange(id, stage);
+            setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
+          }}
+          onConvert={() => {}}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert }: {
+  lead: any;
+  onClose: () => void;
+  onEdit: () => void;
+  onStageChange: (id: string, stage: string) => void;
+  onConvert: (lead: any) => void;
+}) {
+  const ratingColor = lead.scout_rating === "A"
+    ? "bg-green-100 text-green-800 border-green-300"
+    : lead.scout_rating === "B"
+    ? "bg-amber-100 text-amber-800 border-amber-300"
+    : "bg-muted text-muted-foreground border-border";
+
+  const triageColor = lead.triage_decision === "Pursue"
+    ? "bg-primary/10 text-primary border-primary/30"
+    : lead.triage_decision === "Watch"
+    ? "bg-amber-100 text-amber-800 border-amber-300"
+    : "bg-muted text-muted-foreground border-border";
+
+  const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
+
+  const InfoRow = ({ label, value, highlight }: { label: string; value?: string | null; highlight?: boolean }) => {
+    if (!value) return null;
+    return (
+      <div className="space-y-0.5">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</div>
+        <div className={`text-sm ${highlight ? "font-medium text-destructive" : "text-foreground"}`}>{value}</div>
+      </div>
+    );
+  };
+
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="space-y-3">
+      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b pb-1">{title}</div>
+      {children}
+    </div>
+  );
+
+  const daysSinceAdded = lead.created_at
+    ? Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const daysSinceStageChange = lead.last_stage_change_at
+    ? Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isStalled = daysSinceStageChange != null
+    && daysSinceStageChange >= 7
+    && lead.triage_decision === "Pursue"
+    && !["Signed", "Lost"].includes(lead.onboarding_stage);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-background w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92dvh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 p-5 pb-3 border-b">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              {lead.lead_id && (
+                <span className="text-xs font-mono text-muted-foreground border rounded px-1.5 py-0.5">{lead.lead_id}</span>
+              )}
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${ratingColor}`}>
+                {lead.scout_rating} — {lead.scout_rating === "A" ? "Elite prospect" : lead.scout_rating === "B" ? "Strong watch" : "Monitor"}
+              </span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${triageColor}`}>
+                {lead.triage_decision}
+              </span>
+              {isStalled && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                  Stalled {daysSinceStageChange}d
+                </span>
+              )}
+            </div>
+            <h2 className="text-xl font-semibold mt-1.5">{lead.first_name} {lead.last_name}</h2>
+            <p className="text-sm text-muted-foreground">
+              {[lead.age ? `${lead.age}y` : null, lead.position, lead.region].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted transition-colors shrink-0"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <Section title="Scout intelligence">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <InfoRow label="School / Club" value={lead.school_club} />
+              <InfoRow label="Competition / Grade" value={lead.comp_grade} />
+              <InfoRow label="Region" value={lead.region} />
+              <InfoRow label="Age" value={lead.age ? `${lead.age} years old` : null} />
+              <InfoRow label="Logged by" value={lead.scout_name} />
+              <InfoRow label="Source / Referral" value={lead.source_contact} />
+            </div>
+            {lead.key_attributes && (
+              <div className="space-y-0.5">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Key attributes</div>
+                <div className="text-sm text-foreground bg-muted/50 rounded-lg p-3 leading-relaxed">{lead.key_attributes}</div>
+              </div>
+            )}
+          </Section>
+
+          {lead.competitor_interest && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-1">
+              <div className="text-xs font-semibold text-destructive uppercase tracking-wide flex items-center gap-1.5">
+                <span>⚠</span> Competition active
+              </div>
+              <p className="text-sm text-foreground">{lead.competitor_interest}</p>
+            </div>
+          )}
+
+          <Section title="Pipeline status">
+            <div className="flex flex-wrap gap-1.5">
+              {stages.map((stage) => (
+                <button
+                  key={stage}
+                  onClick={() => onStageChange(lead.id, stage)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    lead.onboarding_stage === stage
+                      ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
+                        : stage === "Lost" ? "bg-muted-foreground/20 text-muted-foreground border-transparent"
+                        : "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  }`}
+                >
+                  {stage}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <InfoRow label="Date contacted" value={lead.date_contacted} />
+              <InfoRow label="Pack sent" value={lead.date_pack_sent} />
+              <InfoRow label="Welcome sent" value={lead.date_welcome_sent} />
+              <InfoRow label="Date signed" value={lead.date_signed} />
+            </div>
+          </Section>
+
+          {(lead.action_required || lead.action_due_date || lead.next_step) && (
+            <Section title="Action required">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                <InfoRow label="Action" value={lead.action_required} />
+                <InfoRow label="Due date" value={lead.action_due_date} />
+                <InfoRow label="Status" value={lead.action_status} />
+                <InfoRow label="Outcome" value={lead.action_outcome} />
+              </div>
+              {lead.next_step && (
+                <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2">
+                  <div className="text-xs font-medium text-primary uppercase tracking-wide mb-0.5">Next step</div>
+                  <div className="text-sm">{lead.next_step}</div>
+                </div>
+              )}
+            </Section>
+          )}
+
+          <Section title="Assignment">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <InfoRow label="Assigned agent" value={lead.assigned_agent_name} />
+              <InfoRow label="Scout credited" value={lead.scout_credited ? "Yes" : lead.scout_credited === false ? "No" : null} />
+            </div>
+          </Section>
+
+          <Section title="Timeline">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="space-y-0.5">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Added</div>
+                <div className="text-sm">{lead.created_at ? new Date(lead.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "—"}{daysSinceAdded != null ? ` (${daysSinceAdded}d ago)` : ""}</div>
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Last updated</div>
+                <div className="text-sm">{lead.updated_at ? new Date(lead.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "—"}</div>
+              </div>
+              {lead.response_hours != null && (
+                <div className="space-y-0.5">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Agent response time</div>
+                  <div className={`text-sm font-medium ${Number(lead.response_hours) <= 24 ? "text-green-600" : Number(lead.response_hours) <= 72 ? "text-amber-600" : "text-destructive"}`}>
+                    {Math.round(Number(lead.response_hours))}h
+                    {Number(lead.response_hours) <= 24 ? " — excellent" : Number(lead.response_hours) <= 72 ? " — within target" : " — slow"}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Section>
+
+          {lead.notes && (
+            <Section title="Notes">
+              <div className="text-sm text-foreground bg-muted/50 rounded-lg p-3 leading-relaxed whitespace-pre-wrap">{lead.notes}</div>
+            </Section>
+          )}
+        </div>
+
+        <div className="p-4 pt-3 border-t flex gap-2">
+          {lead.onboarding_stage === "Welcome Sent" && (
+            <Button
+              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => { onConvert(lead); onClose(); }}
+            >
+              <UserPlus className="h-4 w-4" />
+              Convert to athlete
+            </Button>
+          )}
+          <Button variant="outline" className="flex-1 gap-1.5" onClick={onEdit}>
+            <Pencil className="h-4 w-4" />
+            Edit lead
+          </Button>
+          <Button variant="ghost" onClick={onClose} className="shrink-0">
+            Close
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2681,6 +2924,7 @@ function AgentScoutView() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
+  const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
 
@@ -2836,7 +3080,15 @@ function AgentScoutView() {
                         {lead.scout_name && ` · Scout: ${lead.scout_name}`}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={() => { setEditingLead(lead); setShowForm(true); }}>Edit</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 text-xs font-medium"
+                      onClick={() => setReviewingLead(lead)}
+                    >
+                      <ClipboardList className="h-3.5 w-3.5" />
+                      Review
+                    </Button>
                   </div>
 
                   {lead.competitor_interest && (
@@ -2870,6 +3122,23 @@ function AgentScoutView() {
             );
           })}
         </div>
+      )}
+
+      {reviewingLead && (
+        <ScoutLeadReviewPanel
+          lead={reviewingLead}
+          onClose={() => setReviewingLead(null)}
+          onEdit={() => {
+            setEditingLead(reviewingLead);
+            setShowForm(true);
+            setReviewingLead(null);
+          }}
+          onStageChange={(id, stage) => {
+            handleStageChange(id, stage);
+            setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
+          }}
+          onConvert={handleConvert}
+        />
       )}
     </div>
   );
