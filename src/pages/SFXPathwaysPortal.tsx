@@ -2956,6 +2956,7 @@ function AgentScoutView() {
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
 
