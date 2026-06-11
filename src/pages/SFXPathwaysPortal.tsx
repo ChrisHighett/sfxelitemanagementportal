@@ -3873,8 +3873,10 @@ export default function SFXPathwaysPortal() {
 
   if (athletesLoading || roleLoading || !role) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--canvas)" }}>
+        <div className="max-w-5xl mx-auto">
+          <DashboardSkeleton />
+        </div>
       </div>
     );
   }
