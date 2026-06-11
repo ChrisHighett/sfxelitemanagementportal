@@ -36,6 +36,8 @@ export interface ScoutLead {
   date_welcome_sent?: string | null;
   date_signed?: string | null;
   date_lost?: string | null;
+  lost_reason?: string | null;
+  lost_at?: string | null;
   converted_athlete_id?: string | null;
   action_required?: string | null;
   action_due_date?: string | null;

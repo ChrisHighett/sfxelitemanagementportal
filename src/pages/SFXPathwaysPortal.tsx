@@ -2999,6 +2999,29 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
             </div>
           )}
 
+          {lead.onboarding_stage === "Lost" && (() => {
+            const raw = (lead.lost_reason || "").trim();
+            const [category, ...rest] = raw.split(" — ");
+            const note = rest.join(" — ").trim();
+            const dateStr = lead.lost_at || lead.date_lost;
+            const formatted = dateStr
+              ? new Date(dateStr).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+              : null;
+            if (!raw && !formatted) return null;
+            return (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-2">
+                <div className="text-xs font-semibold text-destructive uppercase tracking-wide flex items-center gap-1.5">
+                  <span>⚠</span> Why this was lost
+                </div>
+                {category && <p className="text-sm font-medium text-foreground">{category}</p>}
+                {note && <p className="text-sm text-foreground/80 italic">"{note}"</p>}
+                {formatted && (
+                  <p className="text-xs text-muted-foreground">Marked lost: {formatted}</p>
+                )}
+              </div>
+            );
+          })()}
+
           <Section title="Pipeline status">
             <div className="flex flex-wrap gap-1.5">
               {stages.map((stage) => {
