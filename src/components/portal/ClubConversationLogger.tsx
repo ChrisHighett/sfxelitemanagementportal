@@ -12,6 +12,7 @@ import {
 import {
   Mic, Square, Loader2, CheckCircle2,
   MessageSquarePlus, Trophy, Briefcase, Mic as MicIcon, MessageCircle,
+  Mail, MessageSquare, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,13 @@ import { cn } from "@/lib/utils";
 
 type Category = "club" | "commercial" | "media" | "general";
 type Audience = "athlete" | "parent" | "skip";
+type Format = "email" | "sms" | "whatsapp";
+
+const FORMATS: Array<{ value: Format; label: string; Icon: any }> = [
+  { value: "email",    label: "Email",    Icon: Mail },
+  { value: "sms",      label: "SMS",      Icon: MessageSquare },
+  { value: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
+];
 
 const NRL_CLUBS = [
   "Brisbane Broncos", "Canberra Raiders", "Canterbury-Bankstown Bulldogs",
@@ -130,8 +138,12 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [followUpPreset, setFollowUpPreset] = useState<FollowUpPreset>("8w");
   const [followUpCustom, setFollowUpCustom] = useState<string>("");
 
-  // Audience for the AI update email
+  // Audience for the AI update message
   const [audience, setAudience] = useState<Audience>("athlete");
+
+  // Output format
+  const [format, setFormat] = useState<Format>("email");
+  const [copied, setCopied] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -141,9 +153,12 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [generatingEmail, setGeneratingEmail] = useState(false);
   const [saved, setSaved] = useState(false);
+  // emailDraft / emailSubject now hold the current generated draft, editable by the agent
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
   const [savedRecord, setSavedRecord] = useState<{ counterparty: string } | null>(null);
+
+  const isMinor = typeof athlete.age === "number" && athlete.age < 18;
 
   const convTypeOptions = CONV_TYPES_BY_CATEGORY[category];
   const counterpartyConfig = COUNTERPARTY_CONFIG[category];
@@ -298,23 +313,28 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
-    toast.success(`Saved — generating ${audience} email…`);
-    await handleGenerateEmail();
-    qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
+    toast.success(`Saved — drafting ${format} message for ${audience}…`);
+    await handleGenerateEmail(format, audience);
   };
 
-  const handleGenerateEmail = async () => {
+  const handleGenerateEmail = async (
+    overrideFormat?: Format,
+    overrideAudience?: Audience,
+  ) => {
     if (!notes.trim()) {
-      toast.error("Save the conversation first, then generate the email.");
+      toast.error("Save the conversation first, then generate the message.");
       return;
     }
-    if (audience === "skip") return;
+    const fmt = overrideFormat || format;
+    const aud = overrideAudience || audience;
+    if (aud === "skip") return;
 
     setGeneratingEmail(true);
+    setCopied(false);
     const firstName = athlete.name.split(" ")[0];
     const convLabel = convTypeOptions.find(t => t.value === convType)?.label || convType;
     let parentName: string | null = null;
-    if (audience === "parent") {
+    if (aud === "parent") {
       const { data: g } = await supabase
         .from("guardians")
         .select("parent_name")
@@ -328,7 +348,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
         body: {
           type: "conversation_update",
           category,
-          audience,
+          audience: aud,
+          format: fmt,
           athleteFirstName: firstName,
           parentName,
           counterparty: counterpartyValue.trim() || null,
@@ -353,29 +374,57 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
       setEmailSubject(subject);
       setEmailDraft(body);
-
-      await saveCommsEmail({
-        athleteId: athlete.id,
-        emailType: audience === "parent" ? "parent" : "athlete",
-        subject,
-        body,
-        generatedFrom: `conversation_${category}`,
-        createdBy: user?.id,
-      });
-
-      toast.success(`${audience === "parent" ? "Parent" : "Athlete"} email generated and saved to Comms History.`);
     } catch (e: any) {
-      toast.error(e.message || "Failed to generate email.");
+      toast.error(e.message || "Failed to generate message.");
     } finally {
       setGeneratingEmail(false);
     }
   };
 
-  const handleCopyEmail = () => {
+  const handleFormatChange = async (nextFormat: Format) => {
+    if (nextFormat === format) return;
+    setFormat(nextFormat);
+    // Safeguarding: when switching to SMS / WhatsApp for an under-18 athlete,
+    // default the audience to Parent (still overridable by the agent).
+    let nextAudience = audience;
+    if (isMinor && (nextFormat === "sms" || nextFormat === "whatsapp") && audience === "athlete") {
+      nextAudience = "parent";
+      setAudience("parent");
+    }
+    if (saved && nextAudience !== "skip" && notes.trim()) {
+      await handleGenerateEmail(nextFormat, nextAudience);
+    }
+  };
+
+  const handleCopyEmail = async () => {
     if (!emailDraft) return;
-    const text = `Subject: ${emailSubject}\n\n${emailDraft}`;
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard — paste into your email client.");
+    const text = format === "email" && emailSubject
+      ? `Subject: ${emailSubject}\n\n${emailDraft}`
+      : emailDraft;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      toast.error("Could not access clipboard.");
+      return;
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+
+    // Persist as a comms_history row only on copy (Phase 1 behaviour).
+    try {
+      await saveCommsEmail({
+        athleteId: athlete.id,
+        emailType: audience === "parent" ? "parent" : "athlete",
+        subject: format === "email" ? emailSubject : null,
+        body: emailDraft,
+        channel: format,
+        generatedFrom: `conversation_${category}`,
+        createdBy: user?.id,
+      });
+      qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
+    } catch (err) {
+      console.error("Failed to log to comms history:", err);
+    }
   };
 
   const handleReset = () => {
@@ -389,6 +438,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     setFollowUpPreset("8w");
     setFollowUpCustom("");
     setAudience("athlete");
+    setFormat("email");
+    setCopied(false);
     setSaved(false);
     setEmailDraft(null);
     setEmailSubject("");
@@ -623,7 +674,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
             <Button
               variant="outline"
               className="w-full h-10 gap-2"
-              onClick={handleGenerateEmail}
+              onClick={() => handleGenerateEmail()}
               disabled={generatingEmail}
             >
               {generatingEmail ? (
@@ -633,21 +684,106 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
               )}
             </Button>
           ) : (
-            <div className="space-y-2">
-              <div className="rounded-lg border bg-muted/40 p-3 space-y-1.5">
-                <div className="text-xs font-medium text-muted-foreground">
-                  Subject: {emailSubject}
+            <div className="space-y-3">
+              {/* Format pills */}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Format</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {FORMATS.map(({ value, label, Icon }) => {
+                    const selected = format === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleFormatChange(value)}
+                        disabled={generatingEmail}
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:bg-muted",
+                          generatingEmail && "opacity-60 cursor-not-allowed"
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
-                  {emailDraft}
-                </div>
+                {isMinor && (format === "sms" || format === "whatsapp") && audience === "athlete" && (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                    {athlete.name.split(" ")[0]} is under 18 — consider sending this to their parent.
+                  </p>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="h-8 text-xs flex-1" onClick={handleCopyEmail}>
-                  Copy email
+
+              {generatingEmail ? (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-6 border rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Drafting {format} message…
+                </div>
+              ) : (
+                <>
+                  {format === "email" && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Subject</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Message</Label>
+                      {format === "sms" && (
+                        <span className={cn(
+                          "text-[10px]",
+                          (emailDraft?.length ?? 0) > 160 ? "text-amber-600" : "text-muted-foreground"
+                        )}>
+                          {emailDraft?.length ?? 0} chars
+                        </span>
+                      )}
+                      {format === "whatsapp" && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {emailDraft?.length ?? 0} chars
+                        </span>
+                      )}
+                    </div>
+                    <Textarea
+                      className="text-sm min-h-[140px] font-mono"
+                      value={emailDraft || ""}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  className="h-9 text-xs gap-1.5 flex-1"
+                  onClick={handleCopyEmail}
+                  disabled={generatingEmail || !emailDraft}
+                >
+                  {copied ? (
+                    <><CheckCircle2 className="h-3.5 w-3.5" /> Copied ✓</>
+                  ) : (
+                    <><Copy className="h-3.5 w-3.5" /> Copy {format === "email" ? "email" : "message"}</>
+                  )}
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 text-xs flex-1" onClick={handleReset}>
-                  Log another conversation
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 text-xs gap-1.5"
+                  onClick={() => handleGenerateEmail()}
+                  disabled={generatingEmail}
+                >
+                  Regenerate
+                </Button>
+                <Button size="sm" variant="ghost" className="h-9 text-xs" onClick={handleReset}>
+                  Log another
                 </Button>
               </div>
             </div>

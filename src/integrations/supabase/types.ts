@@ -612,37 +612,40 @@ export type Database = {
         Row: {
           athlete_id: string
           body: string
+          channel: string
           created_at: string
           created_by: string | null
           email_type: string
           generated_from: string | null
           id: string
           sent_status: string
-          subject: string
+          subject: string | null
           updated_at: string
         }
         Insert: {
           athlete_id: string
           body: string
+          channel?: string
           created_at?: string
           created_by?: string | null
           email_type: string
           generated_from?: string | null
           id?: string
           sent_status?: string
-          subject?: string
+          subject?: string | null
           updated_at?: string
         }
         Update: {
           athlete_id?: string
           body?: string
+          channel?: string
           created_at?: string
           created_by?: string | null
           email_type?: string
           generated_from?: string | null
           id?: string
           sent_status?: string
-          subject?: string
+          subject?: string | null
           updated_at?: string
         }
         Relationships: [
