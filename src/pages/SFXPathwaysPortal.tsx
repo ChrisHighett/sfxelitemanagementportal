@@ -2824,7 +2824,7 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
     : lead.triage_decision === "Signed"
     ? "bg-green-100 text-green-800 border-green-300"
     : lead.triage_decision === "Lost"
-    ? "bg-muted text-muted-foreground border-muted-foreground/30"
+    ? "bg-red-100 text-red-800 border-red-300"
     : "bg-muted text-muted-foreground border-border";
 
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
