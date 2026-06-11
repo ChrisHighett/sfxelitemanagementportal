@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
+import LostReasonModal from "@/components/portal/LostReasonModal";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -123,7 +124,8 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                   onClick={() => onNav(it.key)}
                 >
                   <Icon className="h-4 w-4" />
-                  {it.label}
+                  <span className="flex-1 text-left">{it.label}</span>
+                  {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                 </button>
               );
             })}
@@ -161,7 +163,8 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                         onClick={() => { onNav(it.key); setMobileOpen(false); }}
                       >
                         <Icon className="h-5 w-5" />
-                        {it.label}
+                        <span className="flex-1 text-left">{it.label}</span>
+                        {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                       </button>
                     );
                   })}
@@ -381,7 +384,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
         <StatCard
           label="Focus"
           icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus ?? "—"}</span>}
+          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
         />
       </div>
 
@@ -1977,6 +1980,31 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
   );
 }
 
+function usePendingApprovalsCount() {
+  const { data = 0 } = useQuery({
+    queryKey: ["pending_users_count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("portal_users")
+        .select("id", { count: "exact", head: true })
+        .eq("approved", false);
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+  return data;
+}
+
+function PendingApprovalsDot({ className = "" }: { className?: string }) {
+  const count = usePendingApprovalsCount();
+  if (!count) return null;
+  return (
+    <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold ${className}`}>
+      {count}
+    </span>
+  );
+}
+
 function PendingApprovals() {
   const qc = useQueryClient();
   const { data: pending, isLoading } = useQuery({
@@ -2452,8 +2480,22 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     scout_rating: editLead?.scout_rating || "B",
     triage_decision: editLead?.triage_decision || "Watch",
     notes: editLead?.notes || "",
+    assigned_agent_id: editLead?.assigned_agent_id || "",
+    assigned_agent_name: editLead?.assigned_agent_name || "",
   });
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const { data: agents = [] } = useQuery({
+    queryKey: ["portal_users_agents_scoutform"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true);
+      return data || [];
+    },
+  });
 
   async function handleSave() {
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -2462,7 +2504,12 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     }
     setSaving(true);
     try {
-      const payload: any = { ...form, age: form.age ? Number(form.age) : null };
+      const payload: any = {
+        ...form,
+        age: form.age ? Number(form.age) : null,
+        assigned_agent_id: form.assigned_agent_id || null,
+        assigned_agent_name: form.assigned_agent_name || null,
+      };
       if (editLead?.id) {
         const { error } = await supabase.from("scout_leads" as any).update(payload).eq("id", editLead.id);
         if (error) throw error;
@@ -2514,6 +2561,27 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
             <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
           </Select>
         </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Assign to agent</Label>
+        <Select
+          value={form.assigned_agent_id || undefined}
+          onValueChange={(v) => {
+            const a = (agents as any[]).find((x) => x.id === v);
+            setForm((f) => ({
+              ...f,
+              assigned_agent_id: v,
+              assigned_agent_name: a ? (a.display_name || a.email) : "",
+            }));
+          }}
+        >
+          <SelectTrigger className="h-8"><SelectValue placeholder="Select agent" /></SelectTrigger>
+          <SelectContent>
+            {(agents as any[]).map((a) => (
+              <SelectItem key={a.id} value={a.id}>{a.display_name || a.email}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
       <Button className="w-full" onClick={handleSave} disabled={saving}>
@@ -2928,6 +2996,7 @@ function AgentScoutView() {
   const [showForm, setShowForm] = useState(false);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
 
@@ -2962,14 +3031,33 @@ function AgentScoutView() {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
 
   async function handleStageChange(id: string, stage: string) {
+    if (stage === "Lost") {
+      const lead = leads.find((l: any) => l.id === id);
+      setLostModalLead(lead || { id });
+      return;
+    }
     const updates: any = { onboarding_stage: stage };
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
-    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
+
+  async function confirmLost(reason: string) {
+    if (!lostModalLead?.id) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Lost",
+      lost_reason: reason,
+      lost_at: today,
+      date_lost: today,
+    }).eq("id", lostModalLead.id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Marked as lost");
+  }
+
 
   async function handleConvert(lead: any) {
     const { data: newAthlete, error } = await supabase
@@ -3157,6 +3245,13 @@ function AgentScoutView() {
           onConvert={handleConvert}
         />
       )}
+      {lostModalLead && (
+        <LostReasonModal
+          lead={lostModalLead}
+          onClose={() => setLostModalLead(null)}
+          onConfirm={confirmLost}
+        />
+      )}
     </div>
   );
 }
@@ -3175,6 +3270,10 @@ function AdminSecurity() {
           <TabsTrigger value="analytics">Agent Analytics</TabsTrigger>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
           <TabsTrigger value="agents">Agent Accounts</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative">
+            Pending Approvals
+            <PendingApprovalsDot className="ml-2" />
+          </TabsTrigger>
           <TabsTrigger value="security">Security & Access</TabsTrigger>
         </TabsList>
         <TabsContent value="analytics" className="mt-4">
@@ -3186,8 +3285,10 @@ function AdminSecurity() {
         <TabsContent value="agents" className="mt-4">
           <AgentManager />
         </TabsContent>
-        <TabsContent value="security" className="mt-4 space-y-6">
+        <TabsContent value="approvals" className="mt-4">
           <PendingApprovals />
+        </TabsContent>
+        <TabsContent value="security" className="mt-4 space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Access Control Overview</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
