@@ -3683,12 +3683,12 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
               <div className="text-2xl font-semibold">{highCompetition.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Competition active</div>
             </div>
-            <div className="rounded-lg border border-amber-500/30 p-3">
-              <div className="text-2xl font-semibold">{stalledLeads.length}</div>
+            <div className="rounded-lg border p-3" style={{ borderColor: "var(--win)" }}>
+              <div className="text-2xl font-semibold num">{stalledLeads.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stalled</div>
             </div>
-            <div className="rounded-lg border border-emerald-500/30 p-3">
-              <div className="text-2xl font-semibold">{signedThisYear.length}</div>
+            <div className="rounded-lg border p-3" style={{ borderColor: "var(--success)" }}>
+              <div className="text-2xl font-semibold num">{signedThisYear.length}</div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signed {new Date().getFullYear()}</div>
             </div>
           </div>

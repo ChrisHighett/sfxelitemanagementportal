@@ -195,15 +195,15 @@ export default function ScoutPipeline() {
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">At contact+</div>
           </CardContent>
         </Card>
-        <Card className="border-emerald-500/40">
+        <Card style={{ borderColor: "var(--success)" }}>
           <CardContent className="p-3">
-            <div className="text-2xl font-bold">{signedThisYear}</div>
+            <div className="text-2xl font-bold num">{signedThisYear}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signed {new Date().getFullYear()}</div>
           </CardContent>
         </Card>
-        <Card className="border-amber-500/40">
+        <Card style={{ borderColor: "var(--win)" }}>
           <CardContent className="p-3">
-            <div className="text-2xl font-bold">{stalledCount}</div>
+            <div className="text-2xl font-bold num">{stalledCount}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stalled</div>
           </CardContent>
         </Card>
@@ -254,7 +254,7 @@ export default function ScoutPipeline() {
 
       {/* Convert modal */}
       {showConvertModal && (
-        <Card className="border-emerald-500/40">
+        <Card style={{ borderColor: "var(--success)" }}>
           <CardHeader>
             <CardTitle className="text-base">Convert {showConvertModal.first_name} {showConvertModal.last_name} to athlete profile</CardTitle>
           </CardHeader>
