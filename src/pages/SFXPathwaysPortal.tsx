@@ -42,7 +42,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -90,6 +90,10 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "admin", label: "Admin", icon: Shield },
+  ],
+  scout: [
+    { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "add", label: "Add Lead", icon: Plus },
   ],
 };
 
@@ -2169,21 +2173,59 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
 function AgentManager() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState("agent");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
 
   const { data: agents = [], isLoading, refetch } = useQuery({
-    queryKey: ["portal_agents"],
+    queryKey: ["portal_agents_and_scouts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("portal_users" as any)
         .select("id, role, approved, display_name, email, created_at")
-        .eq("role", "agent")
+        .in("role", ["agent", "scout"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
     },
   });
+
+  const { data: scoutResponses = [] } = useQuery({
+    queryKey: ["scout_response_times"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scout_leads" as any)
+        .select("assigned_agent_id, assigned_agent_name, triage_decision, response_hours, first_agent_action_at, created_at, onboarding_stage")
+        .eq("triage_decision", "Pursue")
+        .not("assigned_agent_id", "is", null);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const agentResponseStats = useMemo(() => {
+    const byAgent: Record<string, { name: string; leads: number; responded: number; totalHours: number; overdue: number }> = {};
+    for (const lead of scoutResponses) {
+      const key = lead.assigned_agent_id;
+      if (!key) continue;
+      if (!byAgent[key]) byAgent[key] = { name: lead.assigned_agent_name || "Unknown", leads: 0, responded: 0, totalHours: 0, overdue: 0 };
+      byAgent[key].leads++;
+      if (lead.response_hours != null) {
+        byAgent[key].responded++;
+        byAgent[key].totalHours += Number(lead.response_hours);
+      } else if (lead.onboarding_stage === "New") {
+        const daysPending = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysPending > 1) byAgent[key].overdue++;
+      }
+    }
+    return Object.values(byAgent).map((a) => ({
+      ...a,
+      avgHours: a.responded > 0 ? a.totalHours / a.responded : null,
+      responseRate: a.leads > 0 ? Math.round((a.responded / a.leads) * 100) : 0,
+    })).sort((a, b) => (a.avgHours ?? 999) - (b.avgHours ?? 999));
+  }, [scoutResponses]);
+
+
 
   async function handleInvite() {
     if (!inviteEmail.trim() || !inviteName.trim()) {
@@ -2193,7 +2235,7 @@ function AgentManager() {
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-agent", {
-        body: { email: inviteEmail.trim(), displayName: inviteName.trim() },
+        body: { email: inviteEmail.trim(), displayName: inviteName.trim(), role: inviteRole },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -2255,7 +2297,7 @@ function AgentManager() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Full name *</Label>
                 <Input
@@ -2274,6 +2316,16 @@ function AgentManager() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   className="h-9"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Role *</Label>
+                <Select value={inviteRole} onValueChange={setInviteRole}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="agent">Agent</SelectItem>
+                    <SelectItem value="scout">Scout</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -2310,6 +2362,513 @@ function AgentManager() {
               onUpdateName={handleUpdateName}
             />
           ))}
+        </div>
+      )}
+
+      {agentResponseStats.length > 0 && (
+        <div className="space-y-3 pt-4 border-t">
+          <div>
+            <h3 className="text-base font-semibold">Scout lead response times</h3>
+            <p className="text-sm text-muted-foreground">How quickly each agent acts on Pursue leads assigned to them. Target: under 24 hours.</p>
+          </div>
+          <div className="space-y-2">
+            {agentResponseStats.map((agent, i) => {
+              const isGood = agent.avgHours != null && agent.avgHours <= 24;
+              const isWarn = agent.avgHours != null && agent.avgHours > 24 && agent.avgHours <= 72;
+              const statusColor = isGood ? "text-green-600" : isWarn ? "text-amber-600" : "text-destructive";
+              const bgColor = isGood ? "bg-green-50 border-green-200" : isWarn ? "bg-amber-50 border-amber-200" : "bg-destructive/5 border-destructive/20";
+              const rankColors = ["bg-amber-400", "bg-muted", "bg-orange-300"];
+              return (
+                <div key={agent.name + i} className={`rounded-lg border p-3 ${bgColor}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white ${rankColors[i] || "bg-muted"}`}>
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{agent.name}</span>
+                        {agent.overdue > 0 && (
+                          <Badge variant="destructive" className="text-xs">{agent.overdue} not actioned</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {agent.leads} Pursue {agent.leads === 1 ? "lead" : "leads"} · {agent.responded} actioned · {agent.responseRate}% response rate
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className={`text-base font-semibold ${statusColor}`}>
+                        {agent.avgHours != null ? `${Math.round(agent.avgHours)}h` : "—"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">avg response</div>
+                    </div>
+                  </div>
+                  {agent.avgHours != null && (
+                    <div className="mt-2">
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${isGood ? "bg-green-500" : isWarn ? "bg-amber-500" : "bg-destructive"}`}
+                          style={{ width: `${Math.min(100, (agent.avgHours / 72) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
+                        <span>0h</span>
+                        <span>Target: 24h</span>
+                        <span>72h+</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+            <div><span className="text-green-600 font-medium">Green (under 24h)</span> — excellent. Lead actioned same day.</div>
+            <div><span className="text-amber-600 font-medium">Amber (24–72h)</span> — acceptable. Consider reviewing workload.</div>
+            <div><span className="text-destructive font-medium">Red (72h+)</span> — action needed. Scout leads going cold.</div>
+            <div className="pt-1">Response time is measured from when a lead is assigned as Pursue to when the agent first moves it out of New stage.</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: () => void }) {
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    first_name: editLead?.first_name || "",
+    last_name: editLead?.last_name || "",
+    age: editLead?.age || "",
+    position: editLead?.position || "",
+    school_club: editLead?.school_club || "",
+    region: editLead?.region || "",
+    comp_grade: editLead?.comp_grade || "",
+    key_attributes: editLead?.key_attributes || "",
+    competitor_interest: editLead?.competitor_interest || "",
+    scout_rating: editLead?.scout_rating || "B",
+    triage_decision: editLead?.triage_decision || "Watch",
+    notes: editLead?.notes || "",
+  });
+  const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleSave() {
+    if (!form.first_name.trim() || !form.last_name.trim()) {
+      toast.error("First name and last name are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = { ...form, age: form.age ? Number(form.age) : null };
+      if (editLead?.id) {
+        const { error } = await supabase.from("scout_leads" as any).update(payload).eq("id", editLead.id);
+        if (error) throw error;
+        toast.success("Lead updated");
+      } else {
+        const { error } = await supabase.from("scout_leads" as any).insert({
+          ...payload,
+          created_by: user?.id,
+          onboarding_stage: "New",
+        });
+        if (error) throw error;
+        toast.success(`${form.first_name} ${form.last_name} added`);
+      }
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label className="text-xs">First name *</Label><Input placeholder="Jake" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Last name *</Label><Input placeholder="Morrison" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Age</Label><Input type="number" placeholder="16" value={form.age} onChange={(e) => set("age", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Position</Label><Input placeholder="Halfback" value={form.position} onChange={(e) => set("position", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Region</Label>
+          <Select value={form.region} onValueChange={(v) => set("region", v)}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
+            <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
+      <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label className="text-xs">Scout rating</Label>
+          <Select value={form.scout_rating} onValueChange={(v) => set("scout_rating", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="A">A — Elite prospect</SelectItem><SelectItem value="B">B — Strong watch</SelectItem><SelectItem value="C">C — Monitor</SelectItem></SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1"><Label className="text-xs">Decision</Label>
+          <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
+      <Button className="w-full" onClick={handleSave} disabled={saving}>
+        {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editLead ? "Update lead" : "Add lead"}
+      </Button>
+    </div>
+  );
+}
+
+function ScoutLeadCardSimple({ lead, onEdit, onStageChange, onTriageChange }: {
+  lead: any;
+  onEdit: () => void;
+  onStageChange: (id: string, stage: string) => void;
+  onTriageChange: (id: string, triage: string) => void;
+}) {
+  const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
+  const ratingColor = lead.scout_rating === "A" ? "bg-green-100 text-green-800" : lead.scout_rating === "B" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  const triageColor = lead.triage_decision === "Pursue" ? "bg-primary/10 text-primary" : lead.triage_decision === "Watch" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
+              {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ratingColor}`}>{lead.scout_rating}</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${triageColor}`}>{lead.triage_decision}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={onEdit}>Edit</Button>
+        </div>
+        {lead.competitor_interest && (
+          <div className="text-xs text-destructive font-medium bg-destructive/10 rounded-md px-3 py-1.5">⚠️ {lead.competitor_interest}</div>
+        )}
+        {lead.key_attributes && <p className="text-xs text-muted-foreground line-clamp-2">{lead.key_attributes}</p>}
+        <div className="flex flex-wrap gap-1.5">
+          {stages.map((stage) => (
+            <button
+              key={stage}
+              onClick={() => onStageChange(lead.id, stage)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                lead.onboarding_stage === stage
+                  ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
+                    : stage === "Lost" ? "bg-muted text-muted-foreground border-muted-foreground/30"
+                    : "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
+            >
+              {stage}
+            </button>
+          ))}
+        </div>
+        {lead.assigned_agent_name && (
+          <div className="text-xs text-muted-foreground">Assigned to: <span className="font-medium text-foreground">{lead.assigned_agent_name}</span></div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
+  const { user } = useAuth();
+  const [showForm, setShowForm] = useState(autoOpenForm);
+  const [editingLead, setEditingLead] = useState<any>(null);
+
+  useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
+
+  const { data: leads = [], refetch, isLoading } = useQuery({
+    queryKey: ["scout_my_leads", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scout_leads" as any)
+        .select("*")
+        .eq("created_by", user?.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const pursue = leads.filter((l: any) => l.triage_decision === "Pursue");
+  const watch = leads.filter((l: any) => l.triage_decision === "Watch");
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
+
+  async function handleStageChange(id: string, stage: string) {
+    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Stage updated");
+  }
+  async function handleTriageChange(id: string, triage: string) {
+    const { error } = await supabase.from("scout_leads" as any).update({ triage_decision: triage }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+  }
+
+  return (
+    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">My Scout Leads</h1>
+          <p className="text-sm text-muted-foreground">Log prospects, update stages, track your pipeline.</p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+          <Plus className="h-4 w-4" />Add lead
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Pursue", value: pursue.length, color: "text-primary" },
+          { label: "Watch", value: watch.length, color: "text-amber-600" },
+          { label: "Signed", value: signed.length, color: "text-green-600" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-lg border bg-card p-3 text-center">
+            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {showForm && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{editingLead ? "Edit lead" : "New lead"}</CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ScoutLeadFormSimple
+              editLead={editingLead}
+              onClose={() => { setShowForm(false); setEditingLead(null); refetch(); }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading your leads…
+        </div>
+      ) : leads.length === 0 ? (
+        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">No leads yet. Tap "Add lead" to log your first prospect.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {leads.map((lead: any) => (
+            <ScoutLeadCardSimple
+              key={lead.id}
+              lead={lead}
+              onEdit={() => { setEditingLead(lead); setShowForm(true); }}
+              onStageChange={handleStageChange}
+              onTriageChange={handleTriageChange}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgentScoutView() {
+  const { user } = useAuth();
+  const [showForm, setShowForm] = useState(false);
+  const [editingLead, setEditingLead] = useState<any>(null);
+  const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
+  const [stageFilter, setStageFilter] = useState("All");
+
+  const { data: leads = [], refetch, isLoading } = useQuery({
+    queryKey: ["agent_scout_leads", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scout_leads" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const filtered = leads.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    if (filter === "Pursue" && l.triage_decision !== "Pursue") return false;
+    if (filter === "Watch" && l.triage_decision !== "Watch") return false;
+    if (filter === "Mine" && l.assigned_agent_id !== user?.id) return false;
+    if (filter === "Stalled" && !(days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage))) return false;
+    if (stageFilter !== "All" && l.onboarding_stage !== stageFilter) return false;
+    return true;
+  });
+
+  const pursue = leads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
+  const stalled = leads.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    return days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage);
+  });
+  const competition = leads.filter((l: any) => l.competitor_interest?.trim());
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
+
+  async function handleStageChange(id: string, stage: string) {
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Stage updated");
+  }
+
+  async function handleConvert(lead: any) {
+    const { data: newAthlete, error } = await supabase
+      .from("athletes")
+      .insert({
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        position: lead.position || null,
+        school: lead.school_club || null,
+        assigned_agent_name: lead.assigned_agent_name || null,
+        assigned_agent_user_id: lead.assigned_agent_id || null,
+        stage: "Emerging",
+      } as any)
+      .select("id")
+      .single();
+    if (error) { toast.error("Could not create athlete profile: " + error.message); return; }
+    await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Signed",
+      date_signed: new Date().toISOString().slice(0, 10),
+      converted_athlete_id: (newAthlete as any).id,
+    }).eq("id", lead.id);
+    toast.success(`${lead.first_name} ${lead.last_name} — athlete profile created`);
+    refetch();
+  }
+
+  return (
+    <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Scout pipeline</h1>
+          <p className="text-sm text-muted-foreground">Prospects logged by your scouts — triage, track, and convert.</p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+          <Plus className="h-4 w-4" />Add lead
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { label: "Pursue", value: pursue.length, color: "text-primary" },
+          { label: "Competition active", value: competition.length, color: "text-destructive" },
+          { label: "Stalled", value: stalled.length, color: "text-amber-600" },
+          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: "text-green-600" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-lg border bg-card p-3 text-center">
+            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5">
+          {(["All", "Pursue", "Watch", "Mine", "Stalled"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filter === f ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["All", "New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((f) => (
+            <button key={f} onClick={() => setStageFilter(f)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${stageFilter === f ? "bg-secondary text-secondary-foreground border-secondary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showForm && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{editingLead ? "Edit lead" : "New lead"}</CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ScoutLeadFormSimple editLead={editingLead} onClose={() => { setShowForm(false); setEditingLead(null); refetch(); }} />
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" />Loading leads…
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No leads match this filter.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((lead: any) => {
+            const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at || lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+            const isStalled = days >= 7 && lead.triage_decision === "Pursue" && !["Signed", "Lost"].includes(lead.onboarding_stage);
+            return (
+              <Card key={lead.id} className={isStalled ? "border-amber-300" : ""}>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
+                        {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
+                        <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
+                        <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
+                        {isStalled && <Badge variant="outline" className="text-xs border-amber-400 text-amber-700">Stalled {days}d</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
+                        {lead.assigned_agent_name && ` · Agent: ${lead.assigned_agent_name}`}
+                        {lead.scout_name && ` · Scout: ${lead.scout_name}`}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={() => { setEditingLead(lead); setShowForm(true); }}>Edit</Button>
+                  </div>
+
+                  {lead.competitor_interest && (
+                    <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
+                  )}
+                  {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((stage) => (
+                      <button key={stage} onClick={() => handleStageChange(lead.id, stage)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                          lead.onboarding_stage === stage
+                            ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
+                              : stage === "Lost" ? "bg-muted-foreground/20 text-muted-foreground border-transparent"
+                              : "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground border-border hover:bg-muted"
+                        }`}>
+                        {stage}
+                      </button>
+                    ))}
+                  </div>
+
+                  {lead.onboarding_stage === "Welcome Sent" && (
+                    <Button size="sm" variant="outline" className="w-full gap-1.5 border-green-500 text-green-700 hover:bg-green-50" onClick={() => handleConvert(lead)}>
+                      <UserPlus className="h-3.5 w-3.5" />
+                      Convert to athlete profile →
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
@@ -2823,7 +3382,7 @@ export default function SFXPathwaysPortal() {
   useEffect(() => {
     if (userRoleData?.role && !role) {
       setRole(userRoleData.role as Role);
-      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete"].includes(requestedRole)
+      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete", "scout"].includes(requestedRole)
         ? requestedRole
         : (userRoleData.role as Role);
       if (isAdmin && requestedRole && requestedRole !== userRoleData.role) {
@@ -2873,6 +3432,15 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Scout role: dedicated portal, no athlete data required
+  if (effectiveRole === "scout") {
+    return (
+      <Shell role={effectiveRole} active={active} onNav={setActive}>
+        <ScoutPortal autoOpenForm={active === "add"} />
+      </Shell>
+    );
+  }
+
   // For athlete/parent with no allocated athlete (skip when admin is previewing)
   if (!isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && !allocatedAthleteId) {
     return (
@@ -2917,6 +3485,7 @@ export default function SFXPathwaysPortal() {
             <SelectContent>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="agent">Agent</SelectItem>
+              <SelectItem value="scout">Scout</SelectItem>
               <SelectItem value="parent">Parent</SelectItem>
               <SelectItem value="athlete">Athlete</SelectItem>
             </SelectContent>
@@ -2947,7 +3516,7 @@ export default function SFXPathwaysPortal() {
         />
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <ScoutPipeline />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <AgentScoutView />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
