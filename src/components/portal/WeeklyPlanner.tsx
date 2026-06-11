@@ -196,6 +196,11 @@ function TaskRow({
           <span className={`text-xs font-bold truncate ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
             {item.athleteName}
           </span>
+          {item.aiSourced && (
+            <span title="From conversation" className="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 text-primary px-1 py-px text-[9px] font-medium">
+              <Sparkles className="h-2.5 w-2.5" />
+            </span>
+          )}
         </div>
         <p className={`text-sm font-medium leading-snug ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {item.title}
