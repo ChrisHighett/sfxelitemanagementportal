@@ -4,8 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
 
@@ -20,6 +24,20 @@ interface PlannerItem {
   source: "generated" | "saved";
   aiSourced?: boolean;
   dueDate?: string | null;
+  isOverdue?: boolean;
+  daysOverdue?: number;
+}
+
+function todayISO(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+function daysBetween(fromISO: string, toISO: string): number {
+  const a = new Date(fromISO + "T00:00:00").getTime();
+  const b = new Date(toISO + "T00:00:00").getTime();
+  return Math.max(0, Math.round((b - a) / 86400000));
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -176,14 +194,27 @@ function TaskRow({
   completing,
   completed,
   onComplete,
+  onReschedule,
+  onDismiss,
 }: {
   item: PlannerItem;
   completing: boolean;
   completed: boolean;
   onComplete: () => void;
+  onReschedule?: (item: PlannerItem, date: Date) => void;
+  onDismiss?: (item: PlannerItem) => void;
 }) {
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const canManage = item.source === "saved" && !completed;
   return (
-    <div className="flex items-start gap-2.5 py-2 px-2 rounded border border-border/40 bg-card">
+    <div
+      className={cn(
+        "flex items-start gap-2.5 py-2 px-2 rounded border bg-card",
+        item.isOverdue
+          ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
+          : "border-border/40"
+      )}
+    >
       <div className="pt-0.5 shrink-0">
         {completing ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -196,10 +227,15 @@ function TaskRow({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           <span className={`text-xs font-bold truncate ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
             {item.athleteName}
           </span>
+          {item.isOverdue && item.daysOverdue ? (
+            <Badge variant="destructive" className="text-[9px] px-1.5 py-0 leading-tight">
+              {item.daysOverdue}d overdue
+            </Badge>
+          ) : null}
           {item.aiSourced && (
             <span title="From conversation" className="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 text-primary px-1 py-px text-[9px] font-medium">
               <Sparkles className="h-2.5 w-2.5" />
@@ -212,7 +248,67 @@ function TaskRow({
         {item.reason && (
           <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{item.reason}</p>
         )}
+        {item.isOverdue && item.dueDate && (
+          <p className="text-[10px] text-red-700 dark:text-red-300 mt-0.5">
+            Originally due {new Date(item.dueDate + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}
+          </p>
+        )}
       </div>
+      {canManage && (onReschedule || onDismiss) && (
+        <div className="shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-1 rounded hover:bg-muted text-muted-foreground"
+                aria-label="Task actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-popover z-50">
+              {onReschedule && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setTimeout(() => setRescheduleOpen(true), 0);
+                  }}
+                >
+                  <CalendarClock className="h-3.5 w-3.5 mr-2" />
+                  Reschedule
+                </DropdownMenuItem>
+              )}
+              {onDismiss && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => onDismiss(item)}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-2" />
+                  Dismiss…
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Popover open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
+            <PopoverTrigger asChild>
+              <span className="sr-only">reschedule anchor</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 z-50" align="end">
+              <Calendar
+                mode="single"
+                selected={item.dueDate ? new Date(item.dueDate + "T00:00:00") : undefined}
+                onSelect={(d) => {
+                  if (d && onReschedule) {
+                    onReschedule(item, d);
+                    setRescheduleOpen(false);
+                  }
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
     </div>
   );
 }
@@ -227,6 +323,8 @@ function PriorityBand({
   completing,
   completedIds,
   onComplete,
+  onReschedule,
+  onDismiss,
   cap = 5,
 }: {
   label: string;
@@ -237,6 +335,8 @@ function PriorityBand({
   completing: Set<string>;
   completedIds: Set<string>;
   onComplete: (item: PlannerItem) => void;
+  onReschedule?: (item: PlannerItem, date: Date) => void;
+  onDismiss?: (item: PlannerItem) => void;
   cap?: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -267,6 +367,8 @@ function PriorityBand({
               completing={completing.has(item.id)}
               completed={completedIds.has(item.id)}
               onComplete={() => onComplete(item)}
+              onReschedule={onReschedule}
+              onDismiss={onDismiss}
             />
           ))}
           {overflow > 0 && (
@@ -322,7 +424,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       const weekStartDate = week.start.toISOString().slice(0, 10);
       const weekEndDate = week.end.toISOString().slice(0, 10);
 
-      const [tasksRes, reviewsRes, clubCallsRes, scoutRes, upcomingRes] = await Promise.all([
+      const [tasksRes, overdueRes, reviewsRes, clubCallsRes, scoutRes, upcomingRes] = await Promise.all([
         // Tasks whose due_date falls in the visible week, OR (current week only)
         // recently created undated tasks.
         supabase.from("athlete_tasks")
@@ -335,6 +437,17 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
               : `and(due_date.gte.${weekStartDate},due_date.lte.${weekEndDate})`
           )
           .order("priority", { ascending: true }),
+        // Overdue: still-open tasks with a due_date before this week's start.
+        // Only fetched for the current week — future weeks stay clean.
+        isCurrentWeek
+          ? supabase.from("athlete_tasks")
+              .select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date")
+              .in("athlete_id", athleteIds)
+              .eq("owner_type", "agent")
+              .lt("due_date", weekStartDate)
+              .not("status", "in", '("done","cancelled")')
+              .order("due_date", { ascending: true })
+          : Promise.resolve({ data: [] as any[] }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
         (supabase as any)
@@ -354,7 +467,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       setPursueLeads(scoutRes?.data || []);
       setUpcomingCount(upcomingRes.count ?? 0);
 
-      setSavedTasks(tasksRes.data || []);
+      const overdueRows = (overdueRes as any)?.data || [];
+      // Merge week tasks with overdue, dedup by id
+      const merged: typeof savedTasks = [];
+      const seenIds = new Set<string>();
+      for (const t of [...(tasksRes.data || []), ...overdueRows]) {
+        if (seenIds.has(t.id)) continue;
+        seenIds.add(t.id);
+        merged.push(t);
+      }
+      setSavedTasks(merged);
       const seen = new Set<string>();
       const latestReviews = (reviewsRes.data || []).filter((r) => {
         if (seen.has(r.athlete_id)) return false;
@@ -376,6 +498,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const plannerItems = useMemo((): PlannerItem[] => {
     const savedIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => `${t.athlete_id}:${t.title}`));
     const existingIds = new Set(savedTasks.map((t) => t.athlete_id));
+    const todayStr = todayISO();
 
     const active: PlannerItem[] = savedTasks
       .filter((t) => t.status !== "cancelled")
@@ -386,11 +509,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           const idx = (d.getDay() + 6) % 7;
           day = idx < 5 ? DAYS[idx] : "Friday";
         }
+        const isOpen = t.status !== "done" && t.status !== "cancelled";
+        const isOverdue = !!(t.due_date && isOpen && t.due_date < todayStr);
         return {
           id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
           title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
           aiSourced: t.source === "conversation_ai",
           dueDate: t.due_date ?? null,
+          isOverdue,
+          daysOverdue: isOverdue && t.due_date ? daysBetween(t.due_date, todayStr) : 0,
         };
       });
 
@@ -444,27 +571,87 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     [user?.id]
   );
 
-  // Group by day (no dedup yet)
+  // Reschedule: move task to a new due_date (no auto-rollover; agent decision).
+  const handleReschedule = useCallback(
+    async (item: PlannerItem, date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const newDate = `${yyyy}-${mm}-${dd}`;
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({ due_date: newDate } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, due_date: newDate } : t)));
+        toast.success(`Rescheduled to ${date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}`);
+      } catch {
+        toast.error("Failed to reschedule");
+      }
+    },
+    []
+  );
+
+  // Dismiss with reason — closes the task without deleting the record.
+  const handleDismiss = useCallback(
+    async (item: PlannerItem) => {
+      const reason = window.prompt(`Dismiss "${item.title}" — why?`, "")?.trim();
+      if (!reason) return;
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({
+            status: "cancelled" as any,
+            completed_at: new Date().toISOString(),
+            completed_by: user?.id || null,
+            description: `${item.reason ? item.reason + "\n\n" : ""}[Dismissed: ${reason}]`,
+          } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.filter((t) => t.id !== item.id));
+        toast.success("Task dismissed");
+      } catch {
+        toast.error("Failed to dismiss");
+      }
+    },
+    [user?.id]
+  );
+
+  // Group by day. Overdue items (current week only) are routed to TODAY.
   const byDay = useMemo(() => {
     const map: Record<string, PlannerItem[]> = {};
     for (const day of DAYS) map[day] = [];
     for (const item of plannerItems) {
-      const day = DAYS.includes(item.suggestedDay) ? item.suggestedDay : "Friday";
+      let day: string;
+      if (isCurrentWeek && item.isOverdue) {
+        day = todayName;
+      } else {
+        day = DAYS.includes(item.suggestedDay) ? item.suggestedDay : "Friday";
+      }
       map[day].push(item);
     }
     return map;
-  }, [plannerItems]);
+  }, [plannerItems, isCurrentWeek, todayName]);
 
-  // Smart dedup per athlete per day — keep only highest priority (lowest number)
+  // Smart dedup per athlete per day — overdue first (oldest first), then by priority.
   const dedupedByDay = useMemo(() => {
     const map: Record<string, PlannerItem[]> = {};
     for (const day of DAYS) {
-      const sorted = [...byDay[day]].sort((a, b) => a.priority - b.priority);
+      const sorted = [...byDay[day]].sort((a, b) => {
+        if (!!a.isOverdue !== !!b.isOverdue) return a.isOverdue ? -1 : 1;
+        if (a.isOverdue && b.isOverdue) {
+          return (b.daysOverdue || 0) - (a.daysOverdue || 0);
+        }
+        return a.priority - b.priority;
+      });
       const seen = new Set<string>();
       const out: PlannerItem[] = [];
       for (const it of sorted) {
-        if (seen.has(it.athleteId)) continue;
-        seen.add(it.athleteId);
+        // Allow multiple rows per athlete if one is overdue and another is fresh
+        const key = `${it.athleteId}:${it.isOverdue ? "od" : "ok"}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         out.push(it);
       }
       map[day] = out;
@@ -541,6 +728,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         <PriorityBand
           label="High"
@@ -551,6 +740,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         <PriorityBand
           label="Normal"
@@ -561,6 +752,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         {weekOverflow > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-1">
@@ -605,6 +798,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                       completing={completing.has(item.id)}
                       completed={isCompleted(item)}
                       onComplete={() => handleComplete(item)}
+                      onReschedule={handleReschedule}
+                      onDismiss={handleDismiss}
                     />
                   ))
                 )}
@@ -637,7 +832,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                   {items.slice(0, 5).map((item) => {
                     const done = isCompleted(item);
                     return (
-                      <div key={item.id} className="rounded border bg-card p-2 hover:shadow-sm transition">
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "rounded border p-2 hover:shadow-sm transition",
+                          item.isOverdue
+                            ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
+                            : "bg-card"
+                        )}
+                      >
                         <div className="flex items-start gap-1.5">
                           <div className="pt-px shrink-0">
                             {completing.has(item.id) ? (
@@ -651,9 +854,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
                               {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                              {item.isOverdue && item.daysOverdue ? (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0 leading-tight">
+                                  {item.daysOverdue}d overdue
+                                </Badge>
+                              ) : null}
                             </div>
                             <p className={`text-[11px] leading-snug ${done ? "line-through text-muted-foreground" : ""}`}>{item.title}</p>
                             {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
