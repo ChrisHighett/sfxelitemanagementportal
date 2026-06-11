@@ -371,6 +371,8 @@ function PriorityBand({
               completing={completing.has(item.id)}
               completed={completedIds.has(item.id)}
               onComplete={() => onComplete(item)}
+              onReschedule={onReschedule}
+              onDismiss={onDismiss}
             />
           ))}
           {overflow > 0 && (
