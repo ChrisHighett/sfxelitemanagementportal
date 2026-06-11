@@ -2504,7 +2504,12 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     }
     setSaving(true);
     try {
-      const payload: any = { ...form, age: form.age ? Number(form.age) : null };
+      const payload: any = {
+        ...form,
+        age: form.age ? Number(form.age) : null,
+        assigned_agent_id: form.assigned_agent_id || null,
+        assigned_agent_name: form.assigned_agent_name || null,
+      };
       if (editLead?.id) {
         const { error } = await supabase.from("scout_leads" as any).update(payload).eq("id", editLead.id);
         if (error) throw error;
