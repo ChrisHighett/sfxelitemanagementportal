@@ -275,7 +275,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [savedTasks, setSavedTasks] = useState<
-    { id: string; athlete_id: string; title: string; description: string | null; priority: number; suggested_day: string | null; status: string }[]
+    { id: string; athlete_id: string; title: string; description: string | null; priority: number; suggested_day: string | null; status: string; source?: string | null; due_date?: string | null }[]
   >([]);
   const [reviews, setReviews] = useState<
     { athlete_id: string; review_month: string; follow_up_actions: string | null; wellbeing_score: number | null; parent_engagement_notes: string | null }[]
