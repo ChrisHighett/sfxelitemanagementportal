@@ -224,7 +224,7 @@ function TaskRow({
         {completing ? (
           <ArcLoader size={16} />
         ) : completed ? (
-          <div className="h-4 w-4 rounded-sm bg-emerald-500 flex items-center justify-center">
+          <div className="h-4 w-4 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
             <Check className="h-3 w-3" style={{ color: "#fff" }} />
           </div>
         ) : (
