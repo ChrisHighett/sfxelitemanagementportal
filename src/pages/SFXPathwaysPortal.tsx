@@ -2600,7 +2600,15 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
 }) {
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
   const ratingColor = lead.scout_rating === "A" ? "bg-green-100 text-green-800" : lead.scout_rating === "B" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
-  const triageColor = lead.triage_decision === "Pursue" ? "bg-primary/10 text-primary" : lead.triage_decision === "Watch" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  const triageColor = lead.triage_decision === "Pursue"
+    ? "bg-primary/10 text-primary"
+    : lead.triage_decision === "Watch"
+    ? "bg-amber-100 text-amber-800"
+    : lead.triage_decision === "Signed"
+    ? "bg-green-100 text-green-800"
+    : lead.triage_decision === "Lost"
+    ? "bg-muted text-muted-foreground"
+    : "bg-muted text-muted-foreground";
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
