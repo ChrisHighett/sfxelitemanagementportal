@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
+import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -77,12 +78,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   agent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
