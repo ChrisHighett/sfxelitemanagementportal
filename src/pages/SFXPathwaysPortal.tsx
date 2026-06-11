@@ -2503,6 +2503,23 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
         if (error) throw error;
         toast.success(`${form.first_name} ${form.last_name} added`);
       }
+
+      // Fire alert to assigned agent when marked Pursue
+      if (form.triage_decision === "Pursue" && form.assigned_agent_id) {
+        const wasAlreadyPursue = editLead?.triage_decision === "Pursue";
+        if (!wasAlreadyPursue) {
+          await supabase.from("athlete_alerts" as any).insert({
+            alert_type: "scout_lead_assigned",
+            severity: "high",
+            title: `New scout lead — ${form.first_name} ${form.last_name}`,
+            description: `${form.scout_rating}-rated ${form.position || "player"} from ${form.school_club || form.region || "unknown location"}. ${form.competitor_interest ? "Competition: " + form.competitor_interest : "No known competitor interest."}`,
+            assigned_to: form.assigned_agent_id,
+            athlete_id: form.assigned_agent_id,
+            status: "open",
+            triggered_at: new Date().toISOString(),
+          });
+        }
+      }
       onClose();
     } catch (e: any) {
       toast.error(e.message || "Save failed");
