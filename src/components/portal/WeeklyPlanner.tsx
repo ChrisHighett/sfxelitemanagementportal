@@ -194,14 +194,27 @@ function TaskRow({
   completing,
   completed,
   onComplete,
+  onReschedule,
+  onDismiss,
 }: {
   item: PlannerItem;
   completing: boolean;
   completed: boolean;
   onComplete: () => void;
+  onReschedule?: (item: PlannerItem, date: Date) => void;
+  onDismiss?: (item: PlannerItem) => void;
 }) {
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const canManage = item.source === "saved" && !completed;
   return (
-    <div className="flex items-start gap-2.5 py-2 px-2 rounded border border-border/40 bg-card">
+    <div
+      className={cn(
+        "flex items-start gap-2.5 py-2 px-2 rounded border bg-card",
+        item.isOverdue
+          ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
+          : "border-border/40"
+      )}
+    >
       <div className="pt-0.5 shrink-0">
         {completing ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -214,10 +227,15 @@ function TaskRow({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           <span className={`text-xs font-bold truncate ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
             {item.athleteName}
           </span>
+          {item.isOverdue && item.daysOverdue ? (
+            <Badge variant="destructive" className="text-[9px] px-1.5 py-0 leading-tight">
+              {item.daysOverdue}d overdue
+            </Badge>
+          ) : null}
           {item.aiSourced && (
             <span title="From conversation" className="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 text-primary px-1 py-px text-[9px] font-medium">
               <Sparkles className="h-2.5 w-2.5" />
@@ -230,7 +248,71 @@ function TaskRow({
         {item.reason && (
           <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{item.reason}</p>
         )}
+        {item.isOverdue && item.dueDate && (
+          <p className="text-[10px] text-red-700 dark:text-red-300 mt-0.5">
+            Originally due {new Date(item.dueDate + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}
+          </p>
+        )}
       </div>
+      {canManage && (onReschedule || onDismiss) && (
+        <div className="shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-1 rounded hover:bg-muted text-muted-foreground"
+                aria-label="Task actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 bg-popover z-50">
+              {onReschedule && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setRescheduleOpen(true);
+                  }}
+                >
+                  <CalendarClock className="h-3.5 w-3.5 mr-2" />
+                  Reschedule
+                </DropdownMenuItem>
+              )}
+              {onDismiss && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onDismiss(item);
+                  }}
+                >
+                  <XCircle className="h-3.5 w-3.5 mr-2" />
+                  Dismiss…
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Popover open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
+            <PopoverTrigger asChild>
+              <span className="sr-only">reschedule anchor</span>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 z-50" align="end">
+              <Calendar
+                mode="single"
+                selected={item.dueDate ? new Date(item.dueDate + "T00:00:00") : undefined}
+                onSelect={(d) => {
+                  if (d && onReschedule) {
+                    onReschedule(item, d);
+                    setRescheduleOpen(false);
+                  }
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
     </div>
   );
 }
@@ -245,6 +327,8 @@ function PriorityBand({
   completing,
   completedIds,
   onComplete,
+  onReschedule,
+  onDismiss,
   cap = 5,
 }: {
   label: string;
@@ -255,6 +339,8 @@ function PriorityBand({
   completing: Set<string>;
   completedIds: Set<string>;
   onComplete: (item: PlannerItem) => void;
+  onReschedule?: (item: PlannerItem, date: Date) => void;
+  onDismiss?: (item: PlannerItem) => void;
   cap?: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
