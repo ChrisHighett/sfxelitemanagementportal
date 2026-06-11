@@ -3799,13 +3799,16 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
 export default function SFXPathwaysPortal() {
   const { data: userRoleData, isLoading: roleLoading } = useUserRole();
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedRole = searchParams.get("view");
+  const requestedTab = searchParams.get("tab");
+  const initialRequestedRole = isPortalRole(requestedRole) ? requestedRole : null;
+  const initialRequestedTab = requestedTab || null;
   const [role, setRole] = useState<Role | null>(null);
-  const [active, setActive] = useState("roster");
+  const [active, setActive] = useState(initialRequestedTab || firstNavKeyForRole(initialRequestedRole) || "roster");
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
-  const [roleOverride, setRoleOverride] = useState<Role | null>(null);
+  const [roleOverride, setRoleOverride] = useState<Role | null>(initialRequestedRole);
   const [callActive, setCallActive] = useState(false);
 
-  const requestedRole = searchParams.get("view") as Role | null;
   const isAdmin = userRoleData?.role === "admin";
   const effectiveRole = roleOverride || role;
 
@@ -3822,28 +3825,43 @@ export default function SFXPathwaysPortal() {
   useEffect(() => {
     if (userRoleData?.role && !role) {
       setRole(userRoleData.role as Role);
-      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete", "scout"].includes(requestedRole)
+      const initialRole = isAdmin && initialRequestedRole
         ? requestedRole
         : (userRoleData.role as Role);
-      if (isAdmin && requestedRole && requestedRole !== userRoleData.role) {
-        setRoleOverride(requestedRole);
+      if (isAdmin && initialRequestedRole && initialRequestedRole !== userRoleData.role) {
+        setRoleOverride(initialRequestedRole);
       }
-      const firstTab = NAV[initialRole]?.[0]?.key ?? "dash";
-      setActive(firstTab);
+      const safeTab = isValidNavKeyForRole(initialRole, initialRequestedTab) ? initialRequestedTab! : firstNavKeyForRole(initialRole);
+      setActive(safeTab);
     }
-  }, [userRoleData, role, isAdmin, requestedRole]);
+  }, [userRoleData, role, isAdmin, initialRequestedRole, requestedRole, initialRequestedTab]);
+
+  useEffect(() => {
+    if (!effectiveRole || roleLoading) return;
+    if (!isValidNavKeyForRole(effectiveRole, active)) {
+      setActive(firstNavKeyForRole(effectiveRole));
+    }
+  }, [effectiveRole, active, roleLoading]);
 
   // When admin switches role preview, reset to first tab of that role
   const handleRoleSwitch = (newRole: Role) => {
     if (newRole === userRoleData?.role) {
       setRoleOverride(null);
-      setSearchParams({});
+      setSearchParams({ tab: firstNavKeyForRole(newRole) });
     } else {
       setRoleOverride(newRole);
-      setSearchParams({ view: newRole });
+      setSearchParams({ view: newRole, tab: firstNavKeyForRole(newRole) });
     }
     const firstTab = NAV[newRole]?.[0]?.key ?? "dash";
     setActive(firstTab);
+  };
+
+  const handleNav = (key: string) => {
+    if (!effectiveRole || !isValidNavKeyForRole(effectiveRole, key)) return;
+    setActive(key);
+    const nextParams: Record<string, string> = { tab: key };
+    if (roleOverride && roleOverride !== userRoleData?.role) nextParams.view = roleOverride;
+    setSearchParams(nextParams);
   };
 
   const currentAthleteId = selectedAthleteId || athletes[0]?.id;
