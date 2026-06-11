@@ -2242,7 +2242,7 @@ function AgentManager() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Invite sent to ${inviteEmail} — they'll receive an email to set up their account.`);
+      toast.success(`${inviteRole === "scout" ? "Scout" : "Agent"} invite sent to ${inviteEmail}`);
       setInviteEmail("");
       setInviteName("");
       setShowInviteForm(false);
