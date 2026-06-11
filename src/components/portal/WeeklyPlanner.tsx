@@ -836,7 +836,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                   {items.slice(0, 5).map((item) => {
                     const done = isCompleted(item);
                     return (
-                      <div key={item.id} className="rounded border bg-card p-2 hover:shadow-sm transition">
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "rounded border p-2 hover:shadow-sm transition",
+                          item.isOverdue
+                            ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
+                            : "bg-card"
+                        )}
+                      >
                         <div className="flex items-start gap-1.5">
                           <div className="pt-px shrink-0">
                             {completing.has(item.id) ? (
@@ -850,9 +858,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
                               {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                              {item.isOverdue && item.daysOverdue ? (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0 leading-tight">
+                                  {item.daysOverdue}d overdue
+                                </Badge>
+                              ) : null}
                             </div>
                             <p className={`text-[11px] leading-snug ${done ? "line-through text-muted-foreground" : ""}`}>{item.title}</p>
                             {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
