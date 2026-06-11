@@ -98,6 +98,20 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
 };
 
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout"];
+
+function isPortalRole(value?: string | null): value is Role {
+  return !!value && PORTAL_ROLES.includes(value as Role);
+}
+
+function firstNavKeyForRole(role?: Role | null) {
+  return role ? NAV[role]?.[0]?.key ?? "dash" : "dash";
+}
+
+function isValidNavKeyForRole(role: Role | null | undefined, key?: string | null) {
+  return !!role && !!key && (NAV[role] ?? []).some((item) => item.key === key);
+}
+
 function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode; hideBottomNav?: boolean }) {
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
