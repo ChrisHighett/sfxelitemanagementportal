@@ -331,7 +331,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
           icon={<Users className="h-4 w-4" />}
         >
           <div className="space-y-1 text-sm text-muted-foreground pt-1">
-            <div>Agent: {athlete.assignedAgent}</div>
+            <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
           </div>
           <Button
             variant="secondary"
