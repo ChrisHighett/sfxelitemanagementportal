@@ -2689,7 +2689,19 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
-    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
+    if (stage === "Signed") {
+      updates.date_signed = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Signed";
+    }
+    if (stage === "Lost") {
+      updates.date_lost = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Lost";
+    }
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
