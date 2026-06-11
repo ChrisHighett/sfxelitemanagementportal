@@ -84,7 +84,6 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
   ],
   admin: [
-    { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
@@ -331,7 +330,7 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
           icon={<Users className="h-4 w-4" />}
         >
           <div className="space-y-1 text-sm text-muted-foreground pt-1">
-            <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
+            <div>Agent: {athlete.assignedAgent}</div>
           </div>
           <Button
             variant="secondary"
@@ -382,7 +381,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
         <StatCard
           label="Focus"
           icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
+          value={<span className="text-xs font-medium">{smart?.focus ?? "—"}</span>}
         />
       </div>
 
@@ -2439,9 +2438,7 @@ function AgentManager() {
 
 function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: () => void }) {
   const { user } = useAuth();
-  const { isOnline, enqueue } = useOfflineQueue();
   const [saving, setSaving] = useState(false);
-  const [quickMode, setQuickMode] = useState(!editLead);
   const [form, setForm] = useState({
     first_name: editLead?.first_name || "",
     last_name: editLead?.last_name || "",
@@ -2455,22 +2452,8 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     scout_rating: editLead?.scout_rating || "B",
     triage_decision: editLead?.triage_decision || "Watch",
     notes: editLead?.notes || "",
-    assigned_agent_name: editLead?.assigned_agent_name || "",
-    assigned_agent_id: editLead?.assigned_agent_id || "",
   });
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
-
-  const { data: agentList = [] } = useQuery({
-    queryKey: ["agent_list_scout_form"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("portal_users" as any)
-        .select("id, display_name, email")
-        .eq("role", "agent")
-        .eq("approved", true);
-      return (data as any[]) || [];
-    },
-  });
 
   async function handleSave() {
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -2485,16 +2468,6 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
         if (error) throw error;
         toast.success("Lead updated");
       } else {
-        if (!isOnline) {
-          enqueue("scout_leads", {
-            ...payload,
-            created_by: user?.id,
-            onboarding_stage: "New",
-          });
-          toast.success(`${form.first_name} ${form.last_name} saved offline — will sync when connected`);
-          onClose();
-          return;
-        }
         const { error } = await supabase.from("scout_leads" as any).insert({
           ...payload,
           created_by: user?.id,
@@ -2502,23 +2475,6 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
         });
         if (error) throw error;
         toast.success(`${form.first_name} ${form.last_name} added`);
-      }
-
-      // Fire alert to assigned agent when marked Pursue
-      if (form.triage_decision === "Pursue" && form.assigned_agent_id) {
-        const wasAlreadyPursue = editLead?.triage_decision === "Pursue";
-        if (!wasAlreadyPursue) {
-          await supabase.from("athlete_alerts" as any).insert({
-            alert_type: "scout_lead_assigned",
-            severity: "high",
-            title: `New scout lead — ${form.first_name} ${form.last_name}`,
-            description: `${form.scout_rating}-rated ${form.position || "player"} from ${form.school_club || form.region || "unknown location"}. ${form.competitor_interest ? "Competition: " + form.competitor_interest : "No known competitor interest."}`,
-            assigned_to: form.assigned_agent_id,
-            athlete_id: form.assigned_agent_id,
-            status: "open",
-            triggered_at: new Date().toISOString(),
-          });
-        }
       }
       onClose();
     } catch (e: any) {
@@ -2528,110 +2484,38 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     }
   }
 
-  const ratingButtons = (
-    <div className="space-y-1.5">
-      <Label className="text-xs">Scout rating</Label>
-      <div className="flex gap-2">
-        {["A", "B", "C"].map((r) => (
-          <button
-            key={r}
-            type="button"
-            onClick={() => set("scout_rating", r)}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-              form.scout_rating === r
-                ? r === "A"
-                  ? "bg-green-600 text-white border-green-600"
-                  : r === "B"
-                    ? "bg-amber-500 text-white border-amber-500"
-                    : "bg-muted text-muted-foreground border-muted-foreground/30"
-                : "bg-background border-border text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {quickMode ? r : r === "A" ? "A — Elite" : r === "B" ? "B — Strong" : "C — Monitor"}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-3">
-      {!editLead && (
-        <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
-          <span className="text-xs text-muted-foreground">
-            {quickMode ? "Quick mode — essentials only" : "Full details mode"}
-          </span>
-          <button
-            type="button"
-            onClick={() => setQuickMode((v) => !v)}
-            className="text-xs text-primary underline underline-offset-2"
-          >
-            {quickMode ? "Add full details" : "Quick mode"}
-          </button>
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1"><Label className="text-xs">First name *</Label><Input placeholder="Jake" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Last name *</Label><Input placeholder="Morrison" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Age</Label><Input type="number" placeholder="16" value={form.age} onChange={(e) => set("age", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Position</Label><Input placeholder="Halfback" value={form.position} onChange={(e) => set("position", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Region</Label>
+          <Select value={form.region} onValueChange={(v) => set("region", v)}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
+            <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
       </div>
-
-      {quickMode ? (
-        <>
-          {ratingButtons}
-          <div className="space-y-1"><Label className="text-xs">Quick notes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
-        </>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
-            <div className="space-y-1"><Label className="text-xs">Region</Label>
-              <Select value={form.region} onValueChange={(v) => set("region", v)}>
-                <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
-                <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
-          {ratingButtons}
-          <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
-          <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">Decision</Label>
-              <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
-                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1"><Label className="text-xs">Comp / Grade</Label><Input placeholder="Yr 10 Rep" value={form.comp_grade} onChange={(e) => set("comp_grade", e.target.value)} className="h-8" /></div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Assign to agent</Label>
-            <Select
-              value={form.assigned_agent_name}
-              onValueChange={(v) => {
-                const found = (agentList as any[]).find((a: any) => (a.display_name || a.email) === v);
-                set("assigned_agent_name", v);
-                set("assigned_agent_id", found?.id || "");
-              }}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Select agent…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(agentList as any[]).map((a: any) => (
-                  <SelectItem key={a.id} value={a.display_name || a.email}>
-                    {a.display_name || a.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
-        </>
-      )}
-
+      <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
+      <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label className="text-xs">Scout rating</Label>
+          <Select value={form.scout_rating} onValueChange={(v) => set("scout_rating", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="A">A — Elite prospect</SelectItem><SelectItem value="B">B — Strong watch</SelectItem><SelectItem value="C">C — Monitor</SelectItem></SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1"><Label className="text-xs">Decision</Label>
+          <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
       <Button className="w-full" onClick={handleSave} disabled={saving}>
         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editLead ? "Update lead" : "Add lead"}
       </Button>
@@ -2708,7 +2592,6 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
-  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
 
@@ -2731,33 +2614,11 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
 
   async function handleStageChange(id: string, stage: string) {
-    if (stage === "Lost") {
-      const lead = leads.find((l: any) => l.id === id);
-      setLostModalLead(lead || { id });
-      return;
-    }
-    const updates: any = { onboarding_stage: stage };
-    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
-    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
+    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
-
-  async function handleConfirmLost(reason: string) {
-    if (!lostModalLead) return;
-    const { error } = await supabase.from("scout_leads" as any).update({
-      onboarding_stage: "Lost",
-      lost_reason: reason || null,
-      lost_at: new Date().toISOString().slice(0, 10),
-      date_lost: new Date().toISOString().slice(0, 10),
-    }).eq("id", lostModalLead.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Lead marked as lost");
-    setLostModalLead(null);
-    refetch();
-  }
-
   async function handleTriageChange(id: string, triage: string) {
     const { error } = await supabase.from("scout_leads" as any).update({ triage_decision: triage }).eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -2841,14 +2702,6 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={() => {}}
-        />
-      )}
-
-      {lostModalLead && (
-        <LostReasonModal
-          lead={lostModalLead}
-          onConfirm={handleConfirmLost}
-          onCancel={() => setLostModalLead(null)}
         />
       )}
     </div>
@@ -2992,12 +2845,6 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
               <InfoRow label="Welcome sent" value={lead.date_welcome_sent} />
               <InfoRow label="Date signed" value={lead.date_signed} />
             </div>
-            {lead.lost_reason && (
-              <div className="space-y-0.5">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lost reason</div>
-                <div className="text-sm font-medium text-destructive">{lead.lost_reason}</div>
-              </div>
-            )}
           </Section>
 
           {(lead.action_required || lead.action_due_date || lead.next_step) && (
@@ -3076,91 +2923,6 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
   );
 }
 
-function LostReasonModal({ lead, onConfirm, onCancel }: {
-  lead: any;
-  onConfirm: (reason: string) => Promise<void> | void;
-  onCancel: () => void;
-}) {
-  const [reason, setReason] = useState("");
-  const [saving, setSaving] = useState(false);
-  const commonReasons = [
-    "Signed with another agency",
-    "Family decided not to proceed",
-    "Player stopped playing",
-    "Lost contact with family",
-    "Not the right fit",
-    "Club advised against",
-  ];
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
-      onClick={onCancel}
-    >
-      <div
-        className="bg-background w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-5 border-b">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold">Mark as lost — {lead.first_name} {lead.last_name}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Record why this lead was lost. This helps improve future scouting.</p>
-            </div>
-            <button onClick={onCancel} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        <div className="p-5 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {commonReasons.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setReason(r)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  reason === r
-                    ? "bg-primary text-white border-primary"
-                    : "bg-background border-border text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Additional detail (optional)</Label>
-            <Textarea
-              placeholder="Any other context about why this lead was lost…"
-              value={commonReasons.includes(reason) ? "" : reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              className="resize-none"
-            />
-            {commonReasons.includes(reason) && (
-              <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{reason}</span> — or type above to override</p>
-            )}
-          </div>
-        </div>
-        <div className="p-4 pt-0 flex gap-2">
-          <Button
-            className="flex-1 bg-destructive hover:bg-destructive/90 text-white"
-            disabled={saving}
-            onClick={async () => {
-              setSaving(true);
-              await onConfirm(reason);
-              setSaving(false);
-            }}
-          >
-            {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Confirm — mark as lost"}
-          </Button>
-          <Button variant="outline" onClick={onCancel} className="shrink-0">Cancel</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AgentScoutView() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -3168,7 +2930,6 @@ function AgentScoutView() {
   const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
-  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
@@ -3201,37 +2962,14 @@ function AgentScoutView() {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
 
   async function handleStageChange(id: string, stage: string) {
-    if (stage === "Lost") {
-      const lead = leads.find((l: any) => l.id === id);
-      setLostModalLead(lead || { id });
-      return;
-    }
     const updates: any = { onboarding_stage: stage };
-    if (stage === "Contacted") {
-      updates.first_agent_action_at = new Date().toISOString();
-    }
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
-
-  async function handleConfirmLost(reason: string) {
-    if (!lostModalLead) return;
-    const { error } = await supabase.from("scout_leads" as any).update({
-      onboarding_stage: "Lost",
-      lost_reason: reason || null,
-      lost_at: new Date().toISOString().slice(0, 10),
-      date_lost: new Date().toISOString().slice(0, 10),
-    }).eq("id", lostModalLead.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Lead marked as lost");
-    setLostModalLead(null);
-    refetch();
-  }
-
-
 
   async function handleConvert(lead: any) {
     const { data: newAthlete, error } = await supabase
@@ -3373,12 +3111,6 @@ function AgentScoutView() {
                   {lead.competitor_interest && (
                     <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
                   )}
-                  {lead.onboarding_stage === "Lost" && lead.lost_reason && (
-                    <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-1.5 flex items-center gap-1.5">
-                      <span className="text-muted-foreground">Lost reason:</span>
-                      <span className="font-medium text-foreground">{lead.lost_reason}</span>
-                    </div>
-                  )}
                   {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
 
                   <div className="flex flex-wrap gap-1.5">
@@ -3423,14 +3155,6 @@ function AgentScoutView() {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={handleConvert}
-        />
-      )}
-
-      {lostModalLead && (
-        <LostReasonModal
-          lead={lostModalLead}
-          onConfirm={handleConfirmLost}
-          onCancel={() => setLostModalLead(null)}
         />
       )}
     </div>
