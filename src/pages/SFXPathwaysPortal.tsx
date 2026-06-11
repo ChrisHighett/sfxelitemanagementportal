@@ -2280,12 +2280,12 @@ function AgentManager() {
         <div>
           <h3 className="text-base font-semibold">Agent Accounts</h3>
           <p className="text-sm text-muted-foreground">
-            Invite new agents and manage existing accounts. Invited agents receive an email to set their password.
+            Invite agents and scouts. They receive an email to set their password and access their portal immediately.
           </p>
         </div>
         <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setShowInviteForm((v) => !v)}>
           <UserPlus className="h-4 w-4" />
-          Invite agent
+          Invite member
         </Button>
       </div>
 
