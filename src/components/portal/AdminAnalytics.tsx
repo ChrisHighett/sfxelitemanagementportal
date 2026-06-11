@@ -186,6 +186,9 @@ export default function AdminAnalytics() {
           </div>
         )}
       </div>
+      {/* Task completion scorecard */}
+      <AgentTaskScorecard />
+
 
       {/* KPI legend */}
       <Card>
