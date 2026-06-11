@@ -73,8 +73,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-8" style={{ background: "var(--surface)" }}>
         <div className="w-full max-w-sm space-y-8">
+          <div className="lg:hidden flex justify-center">
+            <div className="rounded-[12px] p-3" style={{ background: "var(--brand-base)" }}>
+              <BrandMark variant="wordmark" height={28} />
+            </div>
+          </div>
           <div className="space-y-2">
             <h2
               className="text-3xl font-bold tracking-tight"
