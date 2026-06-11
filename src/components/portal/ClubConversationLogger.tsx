@@ -672,7 +672,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
             <Button
               variant="outline"
               className="w-full h-10 gap-2"
-              onClick={handleGenerateEmail}
+              onClick={() => handleGenerateEmail()}
               disabled={generatingEmail}
             >
               {generatingEmail ? (
