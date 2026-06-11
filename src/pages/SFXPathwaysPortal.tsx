@@ -162,7 +162,8 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                         onClick={() => { onNav(it.key); setMobileOpen(false); }}
                       >
                         <Icon className="h-5 w-5" />
-                        {it.label}
+                        <span className="flex-1 text-left">{it.label}</span>
+                        {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                       </button>
                     );
                   })}
