@@ -3205,6 +3205,13 @@ function AgentScoutView() {
           onConvert={handleConvert}
         />
       )}
+      {lostModalLead && (
+        <LostReasonModal
+          lead={lostModalLead}
+          onClose={() => setLostModalLead(null)}
+          onConfirm={confirmLost}
+        />
+      )}
     </div>
   );
 }
