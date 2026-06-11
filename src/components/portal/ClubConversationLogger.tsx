@@ -313,23 +313,28 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
-    toast.success(`Saved — generating ${audience} email…`);
-    await handleGenerateEmail();
-    qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
+    toast.success(`Saved — drafting ${format} message for ${audience}…`);
+    await handleGenerateEmail(format, audience);
   };
 
-  const handleGenerateEmail = async () => {
+  const handleGenerateEmail = async (
+    overrideFormat?: Format,
+    overrideAudience?: Audience,
+  ) => {
     if (!notes.trim()) {
-      toast.error("Save the conversation first, then generate the email.");
+      toast.error("Save the conversation first, then generate the message.");
       return;
     }
-    if (audience === "skip") return;
+    const fmt = overrideFormat || format;
+    const aud = overrideAudience || audience;
+    if (aud === "skip") return;
 
     setGeneratingEmail(true);
+    setCopied(false);
     const firstName = athlete.name.split(" ")[0];
     const convLabel = convTypeOptions.find(t => t.value === convType)?.label || convType;
     let parentName: string | null = null;
-    if (audience === "parent") {
+    if (aud === "parent") {
       const { data: g } = await supabase
         .from("guardians")
         .select("parent_name")
@@ -343,7 +348,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
         body: {
           type: "conversation_update",
           category,
-          audience,
+          audience: aud,
+          format: fmt,
           athleteFirstName: firstName,
           parentName,
           counterparty: counterpartyValue.trim() || null,
@@ -368,29 +374,57 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
       setEmailSubject(subject);
       setEmailDraft(body);
-
-      await saveCommsEmail({
-        athleteId: athlete.id,
-        emailType: audience === "parent" ? "parent" : "athlete",
-        subject,
-        body,
-        generatedFrom: `conversation_${category}`,
-        createdBy: user?.id,
-      });
-
-      toast.success(`${audience === "parent" ? "Parent" : "Athlete"} email generated and saved to Comms History.`);
     } catch (e: any) {
-      toast.error(e.message || "Failed to generate email.");
+      toast.error(e.message || "Failed to generate message.");
     } finally {
       setGeneratingEmail(false);
     }
   };
 
-  const handleCopyEmail = () => {
+  const handleFormatChange = async (nextFormat: Format) => {
+    if (nextFormat === format) return;
+    setFormat(nextFormat);
+    // Safeguarding: when switching to SMS / WhatsApp for an under-18 athlete,
+    // default the audience to Parent (still overridable by the agent).
+    let nextAudience = audience;
+    if (isMinor && (nextFormat === "sms" || nextFormat === "whatsapp") && audience === "athlete") {
+      nextAudience = "parent";
+      setAudience("parent");
+    }
+    if (saved && nextAudience !== "skip" && notes.trim()) {
+      await handleGenerateEmail(nextFormat, nextAudience);
+    }
+  };
+
+  const handleCopyEmail = async () => {
     if (!emailDraft) return;
-    const text = `Subject: ${emailSubject}\n\n${emailDraft}`;
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard — paste into your email client.");
+    const text = format === "email" && emailSubject
+      ? `Subject: ${emailSubject}\n\n${emailDraft}`
+      : emailDraft;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      toast.error("Could not access clipboard.");
+      return;
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+
+    // Persist as a comms_history row only on copy (Phase 1 behaviour).
+    try {
+      await saveCommsEmail({
+        athleteId: athlete.id,
+        emailType: audience === "parent" ? "parent" : "athlete",
+        subject: format === "email" ? emailSubject : null,
+        body: emailDraft,
+        channel: format,
+        generatedFrom: `conversation_${category}`,
+        createdBy: user?.id,
+      });
+      qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
+    } catch (err) {
+      console.error("Failed to log to comms history:", err);
+    }
   };
 
   const handleReset = () => {
