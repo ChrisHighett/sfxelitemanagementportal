@@ -575,27 +575,87 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     [user?.id]
   );
 
-  // Group by day (no dedup yet)
+  // Reschedule: move task to a new due_date (no auto-rollover; agent decision).
+  const handleReschedule = useCallback(
+    async (item: PlannerItem, date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const newDate = `${yyyy}-${mm}-${dd}`;
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({ due_date: newDate } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, due_date: newDate } : t)));
+        toast.success(`Rescheduled to ${date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}`);
+      } catch {
+        toast.error("Failed to reschedule");
+      }
+    },
+    []
+  );
+
+  // Dismiss with reason — closes the task without deleting the record.
+  const handleDismiss = useCallback(
+    async (item: PlannerItem) => {
+      const reason = window.prompt(`Dismiss "${item.title}" — why?`, "")?.trim();
+      if (!reason) return;
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({
+            status: "cancelled" as any,
+            completed_at: new Date().toISOString(),
+            completed_by: user?.id || null,
+            description: `${item.reason ? item.reason + "\n\n" : ""}[Dismissed: ${reason}]`,
+          } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.filter((t) => t.id !== item.id));
+        toast.success("Task dismissed");
+      } catch {
+        toast.error("Failed to dismiss");
+      }
+    },
+    [user?.id]
+  );
+
+  // Group by day. Overdue items (current week only) are routed to TODAY.
   const byDay = useMemo(() => {
     const map: Record<string, PlannerItem[]> = {};
     for (const day of DAYS) map[day] = [];
     for (const item of plannerItems) {
-      const day = DAYS.includes(item.suggestedDay) ? item.suggestedDay : "Friday";
+      let day: string;
+      if (isCurrentWeek && item.isOverdue) {
+        day = todayName;
+      } else {
+        day = DAYS.includes(item.suggestedDay) ? item.suggestedDay : "Friday";
+      }
       map[day].push(item);
     }
     return map;
-  }, [plannerItems]);
+  }, [plannerItems, isCurrentWeek, todayName]);
 
-  // Smart dedup per athlete per day — keep only highest priority (lowest number)
+  // Smart dedup per athlete per day — overdue first (oldest first), then by priority.
   const dedupedByDay = useMemo(() => {
     const map: Record<string, PlannerItem[]> = {};
     for (const day of DAYS) {
-      const sorted = [...byDay[day]].sort((a, b) => a.priority - b.priority);
+      const sorted = [...byDay[day]].sort((a, b) => {
+        if (!!a.isOverdue !== !!b.isOverdue) return a.isOverdue ? -1 : 1;
+        if (a.isOverdue && b.isOverdue) {
+          return (b.daysOverdue || 0) - (a.daysOverdue || 0);
+        }
+        return a.priority - b.priority;
+      });
       const seen = new Set<string>();
       const out: PlannerItem[] = [];
       for (const it of sorted) {
-        if (seen.has(it.athleteId)) continue;
-        seen.add(it.athleteId);
+        // Allow multiple rows per athlete if one is overdue and another is fresh
+        const key = `${it.athleteId}:${it.isOverdue ? "od" : "ok"}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         out.push(it);
       }
       map[day] = out;
