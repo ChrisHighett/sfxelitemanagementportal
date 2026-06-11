@@ -1,9 +1,9 @@
 /**
- * Brand primitives — the visual layer of the white-label theme.
+ * Brand primitives — the visual layer of the Eleva platform theme.
  *
- * Every brand-coloured visual element in the app should come from this file.
- * To re-skin: change CSS tokens in src/index.css and swap /public/brand/*.
- * No component file should ever hard-code a brand colour or logo path.
+ * Default brand = Eleva. Client themes (e.g. TGI) override the brand tokens
+ * in src/index.css and the logo URLs only; component code stays untouched.
+ * Never hard-code a brand colour, font, or logo path in a component.
  */
 import { cn } from "@/lib/utils";
 
@@ -12,41 +12,59 @@ import { cn } from "@/lib/utils";
 /* -------------------------------------------------------------------------- */
 
 interface BrandMarkProps {
-  /** "wordmark" = full logo; "icon" = arc-only square mark. */
-  variant?: "wordmark" | "icon";
+  /**
+   * - "wordmark" = horizontal lockup (rail / top bar / tight slots)
+   * - "icon"     = mark only (favicon, app icon, avatars under ~24px)
+   * - "crest"    = vertical crest with "est. 1996" (login, hero, decks)
+   */
+  variant?: "wordmark" | "icon" | "crest";
   /** Pixel height; width auto-scales. */
   height?: number;
+  /** Use light-on-dark variants (for ink backgrounds). */
+  light?: boolean;
   className?: string;
-  /** Accessible label. Defaults to the brand name. */
+  /** Accessible label. */
   alt?: string;
 }
 
 export function BrandMark({
   variant = "wordmark",
   height = 28,
+  light = false,
   className,
-  alt = "TGI Sport",
+  alt = "Eleva",
 }: BrandMarkProps) {
-  // Driven by --brand-logo / --brand-icon so a token swap re-skins instantly.
-  const cls = variant === "icon" ? "brand-icon" : "brand-logo";
-  const widthClass = variant === "icon" ? "" : "w-auto";
+  // CSS-var driven so a theme swap re-skins instantly.
+  const tokenVar =
+    variant === "icon"
+      ? "--brand-mark"
+      : variant === "crest"
+        ? light
+          ? "--brand-logo-crest-light"
+          : "--brand-logo-crest"
+        : light
+          ? "--brand-logo-row-light"
+          : "--brand-logo-row";
+
+  const aspect = variant === "icon" ? 1 : variant === "crest" ? 220 / 260 : 320 / 92;
+
   return (
     <span
       role="img"
       aria-label={alt}
-      className={cn(cls, "inline-block shrink-0", widthClass, className)}
+      className={cn("inline-block shrink-0 bg-center bg-no-repeat bg-contain", className)}
       style={{
         height,
-        width: variant === "icon" ? height : undefined,
-        minWidth: variant === "wordmark" ? height * 2.2 : undefined,
+        width: height * aspect,
+        backgroundImage: `var(${tokenVar})`,
       }}
     />
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Arc gradient defs — mounted once at app root so any SVG can use            */
-/* stroke="url(#brandArc)" or fill="url(#brandArc)".                          */
+/* Legacy gradient defs — kept so any in-flight SVGs referencing              */
+/* stroke="url(#brandArc)" still render. In Eleva, gradient = solid gold.     */
 /* -------------------------------------------------------------------------- */
 
 export function BrandGradientDefs() {
@@ -59,8 +77,8 @@ export function BrandGradientDefs() {
     >
       <defs>
         <linearGradient id="brandArc" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="var(--brand-spectrum-from)" />
-          <stop offset="100%" stopColor="var(--brand-spectrum-to)" />
+          <stop offset="0%" stopColor="var(--brand-accent)" />
+          <stop offset="100%" stopColor="var(--brand-accent)" />
         </linearGradient>
       </defs>
     </svg>
@@ -68,7 +86,8 @@ export function BrandGradientDefs() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Arc loader — replaces every generic spinner in the app.                    */
+/* ArcLoader — Eleva's signature bars-rising loader. Replaces every spinner.  */
+/* (Name kept for API compatibility with existing imports.)                   */
 /* -------------------------------------------------------------------------- */
 
 interface ArcLoaderProps {
@@ -78,27 +97,38 @@ interface ArcLoaderProps {
 }
 
 export function ArcLoader({ size = 26, className, label = "Loading" }: ArcLoaderProps) {
+  // Four bars rising in sequence — echoes the mark (1·9·9·6).
   return (
     <span
       role="status"
       aria-label={label}
-      className={cn("arc-load", className)}
+      className={cn("inline-flex items-end justify-center gap-[2px]", className)}
       style={{ width: size, height: size }}
-    />
+    >
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className="bars-load__bar"
+          style={{
+            width: Math.max(2, Math.round(size * 0.14)),
+            background: "var(--brand-accent)",
+            borderRadius: 2,
+            animationDelay: `${i * 0.12}s`,
+          }}
+        />
+      ))}
+    </span>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* ArcProgress — circular progress ring with the brand cyan→blue stroke.      */
-/* Echoes the logo's incomplete ring; gap at top, rounded cap.                */
+/* ArcProgress — circular gold progress ring. Solid gold (no gradient).       */
 /* -------------------------------------------------------------------------- */
 
 interface ArcProgressProps {
-  /** 0–100 */
   value: number;
   size?: number;
   stroke?: number;
-  /** Centre label (defaults to "{value}%"). Pass null to hide. */
   label?: React.ReactNode;
   className?: string;
 }
@@ -113,10 +143,8 @@ export function ArcProgress({
   const pct = Math.max(0, Math.min(100, value));
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  // 86% of the full circumference becomes the "track" — leaves a top gap like the logo.
   const visible = c * 0.86;
   const dash = (pct / 100) * visible;
-  // Rotate so the gap sits at the top.
   const rotation = -90 - (1 - 0.86) * 180;
 
   return (
@@ -142,7 +170,7 @@ export function ArcProgress({
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="url(#brandArc)"
+          stroke="var(--brand-accent)"
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
@@ -163,7 +191,7 @@ export function ArcProgress({
 }
 
 /* -------------------------------------------------------------------------- */
-/* ArcBar — horizontal completion bar with the brand gradient fill.           */
+/* ArcBar — horizontal completion bar (solid gold fill).                      */
 /* -------------------------------------------------------------------------- */
 
 interface ArcBarProps {
@@ -187,7 +215,7 @@ export function ArcBar({ value, className, height = 6 }: ArcBarProps) {
         className="h-full rounded-full"
         style={{
           width: `${pct}%`,
-          background: "var(--brand-gradient)",
+          background: "var(--brand-accent)",
           transition: "width 400ms ease-out",
         }}
       />
@@ -196,7 +224,49 @@ export function ArcBar({ value, className, height = 6 }: ArcBarProps) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* ArcBackdrop — large faint arc used behind the login screen / empty hero.   */
+/* RisingBars — four-bar progress widget rhyming with the mark.               */
+/* Use for profile completeness, planner completion, etc.                     */
+/* -------------------------------------------------------------------------- */
+
+interface RisingBarsProps {
+  /** 0–100 */
+  value: number;
+  size?: number;
+  className?: string;
+}
+
+export function RisingBars({ value, size = 48, className }: RisingBarsProps) {
+  const pct = Math.max(0, Math.min(100, value));
+  // Bars fill in sequence as pct rises (25 / 50 / 75 / 100 thresholds).
+  const fills = [pct >= 25, pct >= 50, pct >= 75, pct >= 100];
+  const heights = [0.25, 0.7, 0.7, 0.5];
+  const barW = Math.max(3, Math.round(size * 0.14));
+  const gap = Math.max(2, Math.round(size * 0.06));
+  return (
+    <div
+      role="img"
+      aria-label={`${pct} percent`}
+      className={cn("inline-flex items-end", className)}
+      style={{ height: size, gap }}
+    >
+      {heights.map((h, i) => (
+        <span
+          key={i}
+          style={{
+            width: barW,
+            height: size * h,
+            borderRadius: 2,
+            background: fills[i] ? "var(--brand-accent)" : "var(--border-strong)",
+            transition: "background 300ms ease-out",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* ArcBackdrop — large faint mark used behind login / empty heroes.           */
 /* -------------------------------------------------------------------------- */
 
 export function ArcBackdrop({ className }: { className?: string }) {
@@ -206,18 +276,12 @@ export function ArcBackdrop({ className }: { className?: string }) {
       viewBox="0 0 600 600"
       className={cn("pointer-events-none absolute inset-0 h-full w-full", className)}
     >
-      <circle
-        cx="300"
-        cy="300"
-        r="220"
-        stroke="url(#brandArc)"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-        strokeDasharray="1180 1500"
-        transform="rotate(-110 300 300)"
-        opacity="0.55"
-      />
+      <g transform="translate(180 180) scale(2.6)" opacity="0.07">
+        <rect x="10" y="64" width="13" height="9"  rx="2.5" fill="var(--brand-accent)"/>
+        <rect x="29" y="32" width="13" height="41" rx="2.5" fill="var(--brand-accent)"/>
+        <rect x="48" y="32" width="13" height="41" rx="2.5" fill="var(--brand-accent)"/>
+        <rect x="67" y="46" width="13" height="27" rx="2.5" fill="var(--brand-accent)"/>
+      </g>
     </svg>
   );
 }

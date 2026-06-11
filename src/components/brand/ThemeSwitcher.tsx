@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Palette } from "lucide-react";
 
 /**
- * White-label proof: toggles `data-theme` on <html>. The alt theme overrides
- * brand tokens in index.css — re-skinning the entire app with zero component edits.
+ * White-label proof — toggles `data-theme` on <html>. Eleva is the default
+ * platform theme; the other entries are client skins that override the
+ * brand tokens in index.css. Re-skinning is zero-component-edit.
  */
 const THEMES = [
-  { id: "default", label: "TGI" },
+  { id: "default", label: "Eleva" },
+  { id: "tgi", label: "TGI" },
   { id: "aurora", label: "Aurora" },
   { id: "ember", label: "Ember" },
 ] as const;
@@ -40,18 +42,19 @@ export function ThemeSwitcher() {
         <Palette className="h-3 w-3" />
         <span className="font-medium uppercase tracking-wider">Theme</span>
       </div>
-      <div className="flex gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {THEMES.map((t) => {
           const active = theme === t.id;
           return (
             <button
               key={t.id}
               onClick={() => setTheme(t.id)}
-              className="flex-1 rounded-[8px] px-2 py-1 transition-colors"
+              className="rounded-[8px] px-2 py-1 transition-colors"
               style={{
-                background: active ? "var(--brand-gradient)" : "transparent",
-                color: active ? "#fff" : "rgba(255,255,255,0.7)",
+                background: active ? "var(--brand-accent)" : "transparent",
+                color: active ? "var(--brand-base)" : "rgba(255,255,255,0.7)",
                 border: active ? "none" : "1px solid var(--brand-base-line)",
+                fontWeight: active ? 600 : 400,
               }}
             >
               {t.label}

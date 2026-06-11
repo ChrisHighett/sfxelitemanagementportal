@@ -1,130 +1,177 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* =============================================================
-   WHITE-LABEL THEME LAYER
-   Swap the values in :root to re-skin the entire app.
-   Components must reference these tokens — never hard-code hex.
+   ELEVA — PLATFORM THEME (default).
+   Eleva is the brand the product wears by default and the brand
+   beneath every client skin. A client theme (data-theme="tgi", etc.)
+   overrides --brand-* and the logo URLs only; everything else holds.
+   Never hard-code a hex or font name in a component.
    ============================================================= */
 
 @layer base {
   :root {
-    /* —— BRAND (swap per client) —— */
-    --brand-name: "TGI Pathways";
-    --brand-base: #000000;
-    --brand-base-soft: #14161B;
-    --brand-base-line: #262A31;
-    --brand-spectrum-from: #19D3F0;
-    --brand-spectrum-to:   #1B5BFF;
-    --brand-accent: #1B5BFF;
-    --brand-gradient: linear-gradient(120deg, var(--brand-spectrum-from), var(--brand-spectrum-to));
-    --brand-logo: url("/brand/tgi-logo.png");
-    --brand-icon: url("/brand/tgi-arc.svg");
+    /* —— ELEVA BRAND (default) —— */
+    --brand-name: "Eleva";
+    --brand-base:      #101820;   /* ink — warm near-black */
+    --brand-base-soft: #1C2730;   /* hover/elevated on dark */
+    --brand-base-line: #2A3540;   /* borders on dark */
+    --brand-accent:      #C9A35B; /* champagne gold — primary / active / progress */
+    --brand-accent-deep: #9A7B36; /* pressed / on-gold text */
+    --bone:            #F6F3EC;   /* warm heritage surface — login, hero */
 
-    /* —— NEUTRALS —— */
-    --canvas: #F4F6FA;
+    /* Logo lockups (driven by tokens so a client theme can swap them) */
+    --brand-logo-crest:       url("/brand/eleva-crest.svg");
+    --brand-logo-crest-light: url("/brand/eleva-crest-light.svg");
+    --brand-logo-row:         url("/brand/eleva-horizontal.svg");
+    --brand-logo-row-light:   url("/brand/eleva-horizontal-light.svg");
+    --brand-mark:             url("/brand/eleva-mark.svg");
+    --brand-mark-tile:        url("/brand/eleva-mark-tile.svg");
+
+    /* Back-compat aliases for the older arc-gradient API. Both stops = gold,
+       so legacy <linearGradient stroke="url(#brandArc)"> renders flat gold. */
+    --brand-spectrum-from: var(--brand-accent);
+    --brand-spectrum-to:   var(--brand-accent);
+    --brand-gradient:      var(--brand-accent);
+    --brand-logo:          var(--brand-logo-row);
+    --brand-icon:          var(--brand-mark);
+
+    /* —— NEUTRALS (cool & legible for data) —— */
+    --canvas: #F5F6F8;
     --surface: #FFFFFF;
-    --text: #0F1115;
-    --muted-fg: #5A6472;
-    --hint: #93A0B2;
-    --border-hex: #E7EBF2;
-    --border-strong: #D6DCE7;
+    --text: #101820;
+    --muted-fg: #5C636C;
+    --hint: #8A8F97;
+    --border-hex: #E7EAEF;
+    --border-strong: #D6DBE2;
 
     /* —— SEMANTIC —— */
     --success: #15A05A;  --success-soft: #E7F6EE;  --success-deep: #0B6B3B;
     --danger:  #E0453B;  --danger-soft:  #FCEBEA;  --danger-deep:  #B3261E;
-    --win:     #F2B53D;  --win-soft:     #FCEFCF;  --win-deep:     #9A6A0E;
+    /* Gold doubles as the "elevated/priority" warm note — High priority, etc.
+       --win-* aliases retained for components still using them. */
+    --win:      var(--brand-accent);
+    --win-soft: #F4ECDB;
+    --win-deep: var(--brand-accent-deep);
 
     /* —— SHAPE & DEPTH —— */
     --r-sm: 10px; --r: 14px; --r-lg: 18px;
-    --shadow-sm: 0 1px 2px rgba(15,17,21,.05), 0 4px 12px rgba(15,17,21,.05);
-    --shadow:    0 1px 2px rgba(15,17,21,.04), 0 8px 24px rgba(15,17,21,.06);
+    --shadow-sm: 0 1px 2px rgba(16,24,32,.05), 0 4px 12px rgba(16,24,32,.05);
+    --shadow:    0 1px 2px rgba(16,24,32,.04), 0 8px 24px rgba(16,24,32,.06);
 
     /* —— TYPE —— */
-    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-    --font-body: "Geist", system-ui, sans-serif;
-    --font-mono: "Geist Mono", ui-monospace, monospace;
-    /* Back-compat aliases (existing code references --font-heading) */
-    --font-heading: var(--font-display);
+    --font-display: "Fraunces", Georgia, serif;             /* wordmark + hero only */
+    --font-body:    "Geist", system-ui, sans-serif;         /* all UI */
+    --font-mono:    "Geist Mono", ui-monospace, monospace;  /* stats, dates, counts */
+    --font-heading: var(--font-body);  /* in-app section headers stay in Geist */
 
     /* =========================================================
        SHADCN BRIDGE — HSL components derived from brand tokens
-       so shadcn primitives inherit the theme without rewrites.
        ========================================================= */
-    --background: 220 27% 97%;          /* canvas */
-    --foreground: 222 14% 8%;           /* text */
+    --background: 220 14% 97%;
+    --foreground: 213 33% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 14% 8%;
+    --card-foreground: 213 33% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 14% 8%;
+    --popover-foreground: 213 33% 9%;
 
-    --primary: 0 0% 0%;                 /* brand-base — buttons land here */
-    --primary-foreground: 0 0% 100%;
+    --primary: 213 33% 9%;              /* ink — primary buttons */
+    --primary-foreground: 40 35% 95%;
 
-    --secondary: 220 27% 93%;
-    --secondary-foreground: 222 14% 8%;
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 213 33% 9%;
 
-    --muted: 220 27% 95%;
-    --muted-foreground: 217 12% 40%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 217 7% 40%;
 
-    --accent: 224 100% 55%;             /* brand-accent */
-    --accent-foreground: 0 0% 100%;
+    --accent: 39 50% 57%;               /* champagne gold */
+    --accent-foreground: 213 33% 9%;
 
     --destructive: 4 73% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 219 30% 93%;
-    --input: 219 30% 93%;
-    --ring: 224 100% 55%;
+    --border: 220 18% 92%;
+    --input: 220 18% 92%;
+    --ring: 39 50% 57%;
 
     --radius: 14px;
 
-    /* Sidebar shadcn tokens — dark command rail */
-    --sidebar-background: 0 0% 0%;
+    /* Sidebar — Eleva command rail in ink with gold actives */
+    --sidebar-background: 213 33% 9%;
     --sidebar-foreground: 220 14% 78%;
-    --sidebar-primary: 224 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 11%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 10% 16%;
-    --sidebar-ring: 224 100% 55%;
+    --sidebar-primary: 39 50% 57%;
+    --sidebar-primary-foreground: 213 33% 9%;
+    --sidebar-accent: 213 25% 14%;
+    --sidebar-accent-foreground: 40 35% 95%;
+    --sidebar-border: 213 20% 18%;
+    --sidebar-ring: 39 50% 57%;
   }
 
   .dark {
-    --background: 222 14% 6%;
-    --foreground: 220 14% 95%;
-    --card: 222 14% 9%;
-    --card-foreground: 220 14% 95%;
-    --popover: 222 14% 9%;
-    --popover-foreground: 220 14% 95%;
-    --primary: 224 100% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 222 14% 14%;
-    --secondary-foreground: 220 14% 95%;
-    --muted: 222 14% 14%;
-    --muted-foreground: 217 12% 60%;
-    --accent: 224 100% 60%;
-    --accent-foreground: 0 0% 100%;
+    --background: 213 33% 6%;
+    --foreground: 40 14% 95%;
+    --card: 213 33% 9%;
+    --card-foreground: 40 14% 95%;
+    --popover: 213 33% 9%;
+    --popover-foreground: 40 14% 95%;
+    --primary: 39 50% 57%;
+    --primary-foreground: 213 33% 9%;
+    --secondary: 213 25% 14%;
+    --secondary-foreground: 40 14% 95%;
+    --muted: 213 25% 14%;
+    --muted-foreground: 217 7% 60%;
+    --accent: 39 50% 57%;
+    --accent-foreground: 213 33% 9%;
     --destructive: 4 73% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 222 14% 18%;
-    --input: 222 14% 18%;
-    --ring: 224 100% 60%;
+    --border: 213 20% 18%;
+    --input: 213 20% 18%;
+    --ring: 39 50% 57%;
   }
 
-  /* ALT THEMES — proof of white-label. Token-only re-skin. */
+  /* =============================================================
+     CLIENT THEMES — token-only overrides. Proves the white-label
+     model: Eleva persists in platform chrome; client surfaces re-skin.
+     ============================================================= */
+
+  /* TGI Pathways — the original cyan→blue identity, now a client theme. */
+  [data-theme="tgi"] {
+    --brand-name: "TGI Pathways";
+    --brand-base: #000000;
+    --brand-base-soft: #14161B;
+    --brand-base-line: #262A31;
+    --brand-accent: #1B5BFF;
+    --brand-accent-deep: #1346C2;
+    --brand-spectrum-from: #19D3F0;
+    --brand-spectrum-to:   #1B5BFF;
+    --brand-gradient: linear-gradient(120deg, var(--brand-spectrum-from), var(--brand-spectrum-to));
+    --brand-logo-row:   url("/brand/tgi-logo.png");
+    --brand-logo-row-light: url("/brand/tgi-logo.png");
+    --brand-mark:       url("/brand/tgi-arc.svg");
+    --accent: 224 100% 55%;
+    --ring: 224 100% 55%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-border: 220 10% 16%;
+    --sidebar-primary: 224 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 224 100% 55%;
+  }
+
   [data-theme="aurora"] {
+    --brand-name: "Aurora";
     --brand-base: #0B1530;
     --brand-base-soft: #15204A;
     --brand-base-line: #243064;
+    --brand-accent: #7C5CFF;
+    --brand-accent-deep: #5B3FCC;
     --brand-spectrum-from: #7C5CFF;
     --brand-spectrum-to:   #14B8A6;
-    --brand-accent: #7C5CFF;
+    --brand-gradient: linear-gradient(120deg, var(--brand-spectrum-from), var(--brand-spectrum-to));
     --accent: 252 100% 68%;
     --ring: 252 100% 68%;
     --sidebar-background: 224 60% 11%;
@@ -134,12 +181,15 @@
   }
 
   [data-theme="ember"] {
+    --brand-name: "Ember";
     --brand-base: #1A0F0B;
     --brand-base-soft: #2A1813;
     --brand-base-line: #3D241C;
+    --brand-accent: #F97316;
+    --brand-accent-deep: #C2570D;
     --brand-spectrum-from: #F97316;
     --brand-spectrum-to:   #DB2777;
-    --brand-accent: #F97316;
+    --brand-gradient: linear-gradient(120deg, var(--brand-spectrum-from), var(--brand-spectrum-to));
     --accent: 24 95% 53%;
     --ring: 24 95% 53%;
     --sidebar-background: 18 35% 8%;
@@ -159,9 +209,18 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* In-app section headers stay in Geist for density.
+     Fraunces is reserved for the wordmark + hero/marketing moments
+     via the .font-display utility / explicit opt-in. */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     letter-spacing: -0.01em;
+  }
+
+  .font-display, .display {
+    font-family: var(--font-display);
+    font-feature-settings: "ss01";
+    letter-spacing: -0.015em;
   }
 
   /* Instrument-grade numbers — opt-in via .num or font-mono */
@@ -186,53 +245,52 @@
 
 @layer components {
   .auth-gradient {
-    background: var(--brand-base);
+    background: var(--bone);
   }
 
-  /* The signature arc loader — replaces all generic spinners */
+  /* —— Eleva signature loader: four bars rising in sequence —— */
+  .bars-load__bar {
+    display: inline-block;
+    height: 30%;
+    transform-origin: bottom center;
+    animation: bars-rise 1s ease-in-out infinite;
+  }
+  @keyframes bars-rise {
+    0%, 100% { height: 30%; opacity: 0.55; }
+    50%      { height: 100%; opacity: 1; }
+  }
+
+  /* Back-compat: legacy .arc-load spinner now renders the bars-rising loader
+     so existing usages get the new identity without code changes. */
   .arc-load {
     width: 26px;
     height: 26px;
-    border-radius: 50%;
-    background: conic-gradient(
-      from 0deg,
-      transparent 0 30%,
-      var(--brand-spectrum-from),
-      var(--brand-spectrum-to) 95%,
-      transparent
-    );
-    -webkit-mask: radial-gradient(closest-side, transparent 68%, #000 70%);
-            mask: radial-gradient(closest-side, transparent 68%, #000 70%);
-    animation: arc-spin 0.8s linear infinite;
-  }
-  @keyframes arc-spin { to { transform: rotate(360deg); } }
-
-  /* Brand logo as a CSS-driven block — swap by changing --brand-logo */
-  .brand-logo {
-    background-image: var(--brand-logo);
+    display: inline-block;
+    background-image:
+      linear-gradient(to top, var(--brand-accent) 30%, transparent 30%),
+      linear-gradient(to top, var(--brand-accent) 30%, transparent 30%),
+      linear-gradient(to top, var(--brand-accent) 30%, transparent 30%),
+      linear-gradient(to top, var(--brand-accent) 30%, transparent 30%);
     background-repeat: no-repeat;
-    background-position: left center;
-    background-size: contain;
+    background-position: 0% bottom, 33% bottom, 66% bottom, 100% bottom;
+    background-size: 18% 100%, 18% 100%, 18% 100%, 18% 100%;
+    animation: arc-bars 1s ease-in-out infinite;
   }
-  .brand-icon {
-    background-image: var(--brand-icon);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
+  @keyframes arc-bars {
+    0%, 100% { background-size: 18% 30%, 18% 70%, 18% 70%, 18% 50%; }
+    50%      { background-size: 18% 60%, 18% 100%, 18% 100%, 18% 85%; }
   }
 
-  /* Gradient text/border helpers — for the cyan→blue arc motif */
+  /* Gradient text/border helpers (now flat gold — heritage, not neon).
+     Kept for back-compat with any component that opted in. */
   .brand-gradient-text {
-    background: var(--brand-gradient);
-    -webkit-background-clip: text;
-            background-clip: text;
-    color: transparent;
+    color: var(--brand-accent);
   }
   .brand-gradient-bar {
-    background: var(--brand-gradient);
+    background: var(--brand-accent);
   }
 
   /* AI-extracted task / brand-accent left border */
-  .ai-border-l { box-shadow: inset 3px 0 0 var(--brand-spectrum-to); }
+  .ai-border-l { box-shadow: inset 3px 0 0 var(--brand-accent); }
   .overdue-border-l { box-shadow: inset 3px 0 0 var(--danger); }
 }
