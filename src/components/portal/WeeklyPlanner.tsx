@@ -428,7 +428,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       const weekStartDate = week.start.toISOString().slice(0, 10);
       const weekEndDate = week.end.toISOString().slice(0, 10);
 
-      const [tasksRes, reviewsRes, clubCallsRes, scoutRes, upcomingRes] = await Promise.all([
+      const [tasksRes, overdueRes, reviewsRes, clubCallsRes, scoutRes, upcomingRes] = await Promise.all([
         // Tasks whose due_date falls in the visible week, OR (current week only)
         // recently created undated tasks.
         supabase.from("athlete_tasks")
@@ -441,6 +441,17 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
               : `and(due_date.gte.${weekStartDate},due_date.lte.${weekEndDate})`
           )
           .order("priority", { ascending: true }),
+        // Overdue: still-open tasks with a due_date before this week's start.
+        // Only fetched for the current week — future weeks stay clean.
+        isCurrentWeek
+          ? supabase.from("athlete_tasks")
+              .select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date")
+              .in("athlete_id", athleteIds)
+              .eq("owner_type", "agent")
+              .lt("due_date", weekStartDate)
+              .not("status", "in", '("done","cancelled")')
+              .order("due_date", { ascending: true })
+          : Promise.resolve({ data: [] as any[] }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
         (supabase as any)
@@ -460,7 +471,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       setPursueLeads(scoutRes?.data || []);
       setUpcomingCount(upcomingRes.count ?? 0);
 
-      setSavedTasks(tasksRes.data || []);
+      const overdueRows = (overdueRes as any)?.data || [];
+      // Merge week tasks with overdue, dedup by id
+      const merged: typeof savedTasks = [];
+      const seenIds = new Set<string>();
+      for (const t of [...(tasksRes.data || []), ...overdueRows]) {
+        if (seenIds.has(t.id)) continue;
+        seenIds.add(t.id);
+        merged.push(t);
+      }
+      setSavedTasks(merged);
       const seen = new Set<string>();
       const latestReviews = (reviewsRes.data || []).filter((r) => {
         if (seen.has(r.athlete_id)) return false;
