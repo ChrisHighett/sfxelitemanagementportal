@@ -394,14 +394,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         };
       });
 
-    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id);
+    const generated = isCurrentWeek
+      ? generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id)
+      : [];
     const newGenerated: PlannerItem[] = generated
       .filter((g) => !savedIds.has(`${g.athleteId}:${g.title}`))
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
     return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id]);
+  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id, isCurrentWeek]);
 
   // Saved-task completion lookup
   const savedDoneIds = useMemo(
@@ -681,46 +683,83 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
             <CalendarDays className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">Weekly Planner</CardTitle>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{getWeekLabel()}</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setWeekOffset((o) => o - 1)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Previous week"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex flex-col items-center min-w-[120px]">
+              <span className="text-xs font-medium text-foreground">{week.label}</span>
+              {!isCurrentWeek && (
+                <button
+                  onClick={() => setWeekOffset(0)}
+                  className="text-[10px] text-primary hover:underline"
+                >
+                  Back to this week
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setWeekOffset((o) => o + 1)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground"
+              aria-label="Next week"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
             {totalItems > 0 && (
-              <Badge variant="secondary" className="text-xs">{totalItems} item{totalItems !== 1 ? "s" : ""}</Badge>
+              <Badge variant="secondary" className="text-xs ml-1">{totalItems}</Badge>
             )}
           </div>
         </div>
 
+        {isCurrentWeek && upcomingCount > 0 && (
+          <button
+            onClick={() => setWeekOffset(1)}
+            className="text-[11px] text-primary hover:underline mt-1 self-start"
+          >
+            +{upcomingCount} upcoming task{upcomingCount !== 1 ? "s" : ""} in future weeks →
+          </button>
+        )}
+
         {/* Progress for today */}
-        <div className="pt-2">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-muted-foreground">
-              {todayDone} of {todayTotal} task{todayTotal !== 1 ? "s" : ""} done today
-            </span>
-            <span className="font-medium text-foreground">{progressPct}%</span>
+        {isCurrentWeek && (
+          <div className="pt-2">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-muted-foreground">
+                {todayDone} of {todayTotal} task{todayTotal !== 1 ? "s" : ""} done today
+              </span>
+              <span className="font-medium text-foreground">{progressPct}%</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-teal-500 transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-teal-500 transition-all"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        </div>
+        )}
       </CardHeader>
       <CardContent className="px-3 pb-3 space-y-3">
         {/* Day selector */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            onClick={() => setSelectedDay("today")}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition ${
-              selectedDay === "today"
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background text-muted-foreground border-border hover:text-foreground"
-            }`}
-          >
-            Today
-          </button>
+          {isCurrentWeek && (
+            <button
+              onClick={() => setSelectedDay("today")}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition ${
+                selectedDay === "today"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              Today
+            </button>
+          )}
           {DAYS.map((d, i) => {
             const isCurrent = selectedDay === d;
-            const isToday = i === currentDayIndex && currentDayIndex < 5;
+            const isToday = isCurrentWeek && i === currentDayIndex && currentDayIndex < 5;
             return (
               <button
                 key={d}
