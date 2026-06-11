@@ -416,7 +416,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
           </div>
 
           {/* Publish to Development Tracker section */}
-          <Card className={reviewPublished ? "border-green-500/50 bg-green-500/5" : "border-primary/30"}>
+          <Card style={reviewPublished ? { borderColor: "var(--success)", background: "var(--success-soft)" } : undefined} className={reviewPublished ? "" : "border-primary/30"}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
@@ -425,7 +425,7 @@ export default function MobileCallScreen({ athlete, onClose, onCreateEmail, onRe
             </CardHeader>
             <CardContent className="space-y-3">
               {reviewPublished ? (
-                <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+                <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--success-deep)" }}>
                   ✅ Monthly review published successfully
                 </div>
               ) : (

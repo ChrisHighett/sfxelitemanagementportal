@@ -165,14 +165,14 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
       {lead.onboarding_stage === "Signed" && !lead.converted_athlete_id && (
         <Button
           onClick={() => onConvertToAthlete(lead)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          style={{ background: "var(--success)", color: "#fff" }}
           size="sm"
         >
           Convert to athlete profile →
         </Button>
       )}
       {lead.onboarding_stage === "Signed" && lead.converted_athlete_id && (
-        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Athlete profile created</div>
+        <div className="text-xs font-medium" style={{ color: "var(--success-deep)" }}>✓ Athlete profile created</div>
       )}
       {lead.onboarding_stage === "Lost" && (
         <div className="text-xs text-muted-foreground italic">Archived — Lost</div>
