@@ -1977,6 +1977,31 @@ function ContractsTab({ athlete }: { athlete?: Athlete }) {
   );
 }
 
+function usePendingApprovalsCount() {
+  const { data = 0 } = useQuery({
+    queryKey: ["pending_users_count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("portal_users")
+        .select("id", { count: "exact", head: true })
+        .eq("approved", false);
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+  return data;
+}
+
+function PendingApprovalsDot({ className = "" }: { className?: string }) {
+  const count = usePendingApprovalsCount();
+  if (!count) return null;
+  return (
+    <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold ${className}`}>
+      {count}
+    </span>
+  );
+}
+
 function PendingApprovals() {
   const qc = useQueryClient();
   const { data: pending, isLoading } = useQuery({
