@@ -532,9 +532,13 @@ export type Database = {
           call_date: string
           call_type: Database["public"]["Enums"]["call_type"]
           conducted_by: string | null
+          conversation_category: string
+          counterparty_name: string | null
           created_at: string
           detailed_notes: string | null
           duration_minutes: number | null
+          email_audience: string | null
+          follow_up_at: string | null
           follow_up_required: boolean
           id: string
           outcome: string | null
@@ -550,9 +554,13 @@ export type Database = {
           call_date?: string
           call_type?: Database["public"]["Enums"]["call_type"]
           conducted_by?: string | null
+          conversation_category?: string
+          counterparty_name?: string | null
           created_at?: string
           detailed_notes?: string | null
           duration_minutes?: number | null
+          email_audience?: string | null
+          follow_up_at?: string | null
           follow_up_required?: boolean
           id?: string
           outcome?: string | null
@@ -568,9 +576,13 @@ export type Database = {
           call_date?: string
           call_type?: Database["public"]["Enums"]["call_type"]
           conducted_by?: string | null
+          conversation_category?: string
+          counterparty_name?: string | null
           created_at?: string
           detailed_notes?: string | null
           duration_minutes?: number | null
+          email_audience?: string | null
+          follow_up_at?: string | null
           follow_up_required?: boolean
           id?: string
           outcome?: string | null
