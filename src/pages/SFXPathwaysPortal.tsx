@@ -2600,7 +2600,15 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
 }) {
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
   const ratingColor = lead.scout_rating === "A" ? "bg-green-100 text-green-800" : lead.scout_rating === "B" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
-  const triageColor = lead.triage_decision === "Pursue" ? "bg-primary/10 text-primary" : lead.triage_decision === "Watch" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  const triageColor = lead.triage_decision === "Pursue"
+    ? "bg-primary/10 text-primary"
+    : lead.triage_decision === "Watch"
+    ? "bg-amber-100 text-amber-800"
+    : lead.triage_decision === "Signed"
+    ? "bg-green-100 text-green-800"
+    : lead.triage_decision === "Lost"
+    ? "bg-muted text-muted-foreground"
+    : "bg-muted text-muted-foreground";
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
@@ -2689,7 +2697,19 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
-    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
+    if (stage === "Signed") {
+      updates.date_signed = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Signed";
+    }
+    if (stage === "Lost") {
+      updates.date_lost = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Lost";
+    }
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
@@ -2801,6 +2821,10 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
     ? "bg-primary/10 text-primary border-primary/30"
     : lead.triage_decision === "Watch"
     ? "bg-amber-100 text-amber-800 border-amber-300"
+    : lead.triage_decision === "Signed"
+    ? "bg-green-100 text-green-800 border-green-300"
+    : lead.triage_decision === "Lost"
+    ? "bg-muted text-muted-foreground border-muted-foreground/30"
     : "bg-muted text-muted-foreground border-border";
 
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
@@ -3045,7 +3069,13 @@ function AgentScoutView() {
       return;
     }
     const updates: any = { onboarding_stage: stage };
-    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
+    if (stage === "Signed") {
+      updates.date_signed = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Signed";
+    }
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
@@ -3057,7 +3087,8 @@ function AgentScoutView() {
     const today = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update({
       onboarding_stage: "Lost",
-      lost_reason: reason,
+      triage_decision: "Lost",
+      lost_reason: reason || null,
       lost_at: today,
       date_lost: today,
     }).eq("id", lostModalLead.id);
