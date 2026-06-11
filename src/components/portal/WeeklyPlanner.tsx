@@ -502,6 +502,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const plannerItems = useMemo((): PlannerItem[] => {
     const savedIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => `${t.athlete_id}:${t.title}`));
     const existingIds = new Set(savedTasks.map((t) => t.athlete_id));
+    const todayStr = todayISO();
 
     const active: PlannerItem[] = savedTasks
       .filter((t) => t.status !== "cancelled")
@@ -512,11 +513,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           const idx = (d.getDay() + 6) % 7;
           day = idx < 5 ? DAYS[idx] : "Friday";
         }
+        const isOpen = t.status !== "done" && t.status !== "cancelled";
+        const isOverdue = !!(t.due_date && isOpen && t.due_date < todayStr);
         return {
           id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
           title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
           aiSourced: t.source === "conversation_ai",
           dueDate: t.due_date ?? null,
+          isOverdue,
+          daysOverdue: isOverdue && t.due_date ? daysBetween(t.due_date, todayStr) : 0,
         };
       });
 
