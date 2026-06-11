@@ -117,6 +117,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
+  const { user } = useAuth();
   const mobileQuickNav = items.slice(0, 4);
 
   return (
