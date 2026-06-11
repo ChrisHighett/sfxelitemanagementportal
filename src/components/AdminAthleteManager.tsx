@@ -181,10 +181,8 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
             <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
               <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
               <SelectContent>
-                {(agentList || []).map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.display_name || a.email}
-                  </SelectItem>
+                {AGENT_NAMES.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
