@@ -3175,6 +3175,10 @@ function AdminSecurity() {
           <TabsTrigger value="analytics">Agent Analytics</TabsTrigger>
           <TabsTrigger value="athletes">Athlete & Guardian Management</TabsTrigger>
           <TabsTrigger value="agents">Agent Accounts</TabsTrigger>
+          <TabsTrigger value="approvals" className="relative">
+            Pending Approvals
+            <PendingApprovalsDot className="ml-2" />
+          </TabsTrigger>
           <TabsTrigger value="security">Security & Access</TabsTrigger>
         </TabsList>
         <TabsContent value="analytics" className="mt-4">
@@ -3186,8 +3190,10 @@ function AdminSecurity() {
         <TabsContent value="agents" className="mt-4">
           <AgentManager />
         </TabsContent>
-        <TabsContent value="security" className="mt-4 space-y-6">
+        <TabsContent value="approvals" className="mt-4">
           <PendingApprovals />
+        </TabsContent>
+        <TabsContent value="security" className="mt-4 space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Access Control Overview</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
