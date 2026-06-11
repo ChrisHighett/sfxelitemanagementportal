@@ -195,11 +195,9 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
         {/* Mobile header */}
         <div
           className="md:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-30"
-          style={{ background: "var(--brand-base)", color: "#fff" }}
+          style={{ background: "var(--brand-base)", color: "#fff", borderBottom: "1px solid var(--brand-base-line)" }}
         >
           <BrandMark variant="wordmark" height={22} />
-        </div>
-        <div className="md:hidden flex items-center justify-end gap-2 border-b border-border bg-card px-4 py-2 sticky top-[46px] z-30">
           <div className="flex items-center gap-2">
             {!isOnline && (
               <Badge variant="destructive" className="gap-1 text-xs">
@@ -209,14 +207,13 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
             )}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-white hover:bg-white/10 hover:text-white">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-8 w-auto" />
-                  <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+              <SheetContent side="left" className="w-72 p-4" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
+                <div className="mb-4">
+                  <BrandMark variant="wordmark" height={24} />
                 </div>
                 <nav className="space-y-1">
                   {items.map((it) => {
