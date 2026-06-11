@@ -110,12 +110,43 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
               >
                 {s}
               </button>
+      {/* Stage pills */}
+      <div className="flex flex-wrap items-center gap-1">
+        {STAGES.map((s, i) => {
+          const active = lead.onboarding_stage === s;
+          const isTerminal = s === "Signed" || s === "Lost";
+          return (
+            <div key={s} className="flex items-center gap-1">
+              <button
+                onClick={() => onStageChange(lead.id, s)}
+                className="text-[10px] sm:text-[11px] font-medium px-2 py-1 rounded-md border transition"
+                style={
+                  active
+                    ? s === "Signed"
+                      ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
+                      : s === "Lost"
+                      ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }
+                      : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" }
+                    : undefined
+                }
+              >
+                {s}
+              </button>
               {i < STAGES.length - 1 && !isTerminal && (
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               )}
             </div>
           );
         })}
+        {lead.onboarding_stage === "Lost" && lead.lost_reason && (
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded border ml-1"
+            style={{ background: "hsl(var(--destructive) / 0.08)", color: "hsl(var(--destructive))", borderColor: "hsl(var(--destructive) / 0.25)" }}
+            title={lead.lost_reason}
+          >
+            {(lead.lost_reason.split(" — ")[0] || lead.lost_reason).trim()}
+          </span>
+        )}
       </div>
 
       {/* Action row */}
