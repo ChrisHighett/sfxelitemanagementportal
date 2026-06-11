@@ -2991,14 +2991,33 @@ function AgentScoutView() {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
 
   async function handleStageChange(id: string, stage: string) {
+    if (stage === "Lost") {
+      const lead = leads.find((l: any) => l.id === id);
+      setLostModalLead(lead || { id });
+      return;
+    }
     const updates: any = { onboarding_stage: stage };
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
-    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
+
+  async function confirmLost(reason: string) {
+    if (!lostModalLead?.id) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Lost",
+      lost_reason: reason,
+      lost_at: today,
+      date_lost: today,
+    }).eq("id", lostModalLead.id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Marked as lost");
+  }
+
 
   async function handleConvert(lead: any) {
     const { data: newAthlete, error } = await supabase
