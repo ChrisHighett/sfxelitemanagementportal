@@ -2117,7 +2117,7 @@ function PendingApprovals() {
 }
 
 function AgentRow({ agent, onToggleApproved, onUpdateName }: {
-  agent: { id: string; display_name: string | null; email: string | null; approved: boolean; created_at: string };
+  agent: { id: string; display_name: string | null; email: string | null; approved: boolean; created_at: string; role?: string };
   onToggleApproved: (id: string, current: boolean) => void;
   onUpdateName: (id: string, name: string) => void;
 }) {
