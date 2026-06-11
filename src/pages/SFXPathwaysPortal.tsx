@@ -2985,7 +2985,7 @@ function AgentScoutView() {
       } as any)
       .select("id")
       .single();
-    if (error) { toast.error("Could not create athlete profile: " + error.message); return; }
+    if (error) { toast.error("Could not create athlete profile: " + error.message + " — " + ((error as any).details || "")); return; }
     await supabase.from("scout_leads" as any).update({
       onboarding_stage: "Signed",
       date_signed: new Date().toISOString().slice(0, 10),
