@@ -617,7 +617,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1 space-y-0.5">
-                            <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
+                            <div className="flex items-center gap-1">
+                              <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
+                              {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                            </div>
                             <p className={`text-[11px] leading-snug ${done ? "line-through text-muted-foreground" : ""}`}>{item.title}</p>
                             {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
                             <div className="pt-0.5">{priorityBadge(item.priority)}</div>
