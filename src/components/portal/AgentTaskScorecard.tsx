@@ -226,6 +226,7 @@ export default function AgentTaskScorecard() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "on_time" | "overdue">("on_time");
+  const [refetchTick, setRefetchTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -244,7 +245,7 @@ export default function AgentTaskScorecard() {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [windowDays]);
+  }, [windowDays, refetchTick]);
 
   const sorted = useMemo(() => {
     if (!rows) return [];
@@ -290,7 +291,7 @@ export default function AgentTaskScorecard() {
           <ErrorState
             title="Scorecard didn't load"
             detail={error}
-            onRetry={() => { setError(null); setLoading(true); /* refetch via effect */ window.dispatchEvent(new Event("agent-scorecard-refetch")); }}
+            onRetry={() => setRefetchTick(t => t + 1)}
           />
         ) : sorted.length === 0 ? (
           <EmptyState
