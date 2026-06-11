@@ -55,36 +55,31 @@ const WINDOWS: { label: string; value: number }[] = [
 
 function onTimeBadge(rate: number | null) {
   if (rate === null) return <Badge variant="outline" className="text-[10px]">No data</Badge>;
-  if (rate >= 80) return <Badge className="bg-emerald-500 hover:bg-emerald-500 text-[10px]">{rate}%</Badge>;
-  if (rate >= 60) return <Badge className="bg-amber-500 hover:bg-amber-500 text-[10px]">{rate}%</Badge>;
+  if (rate >= 80) return <Badge className="text-[10px] border-0" style={{ background: "var(--success)", color: "#fff" }}>{rate}%</Badge>;
+  if (rate >= 60) return <Badge className="text-[10px] border-0" style={{ background: "var(--win)", color: "var(--win-deep)" }}>{rate}%</Badge>;
   return <Badge variant="destructive" className="text-[10px]">{rate}%</Badge>;
 }
 
 function lagBadge(lag: number | null) {
   if (lag === null) return <span className="text-muted-foreground">—</span>;
-  const cls =
-    lag <= 0
-      ? "text-emerald-600 dark:text-emerald-400"
-      : lag <= 3
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-destructive";
+  const color = lag <= 0 ? "var(--success-deep)" : lag <= 3 ? "var(--win-deep)" : "hsl(var(--destructive))";
   const sign = lag > 0 ? "+" : "";
-  return <span className={cn("font-medium", cls)}>{sign}{lag}d</span>;
+  return <span className="font-medium num" style={{ color }}>{sign}{lag}d</span>;
 }
 
 function overdueBadge(count: number, oldest: number) {
-  if (count === 0) return <span className="text-emerald-600 dark:text-emerald-400 font-medium">0</span>;
-  const cls = oldest >= 14 ? "text-destructive" : oldest >= 7 ? "text-amber-600 dark:text-amber-400" : "text-foreground";
+  if (count === 0) return <span className="font-medium num" style={{ color: "var(--success-deep)" }}>0</span>;
+  const color = oldest >= 14 ? "hsl(var(--destructive))" : oldest >= 7 ? "var(--win-deep)" : "hsl(var(--foreground))";
   return (
-    <span className={cn("font-medium", cls)}>
+    <span className="font-medium num" style={{ color }}>
       {count} <span className="text-[10px] text-muted-foreground">(oldest {oldest}d)</span>
     </span>
   );
 }
 
 function rescheduleBadge(rate: number) {
-  const cls = rate > 30 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-foreground";
-  return <span className={cls}>{rate}%</span>;
+  const isHigh = rate > 30;
+  return <span className={cn("num", isHigh && "font-semibold")} style={isHigh ? { color: "var(--win-deep)" } : undefined}>{rate}%</span>;
 }
 
 function activityWarning(row: ScorecardRow) {
@@ -136,7 +131,7 @@ function AgentRow({
               <div className="font-medium text-sm">{row.agent_name}</div>
               <div className="text-[11px] text-muted-foreground">
                 {row.athletes_assigned} athlete{row.athletes_assigned !== 1 ? "s" : ""} · {row.tasks_created} task{row.tasks_created !== 1 ? "s" : ""} {warning && (
-                  <span className="text-amber-600 dark:text-amber-400 ml-1">· low activity</span>
+                  <span className="ml-1" style={{ color: "var(--win-deep)" }}>· low activity</span>
                 )}
               </div>
             </div>
@@ -147,7 +142,7 @@ function AgentRow({
         <td className="p-3 text-center text-xs">{lagBadge(row.avg_lag_days)}</td>
         <td className="p-3 text-center text-xs">{rescheduleBadge(row.reschedule_rate)}</td>
         <td className="p-3 text-center text-xs">
-          <span className={row.dismiss_rate > 20 ? "text-amber-600 dark:text-amber-400 font-semibold" : ""}>{row.dismiss_rate}%</span>
+          <span className={cn("num", row.dismiss_rate > 20 && "font-semibold")} style={row.dismiss_rate > 20 ? { color: "var(--win-deep)" } : undefined}>{row.dismiss_rate}%</span>
         </td>
         <td className="p-3 text-center text-xs text-muted-foreground">
           {row.tasks_completed}/{row.tasks_created}
@@ -168,7 +163,7 @@ function AgentRow({
                   </div>
                   {!overdue || overdue.length === 0 ? (
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Nothing overdue
+                      <CheckCircle2 className="h-3 w-3" style={{ color: "var(--success)" }} /> Nothing overdue
                     </div>
                   ) : (
                     <ul className="space-y-1 max-h-64 overflow-y-auto pr-1">
@@ -179,7 +174,7 @@ function AgentRow({
                             <div className="text-[10px] text-muted-foreground">
                               {t.athlete_name}
                               {t.reschedule_count > 0 && (
-                                <span className="ml-1 text-amber-600 dark:text-amber-400">· rescheduled {t.reschedule_count}×</span>
+                                <span className="ml-1" style={{ color: "var(--win-deep)" }}>· rescheduled {t.reschedule_count}×</span>
                               )}
                             </div>
                           </div>
