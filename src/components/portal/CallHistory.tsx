@@ -110,7 +110,7 @@ export default function CallHistory({ athlete }: { athlete: Athlete }) {
                           })}
                         </span>
                         {catStyle ? (
-                          <Badge variant="outline" className={cn("text-xs border", catStyle.cls)}>
+                          <Badge variant="outline" className="text-xs border" style={catStyle.style}>
                             {catStyle.label}
                           </Badge>
                         ) : (

@@ -25,10 +25,10 @@ interface CommsEntry {
 
 type ChannelFilter = "all" | "email" | "sms" | "whatsapp";
 
-const CHANNEL_META: Record<string, { label: string; Icon: any; cls: string }> = {
-  email:    { label: "Email",    Icon: Mail,            cls: "bg-blue-100 text-blue-800 border-blue-200" },
-  sms:      { label: "SMS",      Icon: MessageSquare,   cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  whatsapp: { label: "WhatsApp", Icon: MessageCircle,   cls: "bg-green-100 text-green-800 border-green-200" },
+const CHANNEL_META: Record<string, { label: string; Icon: any; style: React.CSSProperties }> = {
+  email:    { label: "Email",    Icon: Mail,            style: { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" } },
+  sms:      { label: "SMS",      Icon: MessageSquare,   style: { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" } },
+  whatsapp: { label: "WhatsApp", Icon: MessageCircle,   style: { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" } },
 };
 
 interface Props {
