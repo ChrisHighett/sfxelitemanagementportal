@@ -486,6 +486,9 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     setEmailDraft(null);
     setEmailSubject("");
     setSavedRecord(null);
+    setSavedConversationId(null);
+    setExtractedItems(null);
+    setExtracting(false);
   };
 
   const audienceOptions: Array<{ value: Audience; label: string }> = [
