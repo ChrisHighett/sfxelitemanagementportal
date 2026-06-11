@@ -83,6 +83,7 @@ function buildConversationPrompt(
   category: string,
   audience: string,
   agentName: string,
+  format: string,
 ): string {
   const recipient = audience === "parent"
     ? "the athlete's parent or guardian"
@@ -98,20 +99,42 @@ function buildConversationPrompt(
     general: `Frame this as a brief, warm summary of a general / welfare conversation. Capture what was discussed and any agreed next steps. Keep it personal and human.`,
   };
 
-  return `You are writing a short, professional update email from ${agentName} at TGI Sport to ${recipient}, summarising a conversation the agent just had on behalf of the athlete.
+  const formatRules: Record<string, string> = {
+    email: `Format: EMAIL.
+- Full professional update.
+- Subject line + greeting + 1-2 short paragraphs + sign-off.
+- No length cap, but stay concise (3 short paragraphs max).
+- The "subject" field is a real email subject line.`,
+    sms: `Format: SMS.
+- Target under 160 characters, hard cap 300.
+- Plain text only. No markdown, no emoji, no line breaks beyond a single sentence break.
+- One sentence on the outcome + one sentence on the next step.
+- First-name greeting at the start, agent first name at the end after an em dash.
+- Example shape: "Hi Charlie — good chat with the Sharks today, they're keen and want to see you at a trial in July. I'll lock details and update you. — Chris"
+- The "subject" field MUST be a short internal label (max 6 words, e.g. "Sharks trial heads-up") — it will NOT be sent, it is only used for the comms history list.
+- The "body" field is the SMS text the agent will copy.`,
+    whatsapp: `Format: WHATSAPP.
+- Target 400-600 characters. A bit more detail than SMS, well short of the email.
+- Warm and conversational. Line breaks are OK. Light emoji allowed (1-2 max, only if natural).
+- Greeting + what happened + what's next + sign-off with the agent's first name.
+- The "subject" field MUST be a short internal label (max 6 words) — it will NOT be sent, only used for the comms history list.
+- The "body" field is the WhatsApp message the agent will copy.`,
+  };
+
+  return `You are writing a short update from ${agentName} at TGI Sport to ${recipient}, summarising a conversation the agent just had on behalf of the athlete.
 
 Category: ${category}
 ${categoryGuidance[category] || categoryGuidance.general}
 
 Tone: ${toneForAudience}
 
-Writing rules:
-- Keep it concise — 3 short paragraphs max
+${formatRules[format] || formatRules.email}
+
+Universal writing rules:
 - Mention the counterparty by name if provided
 - If there's a clear next step, state it plainly
 - End on an encouraging or reassuring note
 - Do not invent details that aren't in the notes
-- Do not use bullet points unless clearly necessary
 - Return valid JSON only with: subject, body
 - Do not wrap JSON in markdown`;
 }
@@ -225,6 +248,7 @@ serve(async (req) => {
       category,        // 'club' | 'commercial' | 'media' | 'general'
       counterparty,    // brand / outlet / person / club
       audience,        // 'athlete' | 'parent'
+      format,          // 'email' | 'sms' | 'whatsapp'
     } = await req.json();
     const senderName = agentName || "Your TGI Sport Manager";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -244,14 +268,16 @@ serve(async (req) => {
     if (type === "conversation_update") {
       const cat = (category || "general").toLowerCase();
       const aud = (audience || "athlete").toLowerCase();
-      systemPrompt = buildConversationPrompt(cat, aud, senderName);
+      const fmt = (format || "email").toLowerCase();
+      systemPrompt = buildConversationPrompt(cat, aud, senderName, fmt);
       userPrompt = [
-        `Please write the update email.`,
+        `Please write the update message.`,
         ``,
         `Sender (agent): ${senderName}`,
         `Athlete first name: ${athleteFirstName || "Athlete"}`,
         aud === "parent" ? `Parent / guardian name: ${parentName || "there"}` : "",
         `Category: ${cat}`,
+        `Format: ${fmt}`,
         `Counterparty: ${counterparty || clubName || "—"}`,
         `Conversation type: ${conversationType || "—"}`,
         ``,
