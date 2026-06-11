@@ -2708,6 +2708,7 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
 
@@ -2730,11 +2731,33 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
 
   async function handleStageChange(id: string, stage: string) {
-    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    if (stage === "Lost") {
+      const lead = leads.find((l: any) => l.id === id);
+      setLostModalLead(lead || { id });
+      return;
+    }
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
+
+  async function handleConfirmLost(reason: string) {
+    if (!lostModalLead) return;
+    const { error } = await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Lost",
+      lost_reason: reason || null,
+      lost_at: new Date().toISOString().slice(0, 10),
+      date_lost: new Date().toISOString().slice(0, 10),
+    }).eq("id", lostModalLead.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead marked as lost");
+    setLostModalLead(null);
+    refetch();
+  }
+
   async function handleTriageChange(id: string, triage: string) {
     const { error } = await supabase.from("scout_leads" as any).update({ triage_decision: triage }).eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -2818,6 +2841,14 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={() => {}}
+        />
+      )}
+
+      {lostModalLead && (
+        <LostReasonModal
+          lead={lostModalLead}
+          onConfirm={handleConfirmLost}
+          onCancel={() => setLostModalLead(null)}
         />
       )}
     </div>
@@ -2961,6 +2992,12 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
               <InfoRow label="Welcome sent" value={lead.date_welcome_sent} />
               <InfoRow label="Date signed" value={lead.date_signed} />
             </div>
+            {lead.lost_reason && (
+              <div className="space-y-0.5">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lost reason</div>
+                <div className="text-sm font-medium text-destructive">{lead.lost_reason}</div>
+              </div>
+            )}
           </Section>
 
           {(lead.action_required || lead.action_due_date || lead.next_step) && (
@@ -3039,6 +3076,91 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
   );
 }
 
+function LostReasonModal({ lead, onConfirm, onCancel }: {
+  lead: any;
+  onConfirm: (reason: string) => Promise<void> | void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const commonReasons = [
+    "Signed with another agency",
+    "Family decided not to proceed",
+    "Player stopped playing",
+    "Lost contact with family",
+    "Not the right fit",
+    "Club advised against",
+  ];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-background w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Mark as lost — {lead.first_name} {lead.last_name}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Record why this lead was lost. This helps improve future scouting.</p>
+            </div>
+            <button onClick={onCancel} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {commonReasons.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setReason(r)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  reason === r
+                    ? "bg-primary text-white border-primary"
+                    : "bg-background border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Additional detail (optional)</Label>
+            <Textarea
+              placeholder="Any other context about why this lead was lost…"
+              value={commonReasons.includes(reason) ? "" : reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+            {commonReasons.includes(reason) && (
+              <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{reason}</span> — or type above to override</p>
+            )}
+          </div>
+        </div>
+        <div className="p-4 pt-0 flex gap-2">
+          <Button
+            className="flex-1 bg-destructive hover:bg-destructive/90 text-white"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              await onConfirm(reason);
+              setSaving(false);
+            }}
+          >
+            {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Confirm — mark as lost"}
+          </Button>
+          <Button variant="outline" onClick={onCancel} className="shrink-0">Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AgentScoutView() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -3046,6 +3168,7 @@ function AgentScoutView() {
   const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
@@ -3078,17 +3201,37 @@ function AgentScoutView() {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
 
   async function handleStageChange(id: string, stage: string) {
+    if (stage === "Lost") {
+      const lead = leads.find((l: any) => l.id === id);
+      setLostModalLead(lead || { id });
+      return;
+    }
     const updates: any = { onboarding_stage: stage };
     if (stage === "Contacted") {
       updates.first_agent_action_at = new Date().toISOString();
     }
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
-    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
+
+  async function handleConfirmLost(reason: string) {
+    if (!lostModalLead) return;
+    const { error } = await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Lost",
+      lost_reason: reason || null,
+      lost_at: new Date().toISOString().slice(0, 10),
+      date_lost: new Date().toISOString().slice(0, 10),
+    }).eq("id", lostModalLead.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead marked as lost");
+    setLostModalLead(null);
+    refetch();
+  }
+
+
 
   async function handleConvert(lead: any) {
     const { data: newAthlete, error } = await supabase
@@ -3230,6 +3373,12 @@ function AgentScoutView() {
                   {lead.competitor_interest && (
                     <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
                   )}
+                  {lead.onboarding_stage === "Lost" && lead.lost_reason && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-1.5 flex items-center gap-1.5">
+                      <span className="text-muted-foreground">Lost reason:</span>
+                      <span className="font-medium text-foreground">{lead.lost_reason}</span>
+                    </div>
+                  )}
                   {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
 
                   <div className="flex flex-wrap gap-1.5">
@@ -3274,6 +3423,14 @@ function AgentScoutView() {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={handleConvert}
+        />
+      )}
+
+      {lostModalLead && (
+        <LostReasonModal
+          lead={lostModalLead}
+          onConfirm={handleConfirmLost}
+          onCancel={() => setLostModalLead(null)}
         />
       )}
     </div>

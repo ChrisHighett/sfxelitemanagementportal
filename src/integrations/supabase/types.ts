@@ -1132,6 +1132,8 @@ export type Database = {
           last_name: string
           last_stage_change_at: string | null
           lead_id: string | null
+          lost_at: string | null
+          lost_reason: string | null
           next_step: string | null
           notes: string | null
           onboarding_stage: string | null
@@ -1172,6 +1174,8 @@ export type Database = {
           last_name: string
           last_stage_change_at?: string | null
           lead_id?: string | null
+          lost_at?: string | null
+          lost_reason?: string | null
           next_step?: string | null
           notes?: string | null
           onboarding_stage?: string | null
@@ -1212,6 +1216,8 @@ export type Database = {
           last_name?: string
           last_stage_change_at?: string | null
           lead_id?: string | null
+          lost_at?: string | null
+          lost_reason?: string | null
           next_step?: string | null
           notes?: string | null
           onboarding_stage?: string | null
