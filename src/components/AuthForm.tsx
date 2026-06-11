@@ -168,7 +168,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
 
             <Button type="submit" className="w-full h-11" disabled={loading}>
-              {loading && <Loader2 className="animate-spin" />}
+              {loading && <ArcLoader size={18} className="mr-2" />}
               {mode === "login" ? "Sign in" : "Create account"}
             </Button>
           </form>
