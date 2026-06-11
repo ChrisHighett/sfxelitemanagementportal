@@ -16,6 +16,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { BrandMark } from "@/components/brand/Brand";
+import { CommandPalette, CommandHint, type PaletteCommand } from "@/components/brand/CommandPalette";
+import { DashboardSkeleton } from "@/components/brand/Skeletons";
+import { User } from "lucide-react";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import LostReasonModal from "@/components/portal/LostReasonModal";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
@@ -173,19 +176,22 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
               );
             })}
           </nav>
-          <div
-            className="mt-6 rounded-[12px] p-3 text-xs"
-            style={{
-              background: "var(--brand-base-soft)",
-              border: "1px solid var(--brand-base-line)",
-              color: "rgba(255,255,255,0.78)",
-            }}
-          >
-            <div className="font-medium text-white truncate">
-              {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
-            </div>
-            <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
-              {role}
+          <div className="mt-6 space-y-2">
+            <CommandHint />
+            <div
+              className="rounded-[12px] p-3 text-xs"
+              style={{
+                background: "var(--brand-base-soft)",
+                border: "1px solid var(--brand-base-line)",
+                color: "rgba(255,255,255,0.78)",
+              }}
+            >
+              <div className="font-medium text-white truncate">
+                {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+              </div>
+              <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {role}
+              </div>
             </div>
           </div>
         </div>
@@ -3870,8 +3876,10 @@ export default function SFXPathwaysPortal() {
 
   if (athletesLoading || roleLoading || !role) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen p-6 md:p-10" style={{ background: "var(--canvas)" }}>
+        <div className="max-w-5xl mx-auto">
+          <DashboardSkeleton />
+        </div>
       </div>
     );
   }
@@ -3891,10 +3899,33 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Build ⌘K palette commands from current role's nav + athlete jump-list
+  const paletteCommands: PaletteCommand[] = [
+    ...((effectiveRole ? NAV[effectiveRole] : []) ?? []).map((it) => ({
+      id: `nav-${it.key}`,
+      label: it.label,
+      group: "Navigate",
+      icon: it.icon,
+      run: () => handleNav(it.key),
+    })),
+    ...((effectiveRole === "agent" || effectiveRole === "admin")
+      ? athletes.slice(0, 50).map((a) => ({
+          id: `athlete-${a.id}`,
+          label: a.name,
+          hint: "Open profile",
+          group: "Athletes",
+          icon: User,
+          keywords: a.position ?? "",
+          run: () => { setSelectedAthleteId(a.id); handleNav("athlete"); },
+        }))
+      : []),
+  ];
+
   // Scout role: dedicated portal, no athlete data required
   if (effectiveRole === "scout") {
     return (
       <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
         <ScoutPortal autoOpenForm={active === "add"} />
       </Shell>
     );
@@ -3992,6 +4023,7 @@ export default function SFXPathwaysPortal() {
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      <CommandPalette commands={paletteCommands} />
     </Shell>
   );
 }
