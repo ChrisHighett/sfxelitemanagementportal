@@ -111,11 +111,8 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
       club_contract_expiry: form.club_contract_expiry || null,
       assigned_agent_user_id:
         lockedAgentId ||
-        ((agentList || []).find((a) => a.id === form.assigned_agent)?.id ?? null),
-      assigned_agent_name: lockedAgentName ||
-        (agentList || []).find((a) => a.id === form.assigned_agent)?.display_name ||
-        (agentList || []).find((a) => a.id === form.assigned_agent)?.email ||
-        null,
+        ((agentList || []).find((a) => (a.display_name || a.email) === form.assigned_agent)?.id ?? null),
+      assigned_agent_name: lockedAgentName || form.assigned_agent || null,
       commercial_potential: form.commercial_potential || "Not Scored",
       avatar_url: form.avatar_url || null,
     } as any;
