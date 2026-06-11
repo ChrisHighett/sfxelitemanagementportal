@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 
 type CategoryFilter = "all" | "club" | "commercial" | "media" | "general";
 
-const CATEGORY_STYLES: Record<string, { label: string; cls: string }> = {
-  club:       { label: "Club",       cls: "bg-blue-100 text-blue-800 border-blue-200" },
-  commercial: { label: "Commercial", cls: "bg-green-100 text-green-800 border-green-200" },
-  media:      { label: "Media",      cls: "bg-purple-100 text-purple-800 border-purple-200" },
-  general:    { label: "General",    cls: "bg-muted text-muted-foreground border-border" },
+const CATEGORY_STYLES: Record<string, { label: string; style: React.CSSProperties }> = {
+  club:       { label: "Club",       style: { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" } },
+  commercial: { label: "Commercial", style: { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" } },
+  media:      { label: "Media",      style: { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" } },
+  general:    { label: "General",    style: { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" } },
 };
 
 const FILTER_CHIPS: Array<{ value: CategoryFilter; label: string }> = [
