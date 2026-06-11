@@ -185,7 +185,7 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className={cn("text-[10px] border gap-1", chMeta.cls)}>
+                          <Badge variant="outline" className="text-[10px] border gap-1" style={chMeta.style}>
                             <ChIcon className="h-3 w-3" />
                             {chMeta.label}
                           </Badge>
@@ -193,7 +193,7 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                             {entry.email_type}
                           </Badge>
                           {entry.sent_status === "sent" ? (
-                            <Badge variant="default" className="text-[10px] bg-green-600">Sent</Badge>
+                            <Badge className="text-[10px] border-0" style={{ background: "var(--success-soft)", color: "var(--success-deep)" }}>Sent</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px]">Draft</Badge>
                           )}

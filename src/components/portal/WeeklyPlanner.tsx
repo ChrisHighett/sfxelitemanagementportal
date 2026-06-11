@@ -727,8 +727,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         <PriorityBand
           label="Urgent"
           items={urgent}
-          bandClass="border-red-300/60 bg-red-50 dark:bg-red-950/20 dark:border-red-900/40"
-          countClass="bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-200"
+          bandClass=""
+          bandStyle={{ background: "var(--danger-soft)", borderColor: "var(--danger-soft)" }}
+          countClass=""
+          countStyle={{ background: "var(--danger-soft)", color: "var(--danger-deep)" }}
           defaultOpen
           completing={completing}
           completedIds={sessionCompleted}
@@ -739,8 +741,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         <PriorityBand
           label="High"
           items={high}
-          bandClass="border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40"
-          countClass="bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+          bandClass=""
+          bandStyle={{ background: "var(--win-soft)", borderColor: "var(--win-soft)" }}
+          countClass=""
+          countStyle={{ background: "var(--win-soft)", color: "var(--win-deep)" }}
           defaultOpen
           completing={completing}
           completedIds={sessionCompleted}
