@@ -2731,11 +2731,33 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
 
   async function handleStageChange(id: string, stage: string) {
-    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    if (stage === "Lost") {
+      const lead = leads.find((l: any) => l.id === id);
+      setLostModalLead(lead || { id });
+      return;
+    }
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
     toast.success("Stage updated");
   }
+
+  async function handleConfirmLost(reason: string) {
+    if (!lostModalLead) return;
+    const { error } = await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Lost",
+      lost_reason: reason || null,
+      lost_at: new Date().toISOString().slice(0, 10),
+      date_lost: new Date().toISOString().slice(0, 10),
+    }).eq("id", lostModalLead.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Lead marked as lost");
+    setLostModalLead(null);
+    refetch();
+  }
+
   async function handleTriageChange(id: string, triage: string) {
     const { error } = await supabase.from("scout_leads" as any).update({ triage_decision: triage }).eq("id", id);
     if (error) { toast.error(error.message); return; }
