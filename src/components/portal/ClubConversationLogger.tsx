@@ -12,6 +12,7 @@ import {
 import {
   Mic, Square, Loader2, CheckCircle2,
   MessageSquarePlus, Trophy, Briefcase, Mic as MicIcon, MessageCircle,
+  Mail, MessageSquare, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,13 @@ import { cn } from "@/lib/utils";
 
 type Category = "club" | "commercial" | "media" | "general";
 type Audience = "athlete" | "parent" | "skip";
+type Format = "email" | "sms" | "whatsapp";
+
+const FORMATS: Array<{ value: Format; label: string; Icon: any }> = [
+  { value: "email",    label: "Email",    Icon: Mail },
+  { value: "sms",      label: "SMS",      Icon: MessageSquare },
+  { value: "whatsapp", label: "WhatsApp", Icon: MessageCircle },
+];
 
 const NRL_CLUBS = [
   "Brisbane Broncos", "Canberra Raiders", "Canterbury-Bankstown Bulldogs",
