@@ -2455,8 +2455,22 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     scout_rating: editLead?.scout_rating || "B",
     triage_decision: editLead?.triage_decision || "Watch",
     notes: editLead?.notes || "",
+    assigned_agent_name: editLead?.assigned_agent_name || "",
+    assigned_agent_id: editLead?.assigned_agent_id || "",
   });
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const { data: agentList = [] } = useQuery({
+    queryKey: ["agent_list_scout_form"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("portal_users" as any)
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true);
+      return (data as any[]) || [];
+    },
+  });
 
   async function handleSave() {
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -2488,6 +2502,23 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
         });
         if (error) throw error;
         toast.success(`${form.first_name} ${form.last_name} added`);
+      }
+
+      // Fire alert to assigned agent when marked Pursue
+      if (form.triage_decision === "Pursue" && form.assigned_agent_id) {
+        const wasAlreadyPursue = editLead?.triage_decision === "Pursue";
+        if (!wasAlreadyPursue) {
+          await supabase.from("athlete_alerts" as any).insert({
+            alert_type: "scout_lead_assigned",
+            severity: "high",
+            title: `New scout lead — ${form.first_name} ${form.last_name}`,
+            description: `${form.scout_rating}-rated ${form.position || "player"} from ${form.school_club || form.region || "unknown location"}. ${form.competitor_interest ? "Competition: " + form.competitor_interest : "No known competitor interest."}`,
+            assigned_to: form.assigned_agent_id,
+            athlete_id: form.assigned_agent_id,
+            status: "open",
+            triggered_at: new Date().toISOString(),
+          });
+        }
       }
       onClose();
     } catch (e: any) {
@@ -2574,6 +2605,28 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
               </Select>
             </div>
             <div className="space-y-1"><Label className="text-xs">Comp / Grade</Label><Input placeholder="Yr 10 Rep" value={form.comp_grade} onChange={(e) => set("comp_grade", e.target.value)} className="h-8" /></div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Assign to agent</Label>
+            <Select
+              value={form.assigned_agent_name}
+              onValueChange={(v) => {
+                const found = (agentList as any[]).find((a: any) => (a.display_name || a.email) === v);
+                set("assigned_agent_name", v);
+                set("assigned_agent_id", found?.id || "");
+              }}
+            >
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Select agent…" />
+              </SelectTrigger>
+              <SelectContent>
+                {(agentList as any[]).map((a: any) => (
+                  <SelectItem key={a.id} value={a.display_name || a.email}>
+                    {a.display_name || a.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
         </>
@@ -3026,6 +3079,9 @@ function AgentScoutView() {
 
   async function handleStageChange(id: string, stage: string) {
     const updates: any = { onboarding_stage: stage };
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
     if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
