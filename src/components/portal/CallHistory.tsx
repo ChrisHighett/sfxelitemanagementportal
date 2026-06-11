@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Loader2 } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
+import { EmptyState } from "@/components/brand/States";
 import { type Athlete } from "@/hooks/usePortalData";
 import { cn } from "@/lib/utils";
 
@@ -83,13 +85,14 @@ export default function CallHistory({ athlete }: { athlete: Athlete }) {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <ArcLoader size={20} />
             </div>
           ) : filteredCalls.length === 0 ? (
-            <div className="text-center py-8">
-              <Phone className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No conversations recorded for this filter.</p>
-            </div>
+            <EmptyState
+              icon={<Phone className="h-5 w-5" />}
+              title="No conversations yet"
+              hint="Log the first call from the Conversation tab — it'll show up here with category and follow-ups."
+            />
           ) : (
             <div className="space-y-3">
               {filteredCalls.map((call) => {

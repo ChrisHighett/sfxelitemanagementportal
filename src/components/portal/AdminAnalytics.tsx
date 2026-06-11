@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
+import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
 
@@ -125,11 +126,7 @@ export default function AdminAnalytics() {
   const avgScore = kpis.length > 0 ? Math.round(kpis.reduce((s, k) => s + k.overallScore, 0) / kpis.length) : 0;
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <ArcLoader size={28} />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
