@@ -84,6 +84,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
   ],
   admin: [
+    { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
