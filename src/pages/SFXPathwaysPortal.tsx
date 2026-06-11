@@ -3045,6 +3045,91 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
   );
 }
 
+function LostReasonModal({ lead, onConfirm, onCancel }: {
+  lead: any;
+  onConfirm: (reason: string) => Promise<void> | void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const commonReasons = [
+    "Signed with another agency",
+    "Family decided not to proceed",
+    "Player stopped playing",
+    "Lost contact with family",
+    "Not the right fit",
+    "Club advised against",
+  ];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-background w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Mark as lost — {lead.first_name} {lead.last_name}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Record why this lead was lost. This helps improve future scouting.</p>
+            </div>
+            <button onClick={onCancel} className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {commonReasons.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setReason(r)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  reason === r
+                    ? "bg-primary text-white border-primary"
+                    : "bg-background border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Additional detail (optional)</Label>
+            <Textarea
+              placeholder="Any other context about why this lead was lost…"
+              value={commonReasons.includes(reason) ? "" : reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+            {commonReasons.includes(reason) && (
+              <p className="text-xs text-muted-foreground">Selected: <span className="font-medium text-foreground">{reason}</span> — or type above to override</p>
+            )}
+          </div>
+        </div>
+        <div className="p-4 pt-0 flex gap-2">
+          <Button
+            className="flex-1 bg-destructive hover:bg-destructive/90 text-white"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              await onConfirm(reason);
+              setSaving(false);
+            }}
+          >
+            {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Confirm — mark as lost"}
+          </Button>
+          <Button variant="outline" onClick={onCancel} className="shrink-0">Cancel</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AgentScoutView() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
