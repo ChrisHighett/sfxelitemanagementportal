@@ -111,8 +111,46 @@ function generateTasks(
     }
   }
 
+  // ── Scout lead tasks ──
+  for (const lead of pursueLeads) {
+    if (lead.assigned_agent_id !== currentUserId) continue;
+    const name = `${lead.first_name} ${lead.last_name}`;
+    const stage = lead.onboarding_stage;
+    const daysSinceChange = Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (stage === "New") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Make first contact — ${name}`,
+        reason: "New Pursue lead not yet contacted",
+        suggestedDay: "Monday",
+        priority: 1,
+      });
+    } else if (daysSinceChange >= 5 && stage !== "Signed" && stage !== "Lost") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Follow up scout lead — ${name}`,
+        reason: `${stage} for ${daysSinceChange} days — move this forward`,
+        suggestedDay: "Wednesday",
+        priority: 2,
+      });
+    } else if (lead.action_due_date && new Date(lead.action_due_date) <= new Date() && lead.action_status === "Open") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Scout action overdue — ${name}`,
+        reason: `Action was due ${new Date(lead.action_due_date).toLocaleDateString("en-AU")}`,
+        suggestedDay: "Tuesday",
+        priority: 1,
+      });
+    }
+  }
+
   return items;
 }
+
 
 /* ── Mobile task row ── */
 function MobileTaskRow({ item, completing, onComplete }: { item: PlannerItem; completing: boolean; onComplete: () => void }) {
