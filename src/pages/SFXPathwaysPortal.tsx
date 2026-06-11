@@ -3783,6 +3783,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
                       key={f.key}
                       onClick={() => setActiveFilter(active ? "all" : f.key)}
                       className={`text-xs rounded-full border px-2.5 py-1 transition-colors ${chipTone[f.key as Exclude<CommandFilter, "all">]} ${active ? "bg-secondary" : "hover:bg-secondary/60"}`}
+                      style={chipToneStyle[f.key as Exclude<CommandFilter, "all">]}
                     >
                       {f.label} · {n}
                     </button>
