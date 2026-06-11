@@ -49,20 +49,21 @@ serve(async (req) => {
       });
     }
 
-    const { email, displayName } = await req.json();
+    const { email, displayName, role = "agent" } = await req.json();
     if (!email || !displayName) {
       return new Response(JSON.stringify({ error: "Email and name are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const safeRole = role === "scout" ? "scout" : "agent";
 
     const origin = req.headers.get("origin") || "https://sfxelitemanagementportal.lovable.app";
 
     const { data: authData, error: authError } = await admin.auth.admin.inviteUserByEmail(
       email,
       {
-        data: { display_name: displayName, role: "agent" },
+        data: { display_name: displayName, role: safeRole },
         redirectTo: `${origin}/dashboard`,
       },
     );
@@ -73,7 +74,7 @@ serve(async (req) => {
       .upsert(
         {
           id: authData.user.id,
-          role: "agent",
+          role: safeRole,
           approved: true,
           display_name: displayName,
           email,
