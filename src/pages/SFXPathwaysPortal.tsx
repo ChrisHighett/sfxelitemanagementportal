@@ -2712,11 +2712,12 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Pursue", value: pursue.length, color: "text-primary" },
           { label: "Watch", value: watch.length, color: "text-amber-600" },
           { label: "Signed", value: signed.length, color: "text-green-600" },
+          { label: "Lost", value: lost.length, color: "text-muted-foreground" },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-lg border bg-card p-3 text-center">
             <div className={`text-2xl font-semibold ${color}`}>{value}</div>
