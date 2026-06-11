@@ -1,23 +1,33 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Mail, Copy, ChevronDown, ChevronUp, User, Users, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Copy, ChevronDown, ChevronUp, User, Users, Loader2, CheckCircle2, MessageSquare, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface CommsEntry {
   id: string;
   athlete_id: string;
   email_type: string;
-  subject: string;
+  subject: string | null;
   body: string;
+  channel?: string | null;
   generated_from: string | null;
   sent_status: string;
   created_at: string;
 }
+
+type ChannelFilter = "all" | "email" | "sms" | "whatsapp";
+
+const CHANNEL_META: Record<string, { label: string; Icon: any; cls: string }> = {
+  email:    { label: "Email",    Icon: Mail,            cls: "bg-blue-100 text-blue-800 border-blue-200" },
+  sms:      { label: "SMS",      Icon: MessageSquare,   cls: "bg-amber-100 text-amber-800 border-amber-200" },
+  whatsapp: { label: "WhatsApp", Icon: MessageCircle,   cls: "bg-green-100 text-green-800 border-green-200" },
+};
 
 interface Props {
   athleteId: string;
