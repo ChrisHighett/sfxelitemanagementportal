@@ -232,6 +232,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
   const [latestClubCalls, setLatestClubCalls] = useState<Record<string, string>>({});
+  const [pursueLeads, setPursueLeads] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -244,11 +245,18 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
       mon.setHours(0, 0, 0, 0);
 
-      const [tasksRes, reviewsRes, clubCallsRes] = await Promise.all([
+      const [tasksRes, reviewsRes, clubCallsRes, scoutRes] = await Promise.all([
         supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status").in("athlete_id", athleteIds).eq("owner_type", "agent").gte("created_at", mon.toISOString()).order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
+        (supabase as any)
+          .from("scout_leads")
+          .select("id, first_name, last_name, triage_decision, onboarding_stage, action_due_date, action_status, assigned_agent_id, last_stage_change_at")
+          .eq("triage_decision", "Pursue")
+          .neq("onboarding_stage", "Signed")
+          .neq("onboarding_stage", "Lost"),
       ]);
+      setPursueLeads(scoutRes?.data || []);
 
       setSavedTasks(tasksRes.data || []);
       const seen = new Set<string>();
@@ -280,14 +288,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
       }));
 
-    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls);
+    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id);
     const newGenerated: PlannerItem[] = generated
       .filter((g) => !savedIds.has(`${g.athleteId}:${g.title}`))
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
     return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews, latestClubCalls]);
+  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id]);
 
   const handleComplete = useCallback(
     async (item: PlannerItem) => {
