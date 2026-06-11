@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Athlete } from "@/hooks/usePortalData";
 import { saveCommsEmail } from "@/components/portal/CommsHistory";
+import ActionItemConfirmPanel, { type ExtractedItem } from "@/components/portal/ActionItemConfirmPanel";
 import { cn } from "@/lib/utils";
 
 type Category = "club" | "commercial" | "media" | "general";
