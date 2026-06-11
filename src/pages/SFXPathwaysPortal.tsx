@@ -2708,6 +2708,7 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
 
