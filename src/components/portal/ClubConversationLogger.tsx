@@ -711,6 +711,27 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
             Saved to {athlete.name}'s file
           </div>
 
+          {/* AI extracted action items */}
+          {extracting && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              Scanning note for follow-ups…
+            </div>
+          )}
+          {!extracting && extractedItems !== null && extractedItems.length === 0 && (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-2.5 text-[11px] text-muted-foreground">
+              ✨ No follow-ups detected in this note.
+            </div>
+          )}
+          {!extracting && extractedItems && extractedItems.length > 0 && (
+            <ActionItemConfirmPanel
+              athleteId={athlete.id}
+              conversationId={savedConversationId}
+              items={extractedItems}
+            />
+          )}
+
+
           {audience === "skip" ? (
             <Button variant="outline" className="w-full h-10" onClick={handleReset}>
               Log another conversation
