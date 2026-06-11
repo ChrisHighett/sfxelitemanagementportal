@@ -3137,6 +3137,7 @@ function AgentScoutView() {
   const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
+  const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
