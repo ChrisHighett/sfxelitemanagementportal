@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,18 @@ import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Mic, Square, Loader2, CheckCircle2, Building2 } from "lucide-react";
+import {
+  Mic, Square, Loader2, CheckCircle2,
+  MessageSquarePlus, Trophy, Briefcase, Mic as MicIcon, MessageCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Athlete } from "@/hooks/usePortalData";
 import { saveCommsEmail } from "@/components/portal/CommsHistory";
+import { cn } from "@/lib/utils";
+
+type Category = "club" | "commercial" | "media" | "general";
+type Audience = "athlete" | "parent" | "skip";
 
 const NRL_CLUBS = [
   "Brisbane Broncos", "Canberra Raiders", "Canterbury-Bankstown Bulldogs",
@@ -24,14 +31,79 @@ const NRL_CLUBS = [
   "Sydney Roosters", "Wests Tigers", "Dolphins",
 ];
 
-const CONV_TYPES = [
-  { value: "recruitment", label: "Recruitment / Pathways" },
-  { value: "high_performance", label: "High Performance Staff" },
-  { value: "coach", label: "Coach / Head Coach" },
-  { value: "scout", label: "Scout / Talent ID" },
-  { value: "contract", label: "Contract Discussion" },
-  { value: "general", label: "General Update" },
+const CATEGORIES: Array<{ value: Category; label: string; Icon: any }> = [
+  { value: "club",       label: "Club / Recruitment", Icon: Trophy },
+  { value: "commercial", label: "Commercial",         Icon: Briefcase },
+  { value: "media",      label: "Media / PR",         Icon: MicIcon },
+  { value: "general",    label: "General",            Icon: MessageCircle },
 ];
+
+const CONV_TYPES_BY_CATEGORY: Record<Category, Array<{ value: string; label: string }>> = {
+  club: [
+    { value: "recruitment",   label: "Recruitment / Pathways" },
+    { value: "trial",         label: "Trial" },
+    { value: "contract",      label: "Contract talk" },
+    { value: "welfare_check", label: "Welfare check" },
+    { value: "general",       label: "General" },
+  ],
+  commercial: [
+    { value: "new_opportunity", label: "New opportunity" },
+    { value: "negotiation",     label: "Negotiation" },
+    { value: "deal_signed",     label: "Deal signed" },
+    { value: "renewal",         label: "Renewal" },
+    { value: "activation",      label: "Activation / appearance" },
+    { value: "declined",        label: "Declined" },
+  ],
+  media: [
+    { value: "interview",  label: "Interview request" },
+    { value: "feature",    label: "Feature" },
+    { value: "podcast",    label: "Podcast" },
+    { value: "social",     label: "Social / content" },
+    { value: "crisis",     label: "Issue / crisis" },
+    { value: "general",    label: "General" },
+  ],
+  general: [
+    { value: "catch_up",  label: "Catch-up" },
+    { value: "welfare",   label: "Welfare" },
+    { value: "family",    label: "Family" },
+    { value: "education", label: "Education" },
+    { value: "admin",     label: "Admin" },
+    { value: "other",     label: "Other" },
+  ],
+};
+
+const COUNTERPARTY_CONFIG: Record<Category, { label: string; placeholder: string }> = {
+  club:       { label: "Club",                 placeholder: "Select a club…" },
+  commercial: { label: "Brand / company",      placeholder: "e.g. ASICS, Gatorade ANZ" },
+  media:      { label: "Outlet / journalist",  placeholder: "e.g. Fox League — Lara Pitt" },
+  general:    { label: "Who with (optional)",  placeholder: "e.g. Athlete's father, School coach" },
+};
+
+const NOTES_PLACEHOLDER: Record<Category, string> = {
+  club:       "What did the club say? Interest level? Specific feedback?",
+  commercial: "What's the deal? Numbers discussed, deliverables, timing?",
+  media:      "What's the opportunity? Format, audience, date, any prep needed?",
+  general:    "What was discussed? Anything to track or follow up?",
+};
+
+type FollowUpPreset = "none" | "2w" | "4w" | "8w" | "custom";
+
+const FOLLOW_UP_PRESETS: Array<{ value: FollowUpPreset; label: string }> = [
+  { value: "none",   label: "No reminder" },
+  { value: "2w",     label: "2 weeks" },
+  { value: "4w",     label: "4 weeks" },
+  { value: "8w",     label: "8 weeks" },
+  { value: "custom", label: "Custom date" },
+];
+
+function presetToDate(preset: FollowUpPreset, custom: string | null): string | null {
+  if (preset === "none") return null;
+  if (preset === "custom") return custom || null;
+  const d = new Date();
+  const days = preset === "2w" ? 14 : preset === "4w" ? 28 : 56;
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 interface Props {
   athlete: Athlete;
@@ -42,11 +114,24 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
 
+  const [category, setCategory] = useState<Category>("club");
+
+  // Club selector state (kept exactly like before for the club category)
   const [clubName, setClubName] = useState("");
   const [customClub, setCustomClub] = useState("");
-  const [convType, setConvType] = useState("recruitment");
+  // Free-text counterparty for commercial / media / general
+  const [counterpartyText, setCounterpartyText] = useState("");
+
+  const [convType, setConvType] = useState<string>("recruitment");
   const [notes, setNotes] = useState("");
   const [outcome, setOutcome] = useState("");
+
+  // Follow-up reminder
+  const [followUpPreset, setFollowUpPreset] = useState<FollowUpPreset>("8w");
+  const [followUpCustom, setFollowUpCustom] = useState<string>("");
+
+  // Audience for the AI update email
+  const [audience, setAudience] = useState<Audience>("athlete");
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -58,8 +143,23 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [saved, setSaved] = useState(false);
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
+  const [savedRecord, setSavedRecord] = useState<{ counterparty: string } | null>(null);
+
+  const convTypeOptions = CONV_TYPES_BY_CATEGORY[category];
+  const counterpartyConfig = COUNTERPARTY_CONFIG[category];
 
   const effectiveClub = clubName === "__custom__" ? customClub : clubName;
+  const counterpartyValue = category === "club" ? effectiveClub : counterpartyText;
+
+  const handleCategoryChange = (next: Category) => {
+    setCategory(next);
+    // Reset conv type to first option of the new category
+    const firstType = CONV_TYPES_BY_CATEGORY[next][0]?.value || "general";
+    setConvType(firstType);
+    // Sensible follow-up + audience defaults per category
+    setFollowUpPreset(next === "club" ? "8w" : "none");
+    setAudience(next === "club" ? "athlete" : "skip");
+  };
 
   const startRecording = useCallback(() => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -145,30 +245,41 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     finalTranscriptRef.current = "";
   }, []);
 
+  const validate = (): string | null => {
+    if (category === "club" && !effectiveClub.trim()) return "Please select or enter a club name.";
+    if (!notes.trim()) return "Please add a voice note or type some notes.";
+    if (followUpPreset === "custom" && !followUpCustom) return "Please pick a custom follow-up date.";
+    return null;
+  };
+
   const handleSave = async () => {
-    if (!effectiveClub.trim()) {
-      toast.error("Please select or enter a club name.");
-      return;
-    }
-    if (!notes.trim()) {
-      toast.error("Please add a voice note or type some notes.");
-      return;
-    }
+    const err = validate();
+    if (err) { toast.error(err); return; }
 
     setSaving(true);
-    const convLabel = CONV_TYPES.find(t => t.value === convType)?.label || convType;
-    const summaryText = `Club conversation — ${effectiveClub} (${convLabel})`;
+    const convLabel = convTypeOptions.find(t => t.value === convType)?.label || convType;
+    const categoryLabel = CATEGORIES.find(c => c.value === category)?.label || category;
+    const cpDisplay = counterpartyValue.trim() || "(no name)";
+    const summaryText = `${categoryLabel} — ${cpDisplay} (${convLabel})`;
+    const followUpAt = presetToDate(followUpPreset, followUpCustom);
 
     const { error } = await supabase.from("call_history").insert({
       athlete_id: athlete.id,
+      // Keep call_type='club_conversation' so existing alerts + filters still work.
+      // Category column is what really drives behaviour going forward.
       call_type: "club_conversation" as any,
       summary: summaryText,
       detailed_notes: notes.trim(),
       outcome: outcome.trim() || null,
       conducted_by: user?.id ?? null,
-      follow_up_required: false,
-      parent_involved: false,
-    });
+      follow_up_required: !!followUpAt,
+      parent_involved: audience === "parent",
+      // new columns
+      conversation_category: category,
+      counterparty_name: counterpartyValue.trim() || null,
+      follow_up_at: followUpAt,
+      email_audience: audience,
+    } as any);
 
     setSaving(false);
 
@@ -177,13 +288,17 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
-    toast.success("Club conversation saved — generating athlete email…");
+    setSavedRecord({ counterparty: counterpartyValue.trim() });
     qc.invalidateQueries({ queryKey: ["call_history", athlete.id] });
     setSaved(true);
     onSaved?.();
 
-    // Auto-generate the athlete email and write it to Comms History
-    // so it appears in the Comms inbox without an extra click.
+    if (audience === "skip") {
+      toast.success("Conversation saved to athlete file.");
+      return;
+    }
+
+    toast.success(`Saved — generating ${audience} email…`);
     await handleGenerateEmail();
     qc.invalidateQueries({ queryKey: ["comms_history", athlete.id] });
   };
@@ -193,17 +308,31 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       toast.error("Save the conversation first, then generate the email.");
       return;
     }
+    if (audience === "skip") return;
 
     setGeneratingEmail(true);
     const firstName = athlete.name.split(" ")[0];
-    const convLabel = CONV_TYPES.find(t => t.value === convType)?.label || convType;
+    const convLabel = convTypeOptions.find(t => t.value === convType)?.label || convType;
+    let parentName: string | null = null;
+    if (audience === "parent") {
+      const { data: g } = await supabase
+        .from("guardians")
+        .select("parent_name")
+        .eq("athlete_id", athlete.id)
+        .maybeSingle();
+      parentName = (g as any)?.parent_name || athlete.parentName || null;
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
-          type: "club_feedback",
+          type: "conversation_update",
+          category,
+          audience,
           athleteFirstName: firstName,
-          clubName: effectiveClub,
+          parentName,
+          counterparty: counterpartyValue.trim() || null,
+          clubName: category === "club" ? effectiveClub : null,
           conversationType: convLabel,
           agentNotes: notes.trim(),
           outcome: outcome.trim() || null,
@@ -214,7 +343,12 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      const subject = (data as any)?.email?.subject || `Club update — ${firstName}`;
+      const fallbackSubject =
+        category === "club"       ? `Club update — ${firstName}` :
+        category === "commercial" ? `Commercial update — ${firstName}` :
+        category === "media"      ? `Media opportunity — ${firstName}` :
+                                    `Quick update — ${firstName}`;
+      const subject = (data as any)?.email?.subject || fallbackSubject;
       const body = (data as any)?.email?.body || (data as any)?.raw_text || "";
 
       setEmailSubject(subject);
@@ -222,14 +356,14 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
       await saveCommsEmail({
         athleteId: athlete.id,
-        emailType: "athlete",
+        emailType: audience === "parent" ? "parent" : "athlete",
         subject,
         body,
-        generatedFrom: "club_conversation",
+        generatedFrom: `conversation_${category}`,
         createdBy: user?.id,
       });
 
-      toast.success("Athlete email generated and saved to Comms History.");
+      toast.success(`${audience === "parent" ? "Parent" : "Athlete"} email generated and saved to Comms History.`);
     } catch (e: any) {
       toast.error(e.message || "Failed to generate email.");
     } finally {
@@ -245,43 +379,92 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   };
 
   const handleReset = () => {
+    setCategory("club");
     setClubName("");
     setCustomClub("");
+    setCounterpartyText("");
     setConvType("recruitment");
     setNotes("");
     setOutcome("");
+    setFollowUpPreset("8w");
+    setFollowUpCustom("");
+    setAudience("athlete");
     setSaved(false);
     setEmailDraft(null);
     setEmailSubject("");
+    setSavedRecord(null);
   };
+
+  const audienceOptions: Array<{ value: Audience; label: string }> = [
+    { value: "athlete", label: "Athlete" },
+    { value: "parent",  label: "Parent" },
+    { value: "skip",    label: "Skip" },
+  ];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Building2 className="h-4 w-4 text-primary" />
-        <h3 className="font-semibold text-sm">Log Club Conversation</h3>
+        <MessageSquarePlus className="h-4 w-4 text-primary" />
+        <h3 className="font-semibold text-sm">Log Conversation</h3>
+      </div>
+
+      {/* Category pills */}
+      <div>
+        <Label className="text-xs mb-1.5 block">Category</Label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {CATEGORIES.map(({ value, label, Icon }) => {
+            const selected = category === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleCategoryChange(value)}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-xs font-medium transition",
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-background hover:bg-muted text-foreground"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span className="truncate">{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs">Club</Label>
-          <Select value={clubName} onValueChange={setClubName}>
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="Select club…" />
-            </SelectTrigger>
-            <SelectContent>
-              {NRL_CLUBS.map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-              <SelectItem value="__custom__">Other / type club name…</SelectItem>
-            </SelectContent>
-          </Select>
-          {clubName === "__custom__" && (
+          <Label className="text-xs">{counterpartyConfig.label}</Label>
+          {category === "club" ? (
+            <>
+              <Select value={clubName} onValueChange={setClubName}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={counterpartyConfig.placeholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  {NRL_CLUBS.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                  <SelectItem value="__custom__">Other / type club name…</SelectItem>
+                </SelectContent>
+              </Select>
+              {clubName === "__custom__" && (
+                <Input
+                  className="h-9 text-sm mt-2"
+                  placeholder="Type club name"
+                  value={customClub}
+                  onChange={e => setCustomClub(e.target.value)}
+                />
+              )}
+            </>
+          ) : (
             <Input
-              className="h-9 text-sm mt-2"
-              placeholder="Type club name"
-              value={customClub}
-              onChange={e => setCustomClub(e.target.value)}
+              className="h-9 text-sm"
+              placeholder={counterpartyConfig.placeholder}
+              value={counterpartyText}
+              onChange={e => setCounterpartyText(e.target.value)}
             />
           )}
         </div>
@@ -293,7 +476,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {CONV_TYPES.map(t => (
+              {convTypeOptions.map(t => (
                 <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
               ))}
             </SelectContent>
@@ -329,7 +512,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
         )}
         <Textarea
           className="text-sm min-h-[120px]"
-          placeholder="What did the club say? What's their interest level? Any specific feedback?"
+          placeholder={NOTES_PLACEHOLDER[category]}
           value={notes}
           onChange={e => setNotes(e.target.value)}
         />
@@ -348,16 +531,81 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
         />
       </div>
 
+      {/* Follow-up reminder */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Follow-up reminder</Label>
+        <div className="flex flex-wrap gap-2">
+          {FOLLOW_UP_PRESETS.map(p => {
+            const selected = followUpPreset === p.value;
+            return (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setFollowUpPreset(p.value)}
+                className={cn(
+                  "rounded-md border px-3 py-1.5 text-xs font-medium transition",
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-muted"
+                )}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+        {followUpPreset === "custom" && (
+          <Input
+            type="date"
+            className="h-9 text-sm mt-1 w-fit"
+            value={followUpCustom}
+            onChange={e => setFollowUpCustom(e.target.value)}
+          />
+        )}
+      </div>
+
+      {/* Audience toggle for AI update email */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">
+          Generate update email for
+          <span className="text-muted-foreground ml-1 font-normal">(optional)</span>
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {audienceOptions.map(a => {
+            const selected = audience === a.value;
+            return (
+              <button
+                key={a.value}
+                type="button"
+                onClick={() => setAudience(a.value)}
+                className={cn(
+                  "rounded-md border px-3 py-1.5 text-xs font-medium transition",
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background hover:bg-muted"
+                )}
+              >
+                {a.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {!saved ? (
         <Button
           className="w-full h-10 gap-2"
           onClick={handleSave}
-          disabled={saving || !effectiveClub.trim() || !notes.trim()}
+          disabled={
+            saving ||
+            !notes.trim() ||
+            (category === "club" && !effectiveClub.trim())
+          }
         >
           {saving ? (
             <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
           ) : (
-            <><Building2 className="h-4 w-4" /> Save to athlete file</>
+            <><MessageSquarePlus className="h-4 w-4" /> Save to athlete file</>
           )}
         </Button>
       ) : (
@@ -367,7 +615,11 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
             Saved to {athlete.name}'s file
           </div>
 
-          {!emailDraft ? (
+          {audience === "skip" ? (
+            <Button variant="outline" className="w-full h-10" onClick={handleReset}>
+              Log another conversation
+            </Button>
+          ) : !emailDraft ? (
             <Button
               variant="outline"
               className="w-full h-10 gap-2"
@@ -377,7 +629,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
               {generatingEmail ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Generating email…</>
               ) : (
-                "Generate athlete email from this conversation"
+                `Generate ${audience} email from this conversation`
               )}
             </Button>
           ) : (

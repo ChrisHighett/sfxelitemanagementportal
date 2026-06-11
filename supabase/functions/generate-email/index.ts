@@ -79,6 +79,43 @@ Output requirements:
 Do not wrap the JSON in markdown.`;
 }
 
+function buildConversationPrompt(
+  category: string,
+  audience: string,
+  agentName: string,
+): string {
+  const recipient = audience === "parent"
+    ? "the athlete's parent or guardian"
+    : "the athlete";
+  const toneForAudience = audience === "parent"
+    ? "Warm, reassuring, professional. Address the guardian by name where available. Keep it clear and confidence-building."
+    : "Supportive, personal, mentor-like — like a trusted older brother. Use the athlete's first name only.";
+
+  const categoryGuidance: Record<string, string> = {
+    club: `Frame this as athlete-facing feedback on where a club conversation landed. Mention the club by name, what the club said, the athlete's standing, and any next steps.`,
+    commercial: `Frame this as a positive but measured commercial / sponsorship update. Mention the brand or company, what the opportunity is, what it could mean, and what happens next. Do NOT over-promise on numbers that aren't locked in. Keep it grounded.`,
+    media: `Frame this as a media opportunity heads-up. Mention the outlet or journalist, the format (interview, podcast, feature etc.), why it's a good fit, any dates or prep required, and reassure them the agent will handle logistics.`,
+    general: `Frame this as a brief, warm summary of a general / welfare conversation. Capture what was discussed and any agreed next steps. Keep it personal and human.`,
+  };
+
+  return `You are writing a short, professional update email from ${agentName} at TGI Sport to ${recipient}, summarising a conversation the agent just had on behalf of the athlete.
+
+Category: ${category}
+${categoryGuidance[category] || categoryGuidance.general}
+
+Tone: ${toneForAudience}
+
+Writing rules:
+- Keep it concise — 3 short paragraphs max
+- Mention the counterparty by name if provided
+- If there's a clear next step, state it plainly
+- End on an encouraging or reassuring note
+- Do not invent details that aren't in the notes
+- Do not use bullet points unless clearly necessary
+- Return valid JSON only with: subject, body
+- Do not wrap JSON in markdown`;
+}
+
 async function callAIWithRetry(
   apiKey: string,
   systemPrompt: string,
@@ -134,7 +171,6 @@ async function callAIWithRetry(
     throw new Error("No parseable JSON in response");
   };
 
-  // First attempt
   const response1 = await makeRequest();
   if (!response1.ok) {
     if (response1.status === 429) throw { status: 429, message: "Rate limit exceeded. Please try again shortly." };
@@ -151,7 +187,6 @@ async function callAIWithRetry(
     console.warn("First parse failed, retrying...");
   }
 
-  // Retry once
   try {
     const response2 = await makeRequest();
     if (response2.ok) {
@@ -165,7 +200,7 @@ async function callAIWithRetry(
       }
     }
   } catch {
-    // Fall through to raw_text
+    // fall through
   }
 
   return { raw_text: raw1 || "AI returned an unparseable response." };
@@ -186,6 +221,10 @@ serve(async (req) => {
       conversationType,
       agentNotes,
       outcome,
+      // multi-purpose conversation logger
+      category,        // 'club' | 'commercial' | 'media' | 'general'
+      counterparty,    // brand / outlet / person / club
+      audience,        // 'athlete' | 'parent'
     } = await req.json();
     const senderName = agentName || "Your TGI Sport Manager";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -202,7 +241,27 @@ serve(async (req) => {
       ? summaryPoints.filter(Boolean).map((p: string) => `- ${p}`).join("\n")
       : "";
 
-    if (type === "club_feedback") {
+    if (type === "conversation_update") {
+      const cat = (category || "general").toLowerCase();
+      const aud = (audience || "athlete").toLowerCase();
+      systemPrompt = buildConversationPrompt(cat, aud, senderName);
+      userPrompt = [
+        `Please write the update email.`,
+        ``,
+        `Sender (agent): ${senderName}`,
+        `Athlete first name: ${athleteFirstName || "Athlete"}`,
+        aud === "parent" ? `Parent / guardian name: ${parentName || "there"}` : "",
+        `Category: ${cat}`,
+        `Counterparty: ${counterparty || clubName || "—"}`,
+        `Conversation type: ${conversationType || "—"}`,
+        ``,
+        `Agent's notes from the conversation:`,
+        agentNotes || "",
+        ``,
+        outcome ? `Outcome / next steps: ${outcome}` : "",
+      ].filter(l => l !== undefined && l !== null && l !== "").join("\n");
+    } else if (type === "club_feedback") {
+      // Legacy compatibility — keep working exactly as before
       systemPrompt = `You are writing a short email from a sports agent to a young elite athlete summarising a conversation the agent just had with an NRL club about the athlete.
 
 Tone: encouraging, warm, professional, forward-looking. Make the athlete feel valued and excited.
@@ -277,7 +336,7 @@ Rules:
         "- close with appreciation and invitation to reach out",
       ].join("\n");
     } else {
-      return new Response(JSON.stringify({ error: "Invalid type. Use 'athlete', 'parent', or 'club_feedback'." }), {
+      return new Response(JSON.stringify({ error: "Invalid type. Use 'athlete', 'parent', 'club_feedback', or 'conversation_update'." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

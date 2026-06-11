@@ -43,14 +43,18 @@ export default function AlertsEngine({ athletes }: { athletes: Athlete[] }) {
     queryKey: ["club_calls_for_alerts", athleteIds],
     queryFn: async () => {
       if (athleteIds.length === 0) return [];
+      // Only club-category conversations should drive the 56-day check-in alert.
       const { data, error } = await supabase
         .from("call_history")
-        .select("athlete_id, call_date")
+        .select("athlete_id, call_date, conversation_category, call_type")
         .in("athlete_id", athleteIds)
         .eq("call_type", "club_conversation" as any)
         .order("call_date", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []).filter((c: any) => {
+        const cat = c.conversation_category || "club";
+        return cat === "club";
+      });
     },
     enabled: athleteIds.length > 0,
   });
