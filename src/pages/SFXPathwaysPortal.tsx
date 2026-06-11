@@ -123,7 +123,8 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                   onClick={() => onNav(it.key)}
                 >
                   <Icon className="h-4 w-4" />
-                  {it.label}
+                  <span className="flex-1 text-left">{it.label}</span>
+                  {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                 </button>
               );
             })}
