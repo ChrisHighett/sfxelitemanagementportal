@@ -4020,6 +4020,7 @@ export default function SFXPathwaysPortal() {
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      <CommandPalette commands={paletteCommands} />
     </Shell>
   );
 }
