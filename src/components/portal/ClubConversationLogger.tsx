@@ -158,6 +158,11 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
   const [savedRecord, setSavedRecord] = useState<{ counterparty: string } | null>(null);
+  const [savedConversationId, setSavedConversationId] = useState<string | null>(null);
+
+  // AI action-item extraction
+  const [extracting, setExtracting] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
 
   const isMinor = typeof athlete.age === "number" && athlete.age < 18;
 
