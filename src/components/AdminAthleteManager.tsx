@@ -83,7 +83,7 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
   const { user } = useAuth();
   const [form, setForm] = useState<AthleteForm>(() => ({
     ...(initial || emptyAthlete),
-    assigned_agent: lockedAgentName ? (lockedAgentId ?? user?.id ?? "") : (initial?.assigned_agent ?? ""),
+    assigned_agent: lockedAgentName ? lockedAgentName : (initial?.assigned_agent ?? ""),
   }));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
