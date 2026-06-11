@@ -120,32 +120,73 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
   const mobileQuickNav = items.slice(0, 4);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
-        <div className="space-y-6 flex-1">
-          <div>
-            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-10 w-auto mb-2" />
-            <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
-            <p className="text-xs text-muted-foreground">Role-based portal + CRM</p>
+    <div className="flex min-h-screen" style={{ background: "var(--canvas)" }}>
+      {/* Desktop command rail — dark, sticky, brand-base */}
+      <aside
+        className="hidden md:flex flex-col flex-shrink-0 sticky top-0 self-start h-screen"
+        style={{
+          width: 248,
+          background: "var(--brand-base)",
+          borderRight: "1px solid var(--brand-base-line)",
+          color: "#fff",
+        }}
+      >
+        <div className="flex flex-col flex-1 p-5">
+          <div className="mb-8 flex items-center gap-3">
+            <BrandMark variant="wordmark" height={26} />
           </div>
-          <nav className="space-y-1">
+          <nav className="space-y-1 flex-1">
             {items.map((it) => {
               const Icon = it.icon;
               const isActive = active === it.key;
               return (
                 <button
                   key={it.key}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
                   onClick={() => onNav(it.key)}
+                  className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors"
+                  style={{
+                    color: isActive ? "#fff" : "rgba(255,255,255,0.62)",
+                    background: isActive ? "var(--brand-base-soft)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "var(--brand-base-soft)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "transparent";
+                  }}
                 >
-                  <Icon className="h-4 w-4" />
+                  {isActive && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                      style={{ background: "var(--brand-gradient)" }}
+                    />
+                  )}
+                  <Icon
+                    className="h-4 w-4"
+                    style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
+                  />
                   <span className="flex-1 text-left">{it.label}</span>
                   {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                 </button>
               );
             })}
           </nav>
+          <div
+            className="mt-6 rounded-[12px] p-3 text-xs"
+            style={{
+              background: "var(--brand-base-soft)",
+              border: "1px solid var(--brand-base-line)",
+              color: "rgba(255,255,255,0.78)",
+            }}
+          >
+            <div className="font-medium text-white truncate">
+              {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+            </div>
+            <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+              {role}
+            </div>
+          </div>
         </div>
       </aside>
 
