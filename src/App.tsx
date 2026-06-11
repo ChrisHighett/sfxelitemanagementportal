@@ -27,6 +27,7 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <BrandGradientDefs />
       <Toaster />
       <Sonner />
       <BrowserRouter>
