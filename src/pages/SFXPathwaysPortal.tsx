@@ -2455,8 +2455,22 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     scout_rating: editLead?.scout_rating || "B",
     triage_decision: editLead?.triage_decision || "Watch",
     notes: editLead?.notes || "",
+    assigned_agent_name: editLead?.assigned_agent_name || "",
+    assigned_agent_id: editLead?.assigned_agent_id || "",
   });
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const { data: agentList = [] } = useQuery({
+    queryKey: ["agent_list_scout_form"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("portal_users" as any)
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true);
+      return (data as any[]) || [];
+    },
+  });
 
   async function handleSave() {
     if (!form.first_name.trim() || !form.last_name.trim()) {
