@@ -2958,7 +2958,7 @@ function AgentScoutView() {
     const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
     return days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage);
   });
-  const competition = leads.filter((l: any) => l.competitor_interest?.trim());
+  const competition = leads.filter((l: any) => l.competitor_interest?.trim() && !["Signed", "Lost"].includes(l.onboarding_stage));
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
 
   async function handleStageChange(id: string, stage: string) {
