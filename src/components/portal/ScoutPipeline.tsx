@@ -5,7 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Binoculars, Loader2 } from "lucide-react";
+import { Plus, Binoculars } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
 import { toast } from "sonner";
 import ScoutLeadForm, { type ScoutLead } from "./ScoutLeadForm";
 import ScoutLeadCard from "./ScoutLeadCard";
@@ -271,7 +272,7 @@ export default function ScoutPipeline() {
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setShowConvertModal(null)} disabled={converting}>Cancel</Button>
               <Button onClick={handleConfirmConvert} disabled={converting} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                {converting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {converting && <span className="mr-2"><ArcLoader size={16} /></span>}
                 Create athlete profile
               </Button>
             </div>
@@ -282,7 +283,7 @@ export default function ScoutPipeline() {
       {/* List */}
       {isLoading ? (
         <Card><CardContent className="p-6 flex items-center justify-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /><span className="text-sm">Loading leads…</span>
+          <ArcLoader size={16} /><span className="text-sm">Loading leads…</span>
         </CardContent></Card>
       ) : filtered.length === 0 ? (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">

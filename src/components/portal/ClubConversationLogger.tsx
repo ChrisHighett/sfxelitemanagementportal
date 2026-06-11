@@ -10,10 +10,11 @@ import {
   SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Mic, Square, Loader2, CheckCircle2,
+  Mic, Square, CheckCircle2,
   MessageSquarePlus, Trophy, Briefcase, Mic as MicIcon, MessageCircle,
   Mail, MessageSquare, Copy,
 } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Athlete } from "@/hooks/usePortalData";
@@ -699,7 +700,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           }
         >
           {saving ? (
-            <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
+            <><ArcLoader size={16} /> Saving…</>
           ) : (
             <><MessageSquarePlus className="h-4 w-4" /> Save to athlete file</>
           )}
@@ -714,7 +715,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           {/* AI extracted action items */}
           {extracting && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              <ArcLoader size={14} />
               Scanning note for follow-ups…
             </div>
           )}
@@ -744,7 +745,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
               disabled={generatingEmail}
             >
               {generatingEmail ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Generating email…</>
+                <><ArcLoader size={16} /> Generating email…</>
               ) : (
                 `Generate ${audience} email from this conversation`
               )}
@@ -786,7 +787,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
               {generatingEmail ? (
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-6 border rounded-md">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Drafting {format} message…
+                  <ArcLoader size={16} /> Drafting {format} message…
                 </div>
               ) : (
                 <>

@@ -2,7 +2,8 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
+import { TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
 
@@ -62,7 +63,7 @@ function AgentCard({ kpi }: { kpi: AgentKPI }) {
             </div>
           </div>
           <div className="text-right shrink-0">
-            <div className="text-2xl font-bold">{kpi.overallScore}%</div>
+            <div className="text-2xl font-bold num">{kpi.overallScore}%</div>
             {scoreBadge(kpi.overallScore)}
           </div>
         </div>
@@ -126,7 +127,7 @@ export default function AdminAnalytics() {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <ArcLoader size={28} />
       </div>
     );
   }
@@ -140,7 +141,7 @@ export default function AdminAnalytics() {
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Users className="h-3 w-3" /> Total athletes
             </div>
-            <div className="text-2xl font-bold mt-1">{totalAthletes}</div>
+            <div className="text-2xl font-bold num mt-1">{totalAthletes}</div>
           </CardContent>
         </Card>
         <Card>
@@ -148,7 +149,7 @@ export default function AdminAnalytics() {
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" /> Calls this month
             </div>
-            <div className="text-2xl font-bold mt-1">{totalCalls}</div>
+            <div className="text-2xl font-bold num mt-1">{totalCalls}</div>
           </CardContent>
         </Card>
         <Card>
@@ -156,7 +157,7 @@ export default function AdminAnalytics() {
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <ClipboardList className="h-3 w-3" /> Reviews this month
             </div>
-            <div className="text-2xl font-bold mt-1">{totalReviews}</div>
+            <div className="text-2xl font-bold num mt-1">{totalReviews}</div>
           </CardContent>
         </Card>
         <Card>
@@ -164,7 +165,7 @@ export default function AdminAnalytics() {
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <TrendingUp className="h-3 w-3" /> Avg agent score
             </div>
-            <div className="text-2xl font-bold mt-1">{avgScore}%</div>
+            <div className="text-2xl font-bold num mt-1">{avgScore}%</div>
           </CardContent>
         </Card>
       </div>
