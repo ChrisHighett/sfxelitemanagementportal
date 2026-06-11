@@ -3659,58 +3659,84 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">High Commercial Potential</div><div className="mt-1 text-2xl font-semibold">{highCommercial}</div></CardContent></Card>
       </div>
       <WeeklyPlanner athletes={athletes} />
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{filterTitle[activeFilter]}</CardTitle>
-              {activeFilter !== "all" && (
-                <Button variant="ghost" size="sm" onClick={() => setActiveFilter("all")} className="text-xs">
-                  ← Back to overview
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {filteredAthletes.map((a) => (
-              <div key={a.id} className="flex items-center justify-between rounded-xl border border-border p-3">
-                <div>
-                  <div className="font-medium">{a.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {a.club} • Wellbeing {a.wellbeingScore}/5 • Last contact: {daysSinceContact(a.id)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {statusBadge(a.status)}
-                  {activeFilter === "commercial_watch" && <Badge variant="secondary">{a.commercialPotential}</Badge>}
-                  <Button variant="secondary" size="sm" onClick={() => onOpenProfile?.(a.id)}>Open</Button>
-                </div>
+      {(() => {
+        const counts: Record<Exclude<CommandFilter, "all">, number> = {
+          calls_due_7: athletes.filter((a) => {
+            const last = lastContactMap[a.id];
+            if (!last) return true;
+            const days = Math.floor((Date.now() - last.getTime()) / (24 * 60 * 60 * 1000));
+            return days >= 14;
+          }).length,
+          wellbeing_low: athletes.filter((a) => a.wellbeingScore <= 3).length,
+          parent_followup: athletes.filter((a) => {
+            const parentComms = allComms.filter((c) => c.athleteId === a.id && c.recipient === "parent");
+            if (parentComms.length === 0) return true;
+            const lastParent = new Date(Math.max(...parentComms.map((c) => new Date(c.sentAt).getTime())));
+            return (Date.now() - lastParent.getTime()) > 14 * 24 * 60 * 60 * 1000;
+          }).length,
+          injury_setback: athletes.filter((a) => a.status === "Needs Support").length,
+          commercial_watch: athletes.filter((a) => a.commercialPotential === "High").length,
+        };
+        const total = Object.values(counts).reduce((s, n) => s + n, 0);
+        if (total === 0) return null;
+
+        const chipTone: Record<Exclude<CommandFilter, "all">, string> = {
+          calls_due_7: "border-destructive/40 text-destructive",
+          wellbeing_low: "border-destructive/40 text-destructive",
+          parent_followup: "border-amber-500/40 text-amber-600 dark:text-amber-400",
+          injury_setback: "border-destructive/40 text-destructive",
+          commercial_watch: "border-emerald-500/40 text-emerald-600 dark:text-emerald-400",
+        };
+
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Needs Attention
+                <Badge variant="secondary" className="ml-1 text-[10px]">{total}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {filters.map((f) => {
+                  const n = counts[f.key as Exclude<CommandFilter, "all">];
+                  if (n === 0) return null;
+                  const active = activeFilter === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => setActiveFilter(active ? "all" : f.key)}
+                      className={`text-xs rounded-full border px-2.5 py-1 transition-colors ${chipTone[f.key as Exclude<CommandFilter, "all">]} ${active ? "bg-secondary" : "hover:bg-secondary/60"}`}
+                    >
+                      {f.label} · {n}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-            {filteredAthletes.length === 0 && <div className="text-sm text-muted-foreground">No athletes match this filter.</div>}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base">Command Centre Filters</CardTitle></CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setActiveFilter(f.key)}
-                className={`w-full text-left rounded-lg px-3 py-2 transition-colors ${
-                  activeFilter === f.key
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                • {f.label}
-              </button>
-            ))}
-            <Separator className="my-2" />
-            <div className="text-xs text-muted-foreground px-3">Click a filter to view priority actions.</div>
-          </CardContent>
-        </Card>
-      </div>
+              {activeFilter !== "all" && (
+                <div className="space-y-1.5 pt-1 border-t border-border">
+                  {filteredAthletes.slice(0, 5).map((a) => (
+                    <div key={a.id} className="flex items-center justify-between rounded-md border border-border px-2.5 py-1.5 text-xs">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{a.name}</div>
+                        <div className="text-muted-foreground text-[11px]">
+                          {a.club} · Wellbeing {a.wellbeingScore}/5 · Last contact {daysSinceContact(a.id)}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onOpenProfile?.(a.id)}>Open</Button>
+                    </div>
+                  ))}
+                  {filteredAthletes.length > 5 && (
+                    <div className="text-[11px] text-muted-foreground px-1">+{filteredAthletes.length - 5} more</div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
     </div>
   );
 }
