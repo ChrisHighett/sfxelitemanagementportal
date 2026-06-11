@@ -96,8 +96,6 @@
   }
 
   .dark {
-    /* Dark mode is currently unused (app is light-canvas + dark-rail by design).
-       Keep tokens defined for shadcn primitives that opt in. */
     --background: 222 14% 6%;
     --foreground: 220 14% 95%;
     --card: 222 14% 9%;
@@ -117,6 +115,37 @@
     --border: 222 14% 18%;
     --input: 222 14% 18%;
     --ring: 224 100% 60%;
+  }
+
+  /* ALT THEMES — proof of white-label. Token-only re-skin. */
+  [data-theme="aurora"] {
+    --brand-base: #0B1530;
+    --brand-base-soft: #15204A;
+    --brand-base-line: #243064;
+    --brand-spectrum-from: #7C5CFF;
+    --brand-spectrum-to:   #14B8A6;
+    --brand-accent: #7C5CFF;
+    --accent: 252 100% 68%;
+    --ring: 252 100% 68%;
+    --sidebar-background: 224 60% 11%;
+    --sidebar-border: 230 45% 22%;
+    --sidebar-primary: 252 100% 68%;
+    --sidebar-ring: 252 100% 68%;
+  }
+
+  [data-theme="ember"] {
+    --brand-base: #1A0F0B;
+    --brand-base-soft: #2A1813;
+    --brand-base-line: #3D241C;
+    --brand-spectrum-from: #F97316;
+    --brand-spectrum-to:   #DB2777;
+    --brand-accent: #F97316;
+    --accent: 24 95% 53%;
+    --ring: 24 95% 53%;
+    --sidebar-background: 18 35% 8%;
+    --sidebar-border: 18 30% 18%;
+    --sidebar-primary: 24 95% 53%;
+    --sidebar-ring: 24 95% 53%;
   }
 }
 
