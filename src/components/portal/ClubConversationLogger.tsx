@@ -284,7 +284,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     const summaryText = `${categoryLabel} — ${cpDisplay} (${convLabel})`;
     const followUpAt = presetToDate(followUpPreset, followUpCustom);
 
-    const { error } = await supabase.from("call_history").insert({
+    const { data: inserted, error } = await supabase.from("call_history").insert({
       athlete_id: athlete.id,
       // Keep call_type='club_conversation' so existing alerts + filters still work.
       // Category column is what really drives behaviour going forward.
@@ -300,7 +300,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       counterparty_name: counterpartyValue.trim() || null,
       follow_up_at: followUpAt,
       email_audience: audience,
-    } as any);
+    } as any).select("id, created_at").maybeSingle();
 
     setSaving(false);
 
@@ -309,10 +309,20 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
+    const newId = (inserted as any)?.id ?? null;
+    const conversationDate =
+      (inserted as any)?.created_at?.slice(0, 10) ||
+      new Date().toISOString().slice(0, 10);
     setSavedRecord({ counterparty: counterpartyValue.trim() });
+    setSavedConversationId(newId);
     qc.invalidateQueries({ queryKey: ["call_history", athlete.id] });
     setSaved(true);
     onSaved?.();
+
+    // Fire-and-forget AI extraction — never blocks the save flow.
+    runExtraction(newId, conversationDate).catch((e) => {
+      console.warn("Action-item extraction failed:", e);
+    });
 
     if (audience === "skip") {
       toast.success("Conversation saved to athlete file.");
@@ -321,6 +331,32 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
     toast.success(`Saved — drafting ${format} message for ${audience}…`);
     await handleGenerateEmail(format, audience);
+  };
+
+  const runExtraction = async (conversationId: string | null, conversationDate: string) => {
+    setExtracting(true);
+    setExtractedItems(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-action-items", {
+        body: {
+          note: notes.trim(),
+          conversationDate,
+          category,
+          athleteFirstName: athlete.name.split(" ")[0],
+          counterparty: counterpartyValue.trim() || null,
+        },
+      });
+      if (error) throw error;
+      const items: ExtractedItem[] = Array.isArray((data as any)?.items)
+        ? (data as any).items
+        : [];
+      setExtractedItems(items);
+    } catch (e) {
+      console.warn("extract-action-items error:", e);
+      setExtractedItems([]);
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const handleGenerateEmail = async (
