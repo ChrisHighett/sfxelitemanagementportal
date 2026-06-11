@@ -438,6 +438,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     setFollowUpPreset("8w");
     setFollowUpCustom("");
     setAudience("athlete");
+    setFormat("email");
+    setCopied(false);
     setSaved(false);
     setEmailDraft(null);
     setEmailSubject("");
