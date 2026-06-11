@@ -18,6 +18,8 @@ interface PlannerItem {
   suggestedDay: string;
   priority: number;
   source: "generated" | "saved";
+  aiSourced?: boolean;
+  dueDate?: string | null;
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
