@@ -46,7 +46,7 @@ export function BrandMark({
           ? "--brand-logo-row-light"
           : "--brand-logo-row";
 
-  const aspect = variant === "icon" ? 1 : variant === "crest" ? 220 / 260 : 320 / 92;
+  const aspect = variant === "icon" ? 1 : variant === "crest" ? 200 / 210 : 320 / 92;
 
   return (
     <span
