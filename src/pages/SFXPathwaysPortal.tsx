@@ -3069,7 +3069,13 @@ function AgentScoutView() {
       return;
     }
     const updates: any = { onboarding_stage: stage };
-    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
+    if (stage === "Signed") {
+      updates.date_signed = new Date().toISOString().slice(0, 10);
+      updates.triage_decision = "Signed";
+    }
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
     refetch();
@@ -3081,7 +3087,8 @@ function AgentScoutView() {
     const today = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update({
       onboarding_stage: "Lost",
-      lost_reason: reason,
+      triage_decision: "Lost",
+      lost_reason: reason || null,
       lost_at: today,
       date_lost: today,
     }).eq("id", lostModalLead.id);
