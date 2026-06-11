@@ -3342,6 +3342,12 @@ function AgentScoutView() {
                   {lead.competitor_interest && (
                     <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
                   )}
+                  {lead.onboarding_stage === "Lost" && lead.lost_reason && (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded px-3 py-1.5 flex items-center gap-1.5">
+                      <span className="text-muted-foreground">Lost reason:</span>
+                      <span className="font-medium text-foreground">{lead.lost_reason}</span>
+                    </div>
+                  )}
                   {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
 
                   <div className="flex flex-wrap gap-1.5">
