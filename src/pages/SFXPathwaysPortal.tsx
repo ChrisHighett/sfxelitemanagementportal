@@ -3007,19 +3007,33 @@ function AgentScoutView() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {[
-          { label: "Pursue", value: pursue.length, color: "text-primary" },
-          { label: "Competition active", value: competition.length, color: "text-destructive" },
-          { label: "Stalled", value: stalled.length, color: "text-amber-600" },
-          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: "text-green-600" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-lg border bg-card p-3 text-center">
+          { label: "Pursue", value: pursue.length, color: "text-primary", border: "" },
+          { label: "Competition active", value: competition.length, color: competition.length > 0 ? "text-destructive" : "text-muted-foreground", border: competition.length > 0 ? "border-destructive/30" : "" },
+          { label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "text-amber-600" : "text-muted-foreground", border: stalled.length > 0 ? "border-amber-300" : "" },
+          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "text-green-600" : "text-muted-foreground", border: signed.length > 0 ? "border-green-300" : "" },
+        ].map(({ label, value, color, border }) => (
+          <div key={label} className={`rounded-lg border bg-card p-3 text-center ${border}`}>
             <div className={`text-2xl font-semibold ${color}`}>{value}</div>
             <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
       </div>
+
+      {signed.length > 0 && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
+          <div className="text-xs font-semibold text-green-700 uppercase tracking-wide">Signed this year</div>
+          {signed.map((lead: any) => (
+            <div key={lead.id} className="flex items-center justify-between text-sm">
+              <span className="font-medium text-green-900">{lead.first_name} {lead.last_name}</span>
+              <span className="text-xs text-green-600">
+                {lead.date_signed ? new Date(lead.date_signed).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : 'Signed'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
