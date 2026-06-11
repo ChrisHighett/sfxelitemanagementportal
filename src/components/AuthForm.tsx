@@ -54,19 +54,21 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 auth-gradient items-center justify-center p-12">
-        <div className="max-w-md space-y-6">
-          <h1
-            className="text-5xl font-bold tracking-tight text-primary-foreground"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
+    <div className="min-h-screen flex" style={{ background: "var(--canvas)" }}>
+      <div
+        className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 relative overflow-hidden"
+        style={{ background: "var(--brand-base)", color: "#fff" }}
+      >
+        <ArcBackdrop />
+        <div className="max-w-md space-y-8 relative">
+          <BrandMark variant="wordmark" height={40} />
+          <h1 className="text-5xl font-semibold tracking-tight text-white" style={{ fontFamily: "var(--font-display)" }}>
             {mode === "login" ? "Welcome back." : "Get started."}
           </h1>
-          <p className="text-lg text-primary-foreground/80">
+          <p className="text-lg" style={{ color: "rgba(255,255,255,0.72)" }}>
             {mode === "login"
-              ? "Sign in to your TGI Sport portal."
-              : "Create your account to access your TGI Sport portal."}
+              ? "Sign in to your TGI Pathways portal."
+              : "Create your account to access your TGI Pathways portal."}
           </p>
         </div>
       </div>
