@@ -224,8 +224,8 @@ function TaskRow({
         {completing ? (
           <ArcLoader size={16} />
         ) : completed ? (
-          <div className="h-4 w-4 rounded-sm bg-emerald-500 flex items-center justify-center">
-            <Check className="h-3 w-3 text-white" />
+          <div className="h-4 w-4 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+            <Check className="h-3 w-3" style={{ color: "#fff" }} />
           </div>
         ) : (
           <Checkbox onCheckedChange={onComplete} className="h-4 w-4" />
@@ -254,7 +254,7 @@ function TaskRow({
           <p className="text-xs text-muted-foreground leading-snug mt-0.5 line-clamp-2">{item.reason}</p>
         )}
         {item.isOverdue && item.dueDate && (
-          <p className="text-[10px] text-red-700 dark:text-red-300 mt-0.5">
+          <p className="text-[10px] mt-0.5" style={{ color: "var(--danger-deep)" }}>
             Originally due {new Date(item.dueDate + "T00:00:00").toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" })}
           </p>
         )}
@@ -323,7 +323,9 @@ function PriorityBand({
   label,
   items,
   bandClass,
+  bandStyle,
   countClass,
+  countStyle,
   defaultOpen,
   completing,
   completedIds,
@@ -335,7 +337,9 @@ function PriorityBand({
   label: string;
   items: PlannerItem[];
   bandClass: string;
+  bandStyle?: React.CSSProperties;
   countClass: string;
+  countStyle?: React.CSSProperties;
   defaultOpen: boolean;
   completing: Set<string>;
   completedIds: Set<string>;
@@ -350,7 +354,7 @@ function PriorityBand({
   const overflow = items.length - visible.length;
 
   return (
-    <div className={`rounded-lg border ${bandClass}`}>
+    <div className={`rounded-lg border ${bandClass}`} style={bandStyle}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-3 py-2"
@@ -358,7 +362,7 @@ function PriorityBand({
         <div className="flex items-center gap-2">
           {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           <span className="text-sm font-bold">{label}</span>
-          <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${countClass}`}>
+          <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${countClass}`} style={countStyle}>
             {items.length}
           </span>
         </div>
@@ -727,8 +731,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         <PriorityBand
           label="Urgent"
           items={urgent}
-          bandClass="border-red-300/60 bg-red-50 dark:bg-red-950/20 dark:border-red-900/40"
-          countClass="bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-200"
+          bandClass=""
+          bandStyle={{ background: "var(--danger-soft)", borderColor: "var(--danger-soft)" }}
+          countClass=""
+          countStyle={{ background: "var(--danger-soft)", color: "var(--danger-deep)" }}
           defaultOpen
           completing={completing}
           completedIds={sessionCompleted}
@@ -739,8 +745,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         <PriorityBand
           label="High"
           items={high}
-          bandClass="border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40"
-          countClass="bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+          bandClass=""
+          bandStyle={{ background: "var(--win-soft)", borderColor: "var(--win-soft)" }}
+          countClass=""
+          countStyle={{ background: "var(--win-soft)", color: "var(--win-deep)" }}
           defaultOpen
           completing={completing}
           completedIds={sessionCompleted}
@@ -841,18 +849,17 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                         key={item.id}
                         className={cn(
                           "rounded border p-2 hover:shadow-sm transition",
-                          item.isOverdue
-                            ? "border-red-400/70 bg-red-50/60 dark:bg-red-950/20 dark:border-red-900/50"
-                            : "bg-card"
+                          item.isOverdue ? "overdue-border-l" : "bg-card"
                         )}
+                        style={item.isOverdue ? { background: "var(--danger-soft)", borderColor: "var(--danger-soft)" } : undefined}
                       >
                         <div className="flex items-start gap-1.5">
                           <div className="pt-px shrink-0">
                             {completing.has(item.id) ? (
                               <ArcLoader size={12} />
                             ) : done ? (
-                              <div className="h-3.5 w-3.5 rounded-sm bg-emerald-500 flex items-center justify-center">
-                                <Check className="h-2.5 w-2.5 text-white" />
+                              <div className="h-3.5 w-3.5 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+                                <Check className="h-2.5 w-2.5" style={{ color: "#fff" }} />
                               </div>
                             ) : (
                               <Checkbox onCheckedChange={() => handleComplete(item)} className="h-3.5 w-3.5" />

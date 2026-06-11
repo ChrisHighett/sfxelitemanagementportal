@@ -25,10 +25,10 @@ interface CommsEntry {
 
 type ChannelFilter = "all" | "email" | "sms" | "whatsapp";
 
-const CHANNEL_META: Record<string, { label: string; Icon: any; cls: string }> = {
-  email:    { label: "Email",    Icon: Mail,            cls: "bg-blue-100 text-blue-800 border-blue-200" },
-  sms:      { label: "SMS",      Icon: MessageSquare,   cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  whatsapp: { label: "WhatsApp", Icon: MessageCircle,   cls: "bg-green-100 text-green-800 border-green-200" },
+const CHANNEL_META: Record<string, { label: string; Icon: any; style: React.CSSProperties }> = {
+  email:    { label: "Email",    Icon: Mail,            style: { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" } },
+  sms:      { label: "SMS",      Icon: MessageSquare,   style: { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" } },
+  whatsapp: { label: "WhatsApp", Icon: MessageCircle,   style: { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" } },
 };
 
 interface Props {
@@ -185,7 +185,7 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className={cn("text-[10px] border gap-1", chMeta.cls)}>
+                          <Badge variant="outline" className="text-[10px] border gap-1" style={chMeta.style}>
                             <ChIcon className="h-3 w-3" />
                             {chMeta.label}
                           </Badge>
@@ -193,7 +193,7 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                             {entry.email_type}
                           </Badge>
                           {entry.sent_status === "sent" ? (
-                            <Badge variant="default" className="text-[10px] bg-green-600">Sent</Badge>
+                            <Badge className="text-[10px] border-0" style={{ background: "var(--success-soft)", color: "var(--success-deep)" }}>Sent</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px]">Draft</Badge>
                           )}

@@ -9,9 +9,23 @@ import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
 
 function scoreBadge(score: number) {
-  if (score >= 80) return <Badge className="bg-green-500 hover:bg-green-500">On track</Badge>;
-  if (score >= 60) return <Badge className="bg-amber-500 hover:bg-amber-500">Review needed</Badge>;
-  return <Badge variant="destructive">Action required</Badge>;
+  if (score >= 80)
+    return (
+      <Badge className="border-0" style={{ background: "var(--success-soft)", color: "var(--success-deep)" }}>
+        On track
+      </Badge>
+    );
+  if (score >= 60)
+    return (
+      <Badge className="border-0" style={{ background: "var(--win-soft)", color: "var(--win-deep)" }}>
+        Review needed
+      </Badge>
+    );
+  return (
+    <Badge className="border-0" style={{ background: "var(--danger-soft)", color: "var(--danger-deep)" }}>
+      Action required
+    </Badge>
+  );
 }
 
 function initials(name: string) {
@@ -23,15 +37,8 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function avatarColor(name: string) {
-  const colors = [
-    "bg-blue-100 text-blue-700",
-    "bg-green-100 text-green-700",
-    "bg-purple-100 text-purple-700",
-    "bg-amber-100 text-amber-700",
-  ];
-  const idx = (name.charCodeAt(0) || 0) % colors.length;
-  return colors[idx];
+function avatarStyle(): React.CSSProperties {
+  return { background: "var(--brand-base-soft)", color: "var(--brand-accent)" };
 }
 
 function formatLastLogin(iso: string | null) {
@@ -53,7 +60,7 @@ function AgentCard({ kpi }: { kpi: AgentKPI }) {
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold ${avatarColor(kpi.agentName)}`}>
+            <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold" style={avatarStyle()}>
               {initials(kpi.agentName)}
             </div>
             <div className="min-w-0">
@@ -105,11 +112,11 @@ function AgentCard({ kpi }: { kpi: AgentKPI }) {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Thriving</div>
-            <div className="text-sm font-medium text-green-600">{kpi.thrivingCount}</div>
+            <div className="text-sm font-medium num" style={{ color: "var(--success-deep)" }}>{kpi.thrivingCount}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Needs support</div>
-            <div className="text-sm font-medium text-red-600">{kpi.needsSupportCount}</div>
+            <div className="text-sm font-medium num" style={{ color: "var(--danger-deep)" }}>{kpi.needsSupportCount}</div>
           </div>
         </div>
       </CardContent>
