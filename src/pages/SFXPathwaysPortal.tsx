@@ -124,6 +124,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
         <div className="space-y-6 flex-1">
           <div>
+            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-10 w-auto mb-2" />
             <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
             <p className="text-xs text-muted-foreground">Role-based portal + CRM</p>
           </div>
