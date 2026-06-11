@@ -2117,7 +2117,7 @@ function PendingApprovals() {
 }
 
 function AgentRow({ agent, onToggleApproved, onUpdateName }: {
-  agent: { id: string; display_name: string | null; email: string | null; approved: boolean; created_at: string };
+  agent: { id: string; display_name: string | null; email: string | null; approved: boolean; created_at: string; role?: string };
   onToggleApproved: (id: string, current: boolean) => void;
   onUpdateName: (id: string, name: string) => void;
 }) {
@@ -2158,6 +2158,9 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
           <div className="text-xs text-muted-foreground truncate">{agent.email || "No email"}</div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {agent.role === "scout" && (
+            <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400">Scout</Badge>
+          )}
           <Badge variant={agent.approved ? "default" : "secondary"}>
             {agent.approved ? "Active" : "Inactive"}
           </Badge>
@@ -2239,7 +2242,7 @@ function AgentManager() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Invite sent to ${inviteEmail} — they'll receive an email to set up their account.`);
+      toast.success(`${inviteRole === "scout" ? "Scout" : "Agent"} invite sent to ${inviteEmail}`);
       setInviteEmail("");
       setInviteName("");
       setShowInviteForm(false);
@@ -2277,12 +2280,12 @@ function AgentManager() {
         <div>
           <h3 className="text-base font-semibold">Agent Accounts</h3>
           <p className="text-sm text-muted-foreground">
-            Invite new agents and manage existing accounts. Invited agents receive an email to set their password.
+            Invite agents and scouts. They receive an email to set their password and access their portal immediately.
           </p>
         </div>
         <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setShowInviteForm((v) => !v)}>
           <UserPlus className="h-4 w-4" />
-          Invite agent
+          Invite member
         </Button>
       </div>
 
