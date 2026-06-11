@@ -176,19 +176,22 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
               );
             })}
           </nav>
-          <div
-            className="mt-6 rounded-[12px] p-3 text-xs"
-            style={{
-              background: "var(--brand-base-soft)",
-              border: "1px solid var(--brand-base-line)",
-              color: "rgba(255,255,255,0.78)",
-            }}
-          >
-            <div className="font-medium text-white truncate">
-              {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
-            </div>
-            <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
-              {role}
+          <div className="mt-6 space-y-2">
+            <CommandHint />
+            <div
+              className="rounded-[12px] p-3 text-xs"
+              style={{
+                background: "var(--brand-base-soft)",
+                border: "1px solid var(--brand-base-line)",
+                color: "rgba(255,255,255,0.78)",
+              }}
+            >
+              <div className="font-medium text-white truncate">
+                {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+              </div>
+              <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {role}
+              </div>
             </div>
           </div>
         </div>
