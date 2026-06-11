@@ -124,6 +124,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
         <div className="space-y-6 flex-1">
           <div>
+            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-10 w-auto mb-2" />
             <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
             <p className="text-xs text-muted-foreground">Role-based portal + CRM</p>
           </div>
@@ -150,7 +151,10 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-30">
-          <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+          <div className="flex items-center gap-2">
+            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-7 w-auto" />
+            <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+          </div>
           <div className="flex items-center gap-2">
             {!isOnline && (
               <Badge variant="destructive" className="gap-1 text-xs">
@@ -165,7 +169,10 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-4">
-                <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+                <div className="flex items-center gap-2 mb-4">
+                  <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-8 w-auto" />
+                  <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+                </div>
                 <nav className="space-y-1">
                   {items.map((it) => {
                     const Icon = it.icon;
