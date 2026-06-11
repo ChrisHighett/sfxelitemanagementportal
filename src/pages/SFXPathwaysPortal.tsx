@@ -2439,7 +2439,9 @@ function AgentManager() {
 
 function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: () => void }) {
   const { user } = useAuth();
+  const { isOnline, enqueue } = useOfflineQueue();
   const [saving, setSaving] = useState(false);
+  const [quickMode, setQuickMode] = useState(!editLead);
   const [form, setForm] = useState({
     first_name: editLead?.first_name || "",
     last_name: editLead?.last_name || "",
@@ -2469,6 +2471,16 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
         if (error) throw error;
         toast.success("Lead updated");
       } else {
+        if (!isOnline) {
+          enqueue("scout_leads", {
+            ...payload,
+            created_by: user?.id,
+            onboarding_stage: "New",
+          });
+          toast.success(`${form.first_name} ${form.last_name} saved offline — will sync when connected`);
+          onClose();
+          return;
+        }
         const { error } = await supabase.from("scout_leads" as any).insert({
           ...payload,
           created_by: user?.id,
@@ -2485,38 +2497,88 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     }
   }
 
+  const ratingButtons = (
+    <div className="space-y-1.5">
+      <Label className="text-xs">Scout rating</Label>
+      <div className="flex gap-2">
+        {["A", "B", "C"].map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => set("scout_rating", r)}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+              form.scout_rating === r
+                ? r === "A"
+                  ? "bg-green-600 text-white border-green-600"
+                  : r === "B"
+                    ? "bg-amber-500 text-white border-amber-500"
+                    : "bg-muted text-muted-foreground border-muted-foreground/30"
+                : "bg-background border-border text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {quickMode ? r : r === "A" ? "A — Elite" : r === "B" ? "B — Strong" : "C — Monitor"}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
+      {!editLead && (
+        <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+          <span className="text-xs text-muted-foreground">
+            {quickMode ? "Quick mode — essentials only" : "Full details mode"}
+          </span>
+          <button
+            type="button"
+            onClick={() => setQuickMode((v) => !v)}
+            className="text-xs text-primary underline underline-offset-2"
+          >
+            {quickMode ? "Add full details" : "Quick mode"}
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1"><Label className="text-xs">First name *</Label><Input placeholder="Jake" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Last name *</Label><Input placeholder="Morrison" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Age</Label><Input type="number" placeholder="16" value={form.age} onChange={(e) => set("age", e.target.value)} className="h-8" /></div>
         <div className="space-y-1"><Label className="text-xs">Position</Label><Input placeholder="Halfback" value={form.position} onChange={(e) => set("position", e.target.value)} className="h-8" /></div>
-        <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
-        <div className="space-y-1"><Label className="text-xs">Region</Label>
-          <Select value={form.region} onValueChange={(v) => set("region", v)}>
-            <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
-            <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
       </div>
-      <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
-      <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1"><Label className="text-xs">Scout rating</Label>
-          <Select value={form.scout_rating} onValueChange={(v) => set("scout_rating", v)}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="A">A — Elite prospect</SelectItem><SelectItem value="B">B — Strong watch</SelectItem><SelectItem value="C">C — Monitor</SelectItem></SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1"><Label className="text-xs">Decision</Label>
-          <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
-            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
+
+      {quickMode ? (
+        <>
+          {ratingButtons}
+          <div className="space-y-1"><Label className="text-xs">Quick notes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
+            <div className="space-y-1"><Label className="text-xs">Region</Label>
+              <Select value={form.region} onValueChange={(v) => set("region", v)}>
+                <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
+                <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          {ratingButtons}
+          <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
+          <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label className="text-xs">Decision</Label>
+              <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
+                <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1"><Label className="text-xs">Comp / Grade</Label><Input placeholder="Yr 10 Rep" value={form.comp_grade} onChange={(e) => set("comp_grade", e.target.value)} className="h-8" /></div>
+          </div>
+          <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
+        </>
+      )}
+
       <Button className="w-full" onClick={handleSave} disabled={saving}>
         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editLead ? "Update lead" : "Add lead"}
       </Button>
