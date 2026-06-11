@@ -3282,8 +3282,8 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
     },
   });
 
-  const pursuePipeline = scoutLeads.filter((l: any) => l.triage_decision === "Pursue");
-  const highCompetition = scoutLeads.filter((l: any) => l.competitor_interest && l.competitor_interest.trim() !== "");
+  const pursuePipeline = scoutLeads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
+  const highCompetition = scoutLeads.filter((l: any) => l.competitor_interest && l.competitor_interest.trim() !== "" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
   const stalledLeads = pursuePipeline.filter((l: any) => {
     const days = Math.floor((Date.now() - new Date(l.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
