@@ -138,8 +138,12 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [followUpPreset, setFollowUpPreset] = useState<FollowUpPreset>("8w");
   const [followUpCustom, setFollowUpCustom] = useState<string>("");
 
-  // Audience for the AI update email
+  // Audience for the AI update message
   const [audience, setAudience] = useState<Audience>("athlete");
+
+  // Output format
+  const [format, setFormat] = useState<Format>("email");
+  const [copied, setCopied] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -149,9 +153,12 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [generatingEmail, setGeneratingEmail] = useState(false);
   const [saved, setSaved] = useState(false);
+  // emailDraft / emailSubject now hold the current generated draft, editable by the agent
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
   const [savedRecord, setSavedRecord] = useState<{ counterparty: string } | null>(null);
+
+  const isMinor = typeof athlete.age === "number" && athlete.age < 18;
 
   const convTypeOptions = CONV_TYPES_BY_CATEGORY[category];
   const counterpartyConfig = COUNTERPARTY_CONFIG[category];
