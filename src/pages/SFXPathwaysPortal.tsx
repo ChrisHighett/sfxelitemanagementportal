@@ -2158,6 +2158,9 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
           <div className="text-xs text-muted-foreground truncate">{agent.email || "No email"}</div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {agent.role === "scout" && (
+            <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400">Scout</Badge>
+          )}
           <Badge variant={agent.approved ? "default" : "secondary"}>
             {agent.approved ? "Active" : "Inactive"}
           </Badge>
