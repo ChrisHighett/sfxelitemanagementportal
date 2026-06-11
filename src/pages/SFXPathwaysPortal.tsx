@@ -42,7 +42,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -90,6 +90,10 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "admin", label: "Admin", icon: Shield },
+  ],
+  scout: [
+    { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "add", label: "Add Lead", icon: Plus },
   ],
 };
 
@@ -2823,7 +2827,7 @@ export default function SFXPathwaysPortal() {
   useEffect(() => {
     if (userRoleData?.role && !role) {
       setRole(userRoleData.role as Role);
-      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete"].includes(requestedRole)
+      const initialRole = isAdmin && requestedRole && ["admin", "agent", "parent", "athlete", "scout"].includes(requestedRole)
         ? requestedRole
         : (userRoleData.role as Role);
       if (isAdmin && requestedRole && requestedRole !== userRoleData.role) {
@@ -2917,6 +2921,7 @@ export default function SFXPathwaysPortal() {
             <SelectContent>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="agent">Agent</SelectItem>
+              <SelectItem value="scout">Scout</SelectItem>
               <SelectItem value="parent">Parent</SelectItem>
               <SelectItem value="athlete">Athlete</SelectItem>
             </SelectContent>
@@ -2947,7 +2952,7 @@ export default function SFXPathwaysPortal() {
         />
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <ScoutPipeline />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <AgentScoutView />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
