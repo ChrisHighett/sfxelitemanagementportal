@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
