@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
@@ -39,15 +39,19 @@ function classifyTask(item: PlannerItem): Exclude<FilterType, "All" | "Urgent"> 
   return "Other";
 }
 
-function getWeekLabel(): string {
+function getWeekRange(offset: number = 0): { start: Date; end: Date; label: string } {
   const now = new Date();
   const mon = new Date(now);
-  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7) + offset * 7);
+  mon.setHours(0, 0, 0, 0);
   const fri = new Date(mon);
   fri.setDate(mon.getDate() + 4);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  sun.setHours(23, 59, 59, 999);
   const fmt = (d: Date) =>
     d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
-  return `${fmt(mon)} – ${fmt(fri)}`;
+  return { start: mon, end: sun, label: `${fmt(mon)} – ${fmt(fri)}` };
 }
 
 function priorityBadge(p: number) {
@@ -290,6 +294,11 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [sessionCompleted, setSessionCompleted] = useState<Set<string>>(new Set());
   const [latestClubCalls, setLatestClubCalls] = useState<Record<string, string>>({});
   const [pursueLeads, setPursueLeads] = useState<any[]>([]);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [upcomingCount, setUpcomingCount] = useState(0);
+
+  const week = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
+  const isCurrentWeek = weekOffset === 0;
 
   const today = new Date();
   const currentDayIndex = (today.getDay() + 6) % 7;
@@ -298,19 +307,34 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [selectedDay, setSelectedDay] = useState<string>("today"); // "today" | "Monday".. | "all"
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
 
+  // When navigating away from current week, "today" no longer applies
+  useEffect(() => {
+    if (!isCurrentWeek && selectedDay === "today") setSelectedDay("all");
+  }, [isCurrentWeek, selectedDay]);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
       const athleteIds = athletes.map((a) => a.id);
       if (athleteIds.length === 0) { setLoading(false); return; }
 
-      const now = new Date();
-      const mon = new Date(now);
-      mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-      mon.setHours(0, 0, 0, 0);
+      const weekStartISO = week.start.toISOString();
+      const weekStartDate = week.start.toISOString().slice(0, 10);
+      const weekEndDate = week.end.toISOString().slice(0, 10);
 
-      const [tasksRes, reviewsRes, clubCallsRes, scoutRes] = await Promise.all([
-        supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date").in("athlete_id", athleteIds).eq("owner_type", "agent").or(`created_at.gte.${mon.toISOString()},due_date.gte.${mon.toISOString().slice(0,10)}`).order("priority", { ascending: true }),
+      const [tasksRes, reviewsRes, clubCallsRes, scoutRes, upcomingRes] = await Promise.all([
+        // Tasks whose due_date falls in the visible week, OR (current week only)
+        // recently created undated tasks.
+        supabase.from("athlete_tasks")
+          .select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date")
+          .in("athlete_id", athleteIds)
+          .eq("owner_type", "agent")
+          .or(
+            isCurrentWeek
+              ? `and(due_date.gte.${weekStartDate},due_date.lte.${weekEndDate}),and(due_date.is.null,created_at.gte.${weekStartISO})`
+              : `and(due_date.gte.${weekStartDate},due_date.lte.${weekEndDate})`
+          )
+          .order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
         (supabase as any)
@@ -319,8 +343,16 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           .eq("triage_decision", "Pursue")
           .neq("onboarding_stage", "Signed")
           .neq("onboarding_stage", "Lost"),
+        // Count of open tasks due AFTER this week's end (for "+N upcoming" hint)
+        supabase.from("athlete_tasks")
+          .select("id", { count: "exact", head: true })
+          .in("athlete_id", athleteIds)
+          .eq("owner_type", "agent")
+          .neq("status", "done" as any)
+          .gt("due_date", weekEndDate),
       ]);
       setPursueLeads(scoutRes?.data || []);
+      setUpcomingCount(upcomingRes.count ?? 0);
 
       setSavedTasks(tasksRes.data || []);
       const seen = new Set<string>();
@@ -339,7 +371,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       setLoading(false);
     }
     load();
-  }, [athletes]);
+  }, [athletes, weekOffset, isCurrentWeek, week.start, week.end]);
 
   const plannerItems = useMemo((): PlannerItem[] => {
     const savedIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => `${t.athlete_id}:${t.title}`));
