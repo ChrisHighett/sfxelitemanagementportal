@@ -45,7 +45,9 @@ function generateTasks(
   athletes: Athlete[],
   reviews: { athlete_id: string; review_month: string; follow_up_actions: string | null; wellbeing_score: number | null; parent_engagement_notes: string | null }[],
   existingTaskAthleteIds: Set<string>,
-  latestClubCalls: Record<string, string>
+  latestClubCalls: Record<string, string>,
+  pursueLeads: any[],
+  currentUserId: string | undefined
 ): Omit<PlannerItem, "id" | "source">[] {
   const items: Omit<PlannerItem, "id" | "source">[] = [];
   const currentMonth = new Date().toISOString().slice(0, 7) + "-01";
