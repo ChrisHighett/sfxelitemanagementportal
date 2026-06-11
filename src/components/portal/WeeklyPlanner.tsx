@@ -732,6 +732,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         <PriorityBand
           label="High"
@@ -742,6 +744,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         <PriorityBand
           label="Normal"
@@ -752,6 +756,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onReschedule={handleReschedule}
+          onDismiss={handleDismiss}
         />
         {weekOverflow > 0 && (
           <p className="text-xs text-muted-foreground text-center pt-1">
