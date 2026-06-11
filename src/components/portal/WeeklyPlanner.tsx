@@ -802,6 +802,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                       completing={completing.has(item.id)}
                       completed={isCompleted(item)}
                       onComplete={() => handleComplete(item)}
+                      onReschedule={handleReschedule}
+                      onDismiss={handleDismiss}
                     />
                   ))
                 )}
