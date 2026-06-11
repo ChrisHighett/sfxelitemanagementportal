@@ -603,9 +603,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           .from("athlete_tasks")
           .update({
             status: "cancelled" as any,
-            completed_at: new Date().toISOString(),
+            dismiss_reason: reason,
             completed_by: user?.id || null,
-            description: `${item.reason ? item.reason + "\n\n" : ""}[Dismissed: ${reason}]`,
           } as any)
           .eq("id", item.id);
         if (error) throw error;

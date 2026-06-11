@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, TrendingUp, Users, Phone, ClipboardList, Mail, CheckSquare } from "lucide-react";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
+import AgentTaskScorecard from "./AgentTaskScorecard";
 
 function scoreBadge(score: number) {
   if (score >= 80) return <Badge className="bg-green-500 hover:bg-green-500">On track</Badge>;
@@ -185,6 +186,9 @@ export default function AdminAnalytics() {
           </div>
         )}
       </div>
+      {/* Task completion scorecard */}
+      <AgentTaskScorecard />
+
 
       {/* KPI legend */}
       <Card>

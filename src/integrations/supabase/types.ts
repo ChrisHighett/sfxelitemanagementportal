@@ -288,13 +288,17 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          dismiss_reason: string | null
+          dismissed_at: string | null
           due_date: string | null
           id: string
+          original_due_date: string | null
           owner_type: Database["public"]["Enums"]["task_owner_type"]
           priority: number
           related_alert_id: string | null
           related_call_id: string | null
           related_review_id: string | null
+          reschedule_count: number
           source: string
           status: Database["public"]["Enums"]["task_status"]
           suggested_day: string | null
@@ -309,13 +313,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dismiss_reason?: string | null
+          dismissed_at?: string | null
           due_date?: string | null
           id?: string
+          original_due_date?: string | null
           owner_type: Database["public"]["Enums"]["task_owner_type"]
           priority?: number
           related_alert_id?: string | null
           related_call_id?: string | null
           related_review_id?: string | null
+          reschedule_count?: number
           source?: string
           status?: Database["public"]["Enums"]["task_status"]
           suggested_day?: string | null
@@ -330,13 +338,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dismiss_reason?: string | null
+          dismissed_at?: string | null
           due_date?: string | null
           id?: string
+          original_due_date?: string | null
           owner_type?: Database["public"]["Enums"]["task_owner_type"]
           priority?: number
           related_alert_id?: string | null
           related_call_id?: string | null
           related_review_id?: string | null
+          reschedule_count?: number
           source?: string
           status?: Database["public"]["Enums"]["task_status"]
           suggested_day?: string | null
@@ -1375,6 +1387,50 @@ export type Database = {
       generate_athlete_code: {
         Args: { first_name: string; last_name: string }
         Returns: string
+      }
+      get_agent_dismiss_reasons: {
+        Args: { p_agent_id: string; p_window_days?: number }
+        Returns: {
+          n: number
+          reason: string
+        }[]
+      }
+      get_agent_overdue_tasks: {
+        Args: { p_agent_id: string }
+        Returns: {
+          athlete_id: string
+          athlete_name: string
+          days_overdue: number
+          due_date: string
+          original_due_date: string
+          priority: number
+          reschedule_count: number
+          status: string
+          task_id: string
+          title: string
+        }[]
+      }
+      get_agent_task_scorecard: {
+        Args: { p_window_days?: number }
+        Returns: {
+          agent_id: string
+          agent_name: string
+          athletes_assigned: number
+          avg_lag_days: number
+          avg_reschedules: number
+          completed_with_due: number
+          currently_overdue: number
+          dismiss_rate: number
+          median_overdue_days: number
+          oldest_overdue_days: number
+          on_time_count: number
+          on_time_rate: number
+          reschedule_rate: number
+          rescheduled_tasks: number
+          tasks_completed: number
+          tasks_created: number
+          tasks_dismissed: number
+        }[]
       }
       is_admin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
