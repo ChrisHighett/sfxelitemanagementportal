@@ -2843,6 +2843,14 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
           onConvert={() => {}}
         />
       )}
+
+      {lostModalLead && (
+        <LostReasonModal
+          lead={lostModalLead}
+          onConfirm={handleConfirmLost}
+          onCancel={() => setLostModalLead(null)}
+        />
+      )}
     </div>
   );
 }
