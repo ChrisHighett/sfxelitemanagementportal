@@ -3896,10 +3896,33 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Build ⌘K palette commands from current role's nav + athlete jump-list
+  const paletteCommands: PaletteCommand[] = [
+    ...((effectiveRole ? NAV[effectiveRole] : []) ?? []).map((it) => ({
+      id: `nav-${it.key}`,
+      label: it.label,
+      group: "Navigate",
+      icon: it.icon,
+      run: () => handleNav(it.key),
+    })),
+    ...((effectiveRole === "agent" || effectiveRole === "admin")
+      ? athletes.slice(0, 50).map((a) => ({
+          id: `athlete-${a.id}`,
+          label: a.name,
+          hint: "Open profile",
+          group: "Athletes",
+          icon: User,
+          keywords: a.position ?? "",
+          run: () => { setSelectedAthleteId(a.id); handleNav("athlete"); },
+        }))
+      : []),
+  ];
+
   // Scout role: dedicated portal, no athlete data required
   if (effectiveRole === "scout") {
     return (
       <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
         <ScoutPortal autoOpenForm={active === "add"} />
       </Shell>
     );
