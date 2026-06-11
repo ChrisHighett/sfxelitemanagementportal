@@ -342,10 +342,20 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
     const active: PlannerItem[] = savedTasks
       .filter((t) => t.status !== "cancelled")
-      .map((t) => ({
-        id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
-        title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
-      }));
+      .map((t) => {
+        let day = t.suggested_day || "Monday";
+        if (t.due_date) {
+          const d = new Date(t.due_date + "T00:00:00");
+          const idx = (d.getDay() + 6) % 7;
+          day = idx < 5 ? DAYS[idx] : "Friday";
+        }
+        return {
+          id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
+          title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
+          aiSourced: t.source === "conversation_ai",
+          dueDate: t.due_date ?? null,
+        };
+      });
 
     const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id);
     const newGenerated: PlannerItem[] = generated
