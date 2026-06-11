@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import SFXPathwaysPortal from "./pages/SFXPathwaysPortal";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import { BrandGradientDefs } from "@/components/brand/Brand";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function RedirectIfAuth({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <BrandGradientDefs />
       <Toaster />
       <Sonner />
       <BrowserRouter>

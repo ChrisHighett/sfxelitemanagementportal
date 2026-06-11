@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
+import { BrandMark } from "@/components/brand/Brand";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import LostReasonModal from "@/components/portal/LostReasonModal";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
@@ -116,45 +117,87 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
+  const { user } = useAuth();
   const mobileQuickNav = items.slice(0, 4);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card p-4 flex-shrink-0">
-        <div className="space-y-6 flex-1">
-          <div>
-            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-10 w-auto mb-2" />
-            <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
-            <p className="text-xs text-muted-foreground">Role-based portal + CRM</p>
+    <div className="flex min-h-screen" style={{ background: "var(--canvas)" }}>
+      {/* Desktop command rail — dark, sticky, brand-base */}
+      <aside
+        className="hidden md:flex flex-col flex-shrink-0 sticky top-0 self-start h-screen"
+        style={{
+          width: 248,
+          background: "var(--brand-base)",
+          borderRight: "1px solid var(--brand-base-line)",
+          color: "#fff",
+        }}
+      >
+        <div className="flex flex-col flex-1 p-5">
+          <div className="mb-8 flex items-center gap-3">
+            <BrandMark variant="wordmark" height={26} />
           </div>
-          <nav className="space-y-1">
+          <nav className="space-y-1 flex-1">
             {items.map((it) => {
               const Icon = it.icon;
               const isActive = active === it.key;
               return (
                 <button
                   key={it.key}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
                   onClick={() => onNav(it.key)}
+                  className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors"
+                  style={{
+                    color: isActive ? "#fff" : "rgba(255,255,255,0.62)",
+                    background: isActive ? "var(--brand-base-soft)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "var(--brand-base-soft)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = "transparent";
+                  }}
                 >
-                  <Icon className="h-4 w-4" />
+                  {isActive && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                      style={{ background: "var(--brand-gradient)" }}
+                    />
+                  )}
+                  <Icon
+                    className="h-4 w-4"
+                    style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
+                  />
                   <span className="flex-1 text-left">{it.label}</span>
                   {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                 </button>
               );
             })}
           </nav>
+          <div
+            className="mt-6 rounded-[12px] p-3 text-xs"
+            style={{
+              background: "var(--brand-base-soft)",
+              border: "1px solid var(--brand-base-line)",
+              color: "rgba(255,255,255,0.78)",
+            }}
+          >
+            <div className="font-medium text-white truncate">
+              {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+            </div>
+            <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+              {role}
+            </div>
+          </div>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between border-b border-border bg-card px-4 py-3 sticky top-0 z-30">
-          <div className="flex items-center gap-2">
-            <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-7 w-auto" />
-            <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
-          </div>
+        <div
+          className="md:hidden flex items-center justify-between px-4 py-3 sticky top-0 z-30"
+          style={{ background: "var(--brand-base)", color: "#fff", borderBottom: "1px solid var(--brand-base-line)" }}
+        >
+          <BrandMark variant="wordmark" height={22} />
           <div className="flex items-center gap-2">
             {!isOnline && (
               <Badge variant="destructive" className="gap-1 text-xs">
@@ -164,14 +207,13 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
             )}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-white hover:bg-white/10 hover:text-white">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <img src="/tgi-sport-logo.png" alt="TGI Sport" className="h-8 w-auto" />
-                  <h2 className="text-lg font-bold" style={{ fontFamily: "var(--font-heading)" }}>TGI Pathways</h2>
+              <SheetContent side="left" className="w-72 p-4" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
+                <div className="mb-4">
+                  <BrandMark variant="wordmark" height={24} />
                 </div>
                 <nav className="space-y-1">
                   {items.map((it) => {
@@ -180,10 +222,17 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                     return (
                       <button
                         key={it.key}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${isAct ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
                         onClick={() => { onNav(it.key); setMobileOpen(false); }}
+                        className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-sm transition-colors"
+                        style={{
+                          color: isAct ? "#fff" : "rgba(255,255,255,0.62)",
+                          background: isAct ? "var(--brand-base-soft)" : "transparent",
+                        }}
                       >
-                        <Icon className="h-5 w-5" />
+                        {isAct && (
+                          <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full" style={{ background: "var(--brand-gradient)" }} />
+                        )}
+                        <Icon className="h-5 w-5" style={{ color: isAct ? "var(--brand-spectrum-from)" : undefined }} />
                         <span className="flex-1 text-left">{it.label}</span>
                         {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                       </button>

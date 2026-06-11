@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, User } from "lucide-react";
+import { BrandMark, ArcBackdrop, ArcLoader } from "@/components/brand/Brand";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -53,25 +54,32 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 auth-gradient items-center justify-center p-12">
-        <div className="max-w-md space-y-6">
-          <h1
-            className="text-5xl font-bold tracking-tight text-primary-foreground"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
+    <div className="min-h-screen flex" style={{ background: "var(--canvas)" }}>
+      <div
+        className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 relative overflow-hidden"
+        style={{ background: "var(--brand-base)", color: "#fff" }}
+      >
+        <ArcBackdrop />
+        <div className="max-w-md space-y-8 relative">
+          <BrandMark variant="wordmark" height={40} />
+          <h1 className="text-5xl font-semibold tracking-tight text-white" style={{ fontFamily: "var(--font-display)" }}>
             {mode === "login" ? "Welcome back." : "Get started."}
           </h1>
-          <p className="text-lg text-primary-foreground/80">
+          <p className="text-lg" style={{ color: "rgba(255,255,255,0.72)" }}>
             {mode === "login"
-              ? "Sign in to your TGI Sport portal."
-              : "Create your account to access your TGI Sport portal."}
+              ? "Sign in to your TGI Pathways portal."
+              : "Create your account to access your TGI Pathways portal."}
           </p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-8" style={{ background: "var(--surface)" }}>
         <div className="w-full max-w-sm space-y-8">
+          <div className="lg:hidden flex justify-center">
+            <div className="rounded-[12px] p-3" style={{ background: "var(--brand-base)" }}>
+              <BrandMark variant="wordmark" height={28} />
+            </div>
+          </div>
           <div className="space-y-2">
             <h2
               className="text-3xl font-bold tracking-tight"
@@ -160,7 +168,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
 
             <Button type="submit" className="w-full h-11" disabled={loading}>
-              {loading && <Loader2 className="animate-spin" />}
+              {loading && <ArcLoader size={18} className="mr-2" />}
               {mode === "login" ? "Sign in" : "Create account"}
             </Button>
           </form>

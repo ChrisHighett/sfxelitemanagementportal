@@ -1,110 +1,209 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================
+   WHITE-LABEL THEME LAYER
+   Swap the values in :root to re-skin the entire app.
+   Components must reference these tokens — never hard-code hex.
+   ============================================================= */
+
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* —— BRAND (swap per client) —— */
+    --brand-name: "TGI Pathways";
+    --brand-base: #000000;
+    --brand-base-soft: #14161B;
+    --brand-base-line: #262A31;
+    --brand-spectrum-from: #19D3F0;
+    --brand-spectrum-to:   #1B5BFF;
+    --brand-accent: #1B5BFF;
+    --brand-gradient: linear-gradient(120deg, var(--brand-spectrum-from), var(--brand-spectrum-to));
+    --brand-logo: url("/brand/tgi-logo.png");
+    --brand-icon: url("/brand/tgi-arc.svg");
+
+    /* —— NEUTRALS —— */
+    --canvas: #F4F6FA;
+    --surface: #FFFFFF;
+    --text: #0F1115;
+    --muted-fg: #5A6472;
+    --hint: #93A0B2;
+    --border-hex: #E7EBF2;
+    --border-strong: #D6DCE7;
+
+    /* —— SEMANTIC —— */
+    --success: #15A05A;  --success-soft: #E7F6EE;  --success-deep: #0B6B3B;
+    --danger:  #E0453B;  --danger-soft:  #FCEBEA;  --danger-deep:  #B3261E;
+    --win:     #F2B53D;  --win-soft:     #FCEFCF;  --win-deep:     #9A6A0E;
+
+    /* —— SHAPE & DEPTH —— */
+    --r-sm: 10px; --r: 14px; --r-lg: 18px;
+    --shadow-sm: 0 1px 2px rgba(15,17,21,.05), 0 4px 12px rgba(15,17,21,.05);
+    --shadow:    0 1px 2px rgba(15,17,21,.04), 0 8px 24px rgba(15,17,21,.06);
+
+    /* —— TYPE —— */
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Geist", system-ui, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, monospace;
+    /* Back-compat aliases (existing code references --font-heading) */
+    --font-heading: var(--font-display);
+
+    /* =========================================================
+       SHADCN BRIDGE — HSL components derived from brand tokens
+       so shadcn primitives inherit the theme without rewrites.
+       ========================================================= */
+    --background: 220 27% 97%;          /* canvas */
+    --foreground: 222 14% 8%;           /* text */
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 222 14% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover-foreground: 222 14% 8%;
 
-    --primary: 220 70% 50%;
+    --primary: 0 0% 0%;                 /* brand-base — buttons land here */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 25% 10%;
+    --secondary: 220 27% 93%;
+    --secondary-foreground: 222 14% 8%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 220 27% 95%;
+    --muted-foreground: 217 12% 40%;
 
-    --accent: 160 60% 45%;
+    --accent: 224 100% 55%;             /* brand-accent */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 4 73% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 220 70% 50%;
+    --border: 219 30% 93%;
+    --input: 219 30% 93%;
+    --ring: 224 100% 55%;
 
-    --radius: 0.75rem;
+    --radius: 14px;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    /* Sidebar shadcn tokens — dark command rail */
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 220 14% 78%;
+    --sidebar-primary: 224 100% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 11%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 10% 16%;
+    --sidebar-ring: 224 100% 55%;
   }
 
   .dark {
-    --background: 220 25% 6%;
-    --foreground: 220 15% 95%;
-
-    --card: 220 25% 10%;
-    --card-foreground: 220 15% 95%;
-
-    --popover: 220 25% 10%;
-    --popover-foreground: 220 15% 95%;
-
-    --primary: 220 70% 55%;
+    /* Dark mode is currently unused (app is light-canvas + dark-rail by design).
+       Keep tokens defined for shadcn primitives that opt in. */
+    --background: 222 14% 6%;
+    --foreground: 220 14% 95%;
+    --card: 222 14% 9%;
+    --card-foreground: 220 14% 95%;
+    --popover: 222 14% 9%;
+    --popover-foreground: 220 14% 95%;
+    --primary: 224 100% 60%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 220 15% 95%;
-
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 55%;
-
-    --accent: 160 60% 45%;
+    --secondary: 222 14% 14%;
+    --secondary-foreground: 220 14% 95%;
+    --muted: 222 14% 14%;
+    --muted-foreground: 217 12% 60%;
+    --accent: 224 100% 60%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 4 73% 50%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 220 70% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 222 14% 18%;
+    --input: 222 14% 18%;
+    --ring: 224 100% 60%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Instrument-grade numbers — opt-in via .num or font-mono */
+  .num, .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 }
 
 @layer components {
   .auth-gradient {
-    background: linear-gradient(135deg, hsl(220 70% 50%) 0%, hsl(260 60% 55%) 50%, hsl(160 60% 45%) 100%);
+    background: var(--brand-base);
   }
+
+  /* The signature arc loader — replaces all generic spinners */
+  .arc-load {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0 30%,
+      var(--brand-spectrum-from),
+      var(--brand-spectrum-to) 95%,
+      transparent
+    );
+    -webkit-mask: radial-gradient(closest-side, transparent 68%, #000 70%);
+            mask: radial-gradient(closest-side, transparent 68%, #000 70%);
+    animation: arc-spin 0.8s linear infinite;
+  }
+  @keyframes arc-spin { to { transform: rotate(360deg); } }
+
+  /* Brand logo as a CSS-driven block — swap by changing --brand-logo */
+  .brand-logo {
+    background-image: var(--brand-logo);
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: contain;
+  }
+  .brand-icon {
+    background-image: var(--brand-icon);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  /* Gradient text/border helpers — for the cyan→blue arc motif */
+  .brand-gradient-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+  .brand-gradient-bar {
+    background: var(--brand-gradient);
+  }
+
+  /* AI-extracted task / brand-accent left border */
+  .ai-border-l { box-shadow: inset 3px 0 0 var(--brand-spectrum-to); }
+  .overdue-border-l { box-shadow: inset 3px 0 0 var(--danger); }
 }
