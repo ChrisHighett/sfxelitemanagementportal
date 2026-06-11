@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check } from "lucide-react";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
@@ -18,6 +18,8 @@ interface PlannerItem {
   suggestedDay: string;
   priority: number;
   source: "generated" | "saved";
+  aiSourced?: boolean;
+  dueDate?: string | null;
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -194,6 +196,11 @@ function TaskRow({
           <span className={`text-xs font-bold truncate ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
             {item.athleteName}
           </span>
+          {item.aiSourced && (
+            <span title="From conversation" className="inline-flex items-center gap-0.5 rounded-sm bg-primary/10 text-primary px-1 py-px text-[9px] font-medium">
+              <Sparkles className="h-2.5 w-2.5" />
+            </span>
+          )}
         </div>
         <p className={`text-sm font-medium leading-snug ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {item.title}
@@ -273,7 +280,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [savedTasks, setSavedTasks] = useState<
-    { id: string; athlete_id: string; title: string; description: string | null; priority: number; suggested_day: string | null; status: string }[]
+    { id: string; athlete_id: string; title: string; description: string | null; priority: number; suggested_day: string | null; status: string; source?: string | null; due_date?: string | null }[]
   >([]);
   const [reviews, setReviews] = useState<
     { athlete_id: string; review_month: string; follow_up_actions: string | null; wellbeing_score: number | null; parent_engagement_notes: string | null }[]
@@ -303,7 +310,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       mon.setHours(0, 0, 0, 0);
 
       const [tasksRes, reviewsRes, clubCallsRes, scoutRes] = await Promise.all([
-        supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status").in("athlete_id", athleteIds).eq("owner_type", "agent").gte("created_at", mon.toISOString()).order("priority", { ascending: true }),
+        supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date").in("athlete_id", athleteIds).eq("owner_type", "agent").or(`created_at.gte.${mon.toISOString()},due_date.gte.${mon.toISOString().slice(0,10)}`).order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
         (supabase as any)
@@ -340,10 +347,20 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
     const active: PlannerItem[] = savedTasks
       .filter((t) => t.status !== "cancelled")
-      .map((t) => ({
-        id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
-        title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
-      }));
+      .map((t) => {
+        let day = t.suggested_day || "Monday";
+        if (t.due_date) {
+          const d = new Date(t.due_date + "T00:00:00");
+          const idx = (d.getDay() + 6) % 7;
+          day = idx < 5 ? DAYS[idx] : "Friday";
+        }
+        return {
+          id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
+          title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
+          aiSourced: t.source === "conversation_ai",
+          dueDate: t.due_date ?? null,
+        };
+      });
 
     const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id);
     const newGenerated: PlannerItem[] = generated
@@ -600,7 +617,10 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             )}
                           </div>
                           <div className="min-w-0 flex-1 space-y-0.5">
-                            <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
+                            <div className="flex items-center gap-1">
+                              <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
+                              {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                            </div>
                             <p className={`text-[11px] leading-snug ${done ? "line-through text-muted-foreground" : ""}`}>{item.title}</p>
                             {item.reason && <p className="text-[10px] text-muted-foreground leading-snug line-clamp-1">{item.reason}</p>}
                             <div className="pt-0.5">{priorityBadge(item.priority)}</div>

@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Athlete } from "@/hooks/usePortalData";
 import { saveCommsEmail } from "@/components/portal/CommsHistory";
+import ActionItemConfirmPanel, { type ExtractedItem } from "@/components/portal/ActionItemConfirmPanel";
 import { cn } from "@/lib/utils";
 
 type Category = "club" | "commercial" | "media" | "general";
@@ -157,6 +158,11 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [emailDraft, setEmailDraft] = useState<string | null>(null);
   const [emailSubject, setEmailSubject] = useState("");
   const [savedRecord, setSavedRecord] = useState<{ counterparty: string } | null>(null);
+  const [savedConversationId, setSavedConversationId] = useState<string | null>(null);
+
+  // AI action-item extraction
+  const [extracting, setExtracting] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
 
   const isMinor = typeof athlete.age === "number" && athlete.age < 18;
 
@@ -278,7 +284,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     const summaryText = `${categoryLabel} — ${cpDisplay} (${convLabel})`;
     const followUpAt = presetToDate(followUpPreset, followUpCustom);
 
-    const { error } = await supabase.from("call_history").insert({
+    const { data: inserted, error } = await supabase.from("call_history").insert({
       athlete_id: athlete.id,
       // Keep call_type='club_conversation' so existing alerts + filters still work.
       // Category column is what really drives behaviour going forward.
@@ -294,7 +300,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       counterparty_name: counterpartyValue.trim() || null,
       follow_up_at: followUpAt,
       email_audience: audience,
-    } as any);
+    } as any).select("id, created_at").maybeSingle();
 
     setSaving(false);
 
@@ -303,10 +309,20 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
       return;
     }
 
+    const newId = (inserted as any)?.id ?? null;
+    const conversationDate =
+      (inserted as any)?.created_at?.slice(0, 10) ||
+      new Date().toISOString().slice(0, 10);
     setSavedRecord({ counterparty: counterpartyValue.trim() });
+    setSavedConversationId(newId);
     qc.invalidateQueries({ queryKey: ["call_history", athlete.id] });
     setSaved(true);
     onSaved?.();
+
+    // Fire-and-forget AI extraction — never blocks the save flow.
+    runExtraction(newId, conversationDate).catch((e) => {
+      console.warn("Action-item extraction failed:", e);
+    });
 
     if (audience === "skip") {
       toast.success("Conversation saved to athlete file.");
@@ -315,6 +331,32 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
     toast.success(`Saved — drafting ${format} message for ${audience}…`);
     await handleGenerateEmail(format, audience);
+  };
+
+  const runExtraction = async (conversationId: string | null, conversationDate: string) => {
+    setExtracting(true);
+    setExtractedItems(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-action-items", {
+        body: {
+          note: notes.trim(),
+          conversationDate,
+          category,
+          athleteFirstName: athlete.name.split(" ")[0],
+          counterparty: counterpartyValue.trim() || null,
+        },
+      });
+      if (error) throw error;
+      const items: ExtractedItem[] = Array.isArray((data as any)?.items)
+        ? (data as any).items
+        : [];
+      setExtractedItems(items);
+    } catch (e) {
+      console.warn("extract-action-items error:", e);
+      setExtractedItems([]);
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const handleGenerateEmail = async (
@@ -444,6 +486,9 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     setEmailDraft(null);
     setEmailSubject("");
     setSavedRecord(null);
+    setSavedConversationId(null);
+    setExtractedItems(null);
+    setExtracting(false);
   };
 
   const audienceOptions: Array<{ value: Audience; label: string }> = [
@@ -665,6 +710,27 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
             <CheckCircle2 className="h-4 w-4" />
             Saved to {athlete.name}'s file
           </div>
+
+          {/* AI extracted action items */}
+          {extracting && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              Scanning note for follow-ups…
+            </div>
+          )}
+          {!extracting && extractedItems !== null && extractedItems.length === 0 && (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-2.5 text-[11px] text-muted-foreground">
+              ✨ No follow-ups detected in this note.
+            </div>
+          )}
+          {!extracting && extractedItems && extractedItems.length > 0 && (
+            <ActionItemConfirmPanel
+              athleteId={athlete.id}
+              conversationId={savedConversationId}
+              items={extractedItems}
+            />
+          )}
+
 
           {audience === "skip" ? (
             <Button variant="outline" className="w-full h-10" onClick={handleReset}>
