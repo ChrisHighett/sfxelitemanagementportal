@@ -269,9 +269,8 @@ function TaskRow({
             <DropdownMenuContent align="end" className="w-44 bg-popover z-50">
               {onReschedule && (
                 <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setRescheduleOpen(true);
+                  onSelect={() => {
+                    setTimeout(() => setRescheduleOpen(true), 0);
                   }}
                 >
                   <CalendarClock className="h-3.5 w-3.5 mr-2" />
@@ -281,10 +280,7 @@ function TaskRow({
               {onDismiss && (
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onDismiss(item);
-                  }}
+                  onSelect={() => onDismiss(item)}
                 >
                   <XCircle className="h-3.5 w-3.5 mr-2" />
                   Dismiss…
