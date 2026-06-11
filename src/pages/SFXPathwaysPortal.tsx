@@ -222,10 +222,17 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
                     return (
                       <button
                         key={it.key}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${isAct ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
                         onClick={() => { onNav(it.key); setMobileOpen(false); }}
+                        className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-sm transition-colors"
+                        style={{
+                          color: isAct ? "#fff" : "rgba(255,255,255,0.62)",
+                          background: isAct ? "var(--brand-base-soft)" : "transparent",
+                        }}
                       >
-                        <Icon className="h-5 w-5" />
+                        {isAct && (
+                          <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full" style={{ background: "var(--brand-gradient)" }} />
+                        )}
+                        <Icon className="h-5 w-5" style={{ color: isAct ? "var(--brand-spectrum-from)" : undefined }} />
                         <span className="flex-1 text-left">{it.label}</span>
                         {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
                       </button>
