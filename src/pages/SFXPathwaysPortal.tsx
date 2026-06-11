@@ -3826,7 +3826,7 @@ export default function SFXPathwaysPortal() {
     if (userRoleData?.role && !role) {
       setRole(userRoleData.role as Role);
       const initialRole = isAdmin && initialRequestedRole
-        ? requestedRole
+        ? initialRequestedRole
         : (userRoleData.role as Role);
       if (isAdmin && initialRequestedRole && initialRequestedRole !== userRoleData.role) {
         setRoleOverride(initialRequestedRole);
@@ -3893,7 +3893,7 @@ export default function SFXPathwaysPortal() {
   // Scout role: dedicated portal, no athlete data required
   if (effectiveRole === "scout") {
     return (
-      <Shell role={effectiveRole} active={active} onNav={setActive}>
+      <Shell role={effectiveRole} active={active} onNav={handleNav}>
         <ScoutPortal autoOpenForm={active === "add"} />
       </Shell>
     );
@@ -3931,7 +3931,7 @@ export default function SFXPathwaysPortal() {
   }
 
   return (
-    <Shell role={effectiveRole} active={active} onNav={setActive} hideBottomNav={callActive}>
+    <Shell role={effectiveRole} active={active} onNav={handleNav} hideBottomNav={callActive}>
       {/* Admin role preview switcher */}
       {isAdmin && (
         <div className="px-4 pt-3 pb-1 flex items-center gap-2">
