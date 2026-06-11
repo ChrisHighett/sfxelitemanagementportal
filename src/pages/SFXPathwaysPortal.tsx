@@ -2426,6 +2426,26 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
   const { data: allComms = [] } = useCommsLog();
 
+  const { data: scoutLeads = [] } = useQuery({
+    queryKey: ["scout_leads_summary"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("scout_leads")
+        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at")
+        .neq("onboarding_stage", "Lost");
+      return data || [];
+    },
+  });
+
+  const pursuePipeline = scoutLeads.filter((l: any) => l.triage_decision === "Pursue");
+  const highCompetition = scoutLeads.filter((l: any) => l.competitor_interest && l.competitor_interest.trim() !== "");
+  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
+  const stalledLeads = pursuePipeline.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
+    return days >= 7 && l.onboarding_stage !== "Signed";
+  });
+
+
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
 
   const contractAlerts = useMemo(() => {
