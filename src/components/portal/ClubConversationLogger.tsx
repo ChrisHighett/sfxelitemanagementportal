@@ -602,8 +602,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           </Button>
         </div>
         {isRecording && (
-          <div className="flex items-center gap-2 text-xs text-red-500">
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          <div className="flex items-center gap-2 text-xs" style={{ color: "var(--danger-deep)" }}>
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: "var(--danger)" }} />
             Recording — speak your summary of the conversation
           </div>
         )}
@@ -707,7 +707,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
         </Button>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--success-deep)" }}>
             <CheckCircle2 className="h-4 w-4" />
             Saved to {athlete.name}'s file
           </div>

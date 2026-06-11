@@ -271,7 +271,7 @@ export default function ScoutPipeline() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setShowConvertModal(null)} disabled={converting}>Cancel</Button>
-              <Button onClick={handleConfirmConvert} disabled={converting} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button onClick={handleConfirmConvert} disabled={converting} style={{ background: "var(--success)", color: "#fff" }}>
                 {converting && <span className="mr-2"><ArcLoader size={16} /></span>}
                 Create athlete profile
               </Button>
