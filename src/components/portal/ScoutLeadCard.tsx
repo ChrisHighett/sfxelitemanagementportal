@@ -119,7 +119,7 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
         {lead.onboarding_stage === "Lost" && lead.lost_reason && (
           <span
             className="text-[10px] font-medium px-1.5 py-0.5 rounded border ml-1"
-            style={{ background: "hsl(var(--destructive) / 0.08)", color: "hsl(var(--destructive))", borderColor: "hsl(var(--destructive) / 0.25)" }}
+            style={{ backgroundColor: "hsl(var(--destructive) / 0.08)", color: "hsl(var(--destructive))", borderColor: "hsl(var(--destructive) / 0.25)" }}
             title={lead.lost_reason}
           >
             {(lead.lost_reason.split(" — ")[0] || lead.lost_reason).trim()}

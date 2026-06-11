@@ -3004,8 +3004,9 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
             const [category, ...rest] = raw.split(" — ");
             const note = rest.join(" — ").trim();
             const dateStr = lead.lost_at || lead.date_lost;
-            const formatted = dateStr
-              ? new Date(dateStr).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+            const parsedDate = dateStr ? new Date(dateStr) : null;
+            const formatted = parsedDate && !isNaN(parsedDate.getTime())
+              ? parsedDate.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
               : null;
             if (!raw && !formatted) return null;
             return (
