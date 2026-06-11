@@ -295,6 +295,7 @@ export type Database = {
           related_alert_id: string | null
           related_call_id: string | null
           related_review_id: string | null
+          source: string
           status: Database["public"]["Enums"]["task_status"]
           suggested_day: string | null
           title: string
@@ -315,6 +316,7 @@ export type Database = {
           related_alert_id?: string | null
           related_call_id?: string | null
           related_review_id?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["task_status"]
           suggested_day?: string | null
           title: string
@@ -335,6 +337,7 @@ export type Database = {
           related_alert_id?: string | null
           related_call_id?: string | null
           related_review_id?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["task_status"]
           suggested_day?: string | null
           title?: string
