@@ -1125,6 +1125,7 @@ export type Database = {
           date_pack_sent: string | null
           date_signed: string | null
           date_welcome_sent: string | null
+          first_agent_action_at: string | null
           first_name: string
           id: string
           key_attributes: string | null
@@ -1136,6 +1137,7 @@ export type Database = {
           onboarding_stage: string | null
           position: string | null
           region: string | null
+          response_hours: number | null
           school_club: string | null
           scout_credited: boolean | null
           scout_name: string | null
@@ -1163,6 +1165,7 @@ export type Database = {
           date_pack_sent?: string | null
           date_signed?: string | null
           date_welcome_sent?: string | null
+          first_agent_action_at?: string | null
           first_name: string
           id?: string
           key_attributes?: string | null
@@ -1174,6 +1177,7 @@ export type Database = {
           onboarding_stage?: string | null
           position?: string | null
           region?: string | null
+          response_hours?: number | null
           school_club?: string | null
           scout_credited?: boolean | null
           scout_name?: string | null
@@ -1201,6 +1205,7 @@ export type Database = {
           date_pack_sent?: string | null
           date_signed?: string | null
           date_welcome_sent?: string | null
+          first_agent_action_at?: string | null
           first_name?: string
           id?: string
           key_attributes?: string | null
@@ -1212,6 +1217,7 @@ export type Database = {
           onboarding_stage?: string | null
           position?: string | null
           region?: string | null
+          response_hours?: number | null
           school_club?: string | null
           scout_credited?: boolean | null
           scout_name?: string | null
