@@ -2480,8 +2480,22 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
     scout_rating: editLead?.scout_rating || "B",
     triage_decision: editLead?.triage_decision || "Watch",
     notes: editLead?.notes || "",
+    assigned_agent_id: editLead?.assigned_agent_id || "",
+    assigned_agent_name: editLead?.assigned_agent_name || "",
   });
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const { data: agents = [] } = useQuery({
+    queryKey: ["portal_users_agents_scoutform"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true);
+      return data || [];
+    },
+  });
 
   async function handleSave() {
     if (!form.first_name.trim() || !form.last_name.trim()) {
