@@ -17,6 +17,7 @@ import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Librar
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import { BrandMark } from "@/components/brand/Brand";
 import { CommandPalette, CommandHint, type PaletteCommand } from "@/components/brand/CommandPalette";
+import { ThemeSwitcher } from "@/components/brand/ThemeSwitcher";
 import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { User } from "lucide-react";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
@@ -178,6 +179,7 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
           </nav>
           <div className="mt-6 space-y-2">
             <CommandHint />
+            {role === "admin" && <ThemeSwitcher />}
             <div
               className="rounded-[12px] p-3 text-xs"
               style={{
