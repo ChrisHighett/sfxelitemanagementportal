@@ -2961,6 +2961,12 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
               <InfoRow label="Welcome sent" value={lead.date_welcome_sent} />
               <InfoRow label="Date signed" value={lead.date_signed} />
             </div>
+            {lead.lost_reason && (
+              <div className="space-y-0.5">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lost reason</div>
+                <div className="text-sm font-medium text-destructive">{lead.lost_reason}</div>
+              </div>
+            )}
           </Section>
 
           {(lead.action_required || lead.action_due_date || lead.next_step) && (
