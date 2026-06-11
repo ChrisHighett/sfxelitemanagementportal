@@ -3432,6 +3432,15 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Scout role: dedicated portal, no athlete data required
+  if (effectiveRole === "scout") {
+    return (
+      <Shell role={effectiveRole} active={active} onNav={setActive}>
+        <ScoutPortal autoOpenForm={active === "add"} />
+      </Shell>
+    );
+  }
+
   // For athlete/parent with no allocated athlete (skip when admin is previewing)
   if (!isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && !allocatedAthleteId) {
     return (
