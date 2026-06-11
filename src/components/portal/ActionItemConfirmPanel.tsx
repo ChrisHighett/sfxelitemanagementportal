@@ -62,6 +62,16 @@ export default function ActionItemConfirmPanel({
 
   const insertOne = async (row: RowState): Promise<boolean> => {
     if (!row.due_date) return false;
+    // Resolve the athlete's assigned agent so the task lands in their workflow
+    // even when an admin is logging the conversation on their behalf.
+    const { data: athleteRow } = await supabase
+      .from("athletes")
+      .select("assigned_agent_user_id")
+      .eq("id", athleteId)
+      .maybeSingle();
+    const assignedAgentId =
+      (athleteRow as any)?.assigned_agent_user_id ?? user?.id ?? null;
+
     const { error } = await supabase.from("athlete_tasks").insert({
       athlete_id: athleteId,
       title: row.task,
@@ -69,7 +79,7 @@ export default function ActionItemConfirmPanel({
         ? `Auto-extracted from conversation (“${row.relative_phrase}”).`
         : "Auto-extracted from conversation.",
       owner_type: "agent" as any,
-      assigned_to_user_id: user?.id ?? null,
+      assigned_to_user_id: assignedAgentId,
       created_by: user?.id ?? null,
       due_date: row.due_date,
       priority: PRIORITY_TO_INT[row.priority],
