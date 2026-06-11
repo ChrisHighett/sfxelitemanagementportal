@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, User } from "lucide-react";
+import { BrandMark, ArcBackdrop, ArcLoader } from "@/components/brand/Brand";
 
 interface AuthFormProps {
   mode: "login" | "signup";
