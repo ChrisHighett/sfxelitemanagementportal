@@ -3079,6 +3079,9 @@ function AgentScoutView() {
 
   async function handleStageChange(id: string, stage: string) {
     const updates: any = { onboarding_stage: stage };
+    if (stage === "Contacted") {
+      updates.first_agent_action_at = new Date().toISOString();
+    }
     if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
     if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
