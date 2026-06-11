@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Clock, RotateCcw, XCircle, ChevronDown, ChevronRight } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
+import { ScorecardSkeleton } from "@/components/brand/Skeletons";
+import { EmptyState, ErrorState } from "@/components/brand/States";
 import { cn } from "@/lib/utils";
 
 interface ScorecardRow {
@@ -224,6 +226,7 @@ export default function AgentTaskScorecard() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"name" | "on_time" | "overdue">("on_time");
+  const [refetchTick, setRefetchTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -242,7 +245,7 @@ export default function AgentTaskScorecard() {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [windowDays]);
+  }, [windowDays, refetchTick]);
 
   const sorted = useMemo(() => {
     if (!rows) return [];
@@ -283,13 +286,19 @@ export default function AgentTaskScorecard() {
       </CardHeader>
       <CardContent className="p-0">
         {loading ? (
-          <div className="flex justify-center items-center gap-2 p-8 text-sm text-muted-foreground">
-            <ArcLoader size={18} /> Loading scorecard…
-          </div>
+          <div className="p-4"><ScorecardSkeleton /></div>
         ) : error ? (
-          <div className="p-6 text-sm text-destructive">{error}</div>
+          <ErrorState
+            title="Scorecard didn't load"
+            detail={error}
+            onRetry={() => setRefetchTick(t => t + 1)}
+          />
         ) : sorted.length === 0 ? (
-          <div className="p-6 text-sm text-muted-foreground">No agent data available.</div>
+          <EmptyState
+            icon={<CheckCircle2 className="h-5 w-5" />}
+            title="No agent activity yet in this window"
+            hint="Once agents log conversations or complete tasks, the scorecard fills in."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

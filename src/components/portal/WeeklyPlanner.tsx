@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
+import { PlannerSkeleton } from "@/components/brand/Skeletons";
+import { EmptyState } from "@/components/brand/States";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -683,9 +685,8 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6 flex items-center justify-center gap-2 text-muted-foreground">
-          <ArcLoader size={16} />
-          <span className="text-sm">Loading weekly planner…</span>
+        <CardContent className="p-6">
+          <PlannerSkeleton />
         </CardContent>
       </Card>
     );
@@ -710,10 +711,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
     const empty = urgent.length === 0 && high.length === 0 && normal.length === 0;
     if (empty) {
       return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
-          <CheckCircle2 className="h-4 w-4 text-primary" />
-          Nothing for {day} on this filter.
-        </div>
+        <EmptyState
+          compact
+          icon={<CheckCircle2 className="h-5 w-5" />}
+          title={`Nothing for ${day} on this filter`}
+          hint="Switch filter or jump to Full week to see what's queued."
+        />
       );
     }
 
@@ -1016,10 +1019,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         </div>
 
         {totalItems === 0 ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-            All caught up — no pressing tasks this week.
-          </div>
+          <EmptyState
+            compact
+            icon={<CheckCircle2 className="h-5 w-5" />}
+            title="All caught up for this week"
+            hint="Nothing pressing on the board. Log a conversation or check the roster for next moves."
+          />
         ) : showFullWeek ? (
           renderFullWeek()
         ) : (

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Mail, Copy, ChevronDown, ChevronUp, User, Users, Loader2, CheckCircle2, MessageSquare, MessageCircle } from "lucide-react";
+import { ArcLoader } from "@/components/brand/Brand";
+import { EmptyState } from "@/components/brand/States";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -154,13 +156,14 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <ArcLoader size={20} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">
-          <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          No messages generated yet for {athleteName}.
-        </div>
+        <EmptyState
+          icon={<Mail className="h-5 w-5" />}
+          title={`No messages for ${athleteName} yet`}
+          hint="Generate one from the latest conversation — it'll be saved here for one-tap re-use."
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map(entry => {
