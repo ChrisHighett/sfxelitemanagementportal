@@ -2265,7 +2265,7 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {agent.role === "scout" && (
-            <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400">Scout</Badge>
+            <Badge variant="outline" style={{ borderColor: "var(--brand-base-line)", color: "var(--brand-accent)" }}>Scout</Badge>
           )}
           <Badge variant={agent.approved ? "default" : "secondary"}>
             {agent.approved ? "Active" : "Inactive"}
@@ -2484,13 +2484,14 @@ function AgentManager() {
             {agentResponseStats.map((agent, i) => {
               const isGood = agent.avgHours != null && agent.avgHours <= 24;
               const isWarn = agent.avgHours != null && agent.avgHours > 24 && agent.avgHours <= 72;
-              const statusColor = isGood ? "text-green-600" : isWarn ? "text-amber-600" : "text-destructive";
-              const bgColor = isGood ? "bg-green-50 border-green-200" : isWarn ? "bg-amber-50 border-amber-200" : "bg-destructive/5 border-destructive/20";
-              const rankColors = ["bg-amber-400", "bg-muted", "bg-orange-300"];
+              const toneColor = isGood ? "var(--success-deep)" : isWarn ? "var(--win-deep)" : "var(--danger-deep)";
+              const toneBg = isGood ? "var(--success-soft)" : isWarn ? "var(--win-soft)" : "var(--danger-soft)";
+              const barFill = isGood ? "var(--success)" : isWarn ? "var(--win)" : "var(--danger)";
+              const rankBgs = ["var(--win)", "var(--border-strong)", "var(--win-soft)"];
               return (
-                <div key={agent.name + i} className={`rounded-lg border p-3 ${bgColor}`}>
+                <div key={agent.name + i} className="rounded-lg border p-3" style={{ background: toneBg, borderColor: toneBg }}>
                   <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white ${rankColors[i] || "bg-muted"}`}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold" style={{ background: rankBgs[i] || "var(--border-strong)", color: "var(--text)" }}>
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -2505,7 +2506,7 @@ function AgentManager() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className={`text-base font-semibold ${statusColor}`}>
+                      <div className="text-base font-semibold num" style={{ color: toneColor }}>
                         {agent.avgHours != null ? `${Math.round(agent.avgHours)}h` : "—"}
                       </div>
                       <div className="text-xs text-muted-foreground">avg response</div>
@@ -2513,10 +2514,10 @@ function AgentManager() {
                   </div>
                   {agent.avgHours != null && (
                     <div className="mt-2">
-                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border-strong)" }}>
                         <div
-                          className={`h-full rounded-full transition-all ${isGood ? "bg-green-500" : isWarn ? "bg-amber-500" : "bg-destructive"}`}
-                          style={{ width: `${Math.min(100, (agent.avgHours / 72) * 100)}%` }}
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${Math.min(100, (agent.avgHours / 72) * 100)}%`, background: barFill }}
                         />
                       </div>
                       <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
@@ -2531,8 +2532,8 @@ function AgentManager() {
             })}
           </div>
           <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
-            <div><span className="text-green-600 font-medium">Green (under 24h)</span> — excellent. Lead actioned same day.</div>
-            <div><span className="text-amber-600 font-medium">Amber (24–72h)</span> — acceptable. Consider reviewing workload.</div>
+            <div><span className="font-medium" style={{ color: "var(--success-deep)" }}>Green (under 24h)</span> — excellent. Lead actioned same day.</div>
+            <div><span className="font-medium" style={{ color: "var(--win-deep)" }}>Amber (24–72h)</span> — acceptable. Consider reviewing workload.</div>
             <div><span className="text-destructive font-medium">Red (72h+)</span> — action needed. Scout leads going cold.</div>
             <div className="pt-1">Response time is measured from when a lead is assigned as Pursue to when the agent first moves it out of New stage.</div>
           </div>
@@ -2677,16 +2678,16 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
   onTriageChange: (id: string, triage: string) => void;
 }) {
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
-  const ratingColor = lead.scout_rating === "A" ? "bg-green-100 text-green-800" : lead.scout_rating === "B" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
-  const triageColor = lead.triage_decision === "Pursue"
-    ? "bg-primary/10 text-primary border-primary/30"
-    : lead.triage_decision === "Watch"
-    ? "bg-amber-100 text-amber-800 border-amber-300"
-    : lead.triage_decision === "Signed"
-    ? "bg-green-100 text-green-800 border-green-300"
-    : lead.triage_decision === "Lost"
-    ? "bg-red-100 text-red-800 border-red-300"
-    : "bg-muted text-muted-foreground border-border";
+  const ratingStyle: React.CSSProperties =
+    lead.scout_rating === "A" ? { background: "var(--success-soft)", color: "var(--success-deep)" }
+    : lead.scout_rating === "B" ? { background: "var(--win-soft)", color: "var(--win-deep)" }
+    : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" };
+  const triageStyle: React.CSSProperties =
+    lead.triage_decision === "Pursue" ? { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" }
+    : lead.triage_decision === "Watch" ? { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }
+    : lead.triage_decision === "Signed" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
+    : lead.triage_decision === "Lost" ? { background: "var(--danger-soft)", color: "var(--danger-deep)", borderColor: "var(--danger-soft)" }
+    : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" };
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
@@ -2695,8 +2696,8 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
               {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ratingColor}`}>{lead.scout_rating}</span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${triageColor}`}>{lead.triage_decision}</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={ratingStyle}>{lead.scout_rating}</span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full border" style={triageStyle}>{lead.triage_decision}</span>
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
@@ -2717,21 +2718,24 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
         )}
         {lead.key_attributes && <p className="text-xs text-muted-foreground line-clamp-2">{lead.key_attributes}</p>}
         <div className="flex flex-wrap gap-1.5">
-          {stages.map((stage) => (
-            <button
-              key={stage}
-              onClick={() => onStageChange(lead.id, stage)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                lead.onboarding_stage === stage
-                  ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
-                    : stage === "Lost" ? "bg-muted text-muted-foreground border-muted-foreground/30"
-                    : "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted"
-              }`}
-            >
-              {stage}
-            </button>
-          ))}
+          {stages.map((stage) => {
+            const active = lead.onboarding_stage === stage;
+            const activeStyle: React.CSSProperties = stage === "Signed"
+              ? { background: "var(--success)", color: "#fff", borderColor: "var(--success)" }
+              : stage === "Lost"
+              ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
+              : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" };
+            return (
+              <button
+                key={stage}
+                onClick={() => onStageChange(lead.id, stage)}
+                className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}
+              >
+                {stage}
+              </button>
+            );
+          })}
         </div>
         {lead.assigned_agent_name && (
           <div className="text-xs text-muted-foreground">Assigned to: <span className="font-medium text-foreground">{lead.assigned_agent_name}</span></div>
@@ -2812,13 +2816,13 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
 
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Pursue", value: pursue.length, color: "text-primary" },
-          { label: "Watch", value: watch.length, color: "text-amber-600" },
-          { label: "Signed", value: signed.length, color: "text-green-600" },
-          { label: "Lost", value: lost.length, color: "text-muted-foreground" },
+          { label: "Pursue", value: pursue.length, color: "hsl(var(--primary))" },
+          { label: "Watch", value: watch.length, color: "var(--win-deep)" },
+          { label: "Signed", value: signed.length, color: "var(--success-deep)" },
+          { label: "Lost", value: lost.length, color: "hsl(var(--muted-foreground))" },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-lg border bg-card p-3 text-center">
-            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-2xl font-semibold num" style={{ color }}>{value}</div>
             <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
           </div>
         ))}
@@ -2889,21 +2893,17 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
   onStageChange: (id: string, stage: string) => void;
   onConvert: (lead: any) => void;
 }) {
-  const ratingColor = lead.scout_rating === "A"
-    ? "bg-green-100 text-green-800 border-green-300"
-    : lead.scout_rating === "B"
-    ? "bg-amber-100 text-amber-800 border-amber-300"
-    : "bg-muted text-muted-foreground border-border";
+  const ratingStyle: React.CSSProperties =
+    lead.scout_rating === "A" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
+    : lead.scout_rating === "B" ? { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }
+    : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" };
 
-  const triageColor = lead.triage_decision === "Pursue"
-    ? "bg-primary/10 text-primary border-primary/30"
-    : lead.triage_decision === "Watch"
-    ? "bg-amber-100 text-amber-800 border-amber-300"
-    : lead.triage_decision === "Signed"
-    ? "bg-green-100 text-green-800 border-green-300"
-    : lead.triage_decision === "Lost"
-    ? "bg-red-100 text-red-800 border-red-300"
-    : "bg-muted text-muted-foreground border-border";
+  const triageStyle: React.CSSProperties =
+    lead.triage_decision === "Pursue" ? { background: "var(--brand-base-soft)", color: "var(--brand-accent)", borderColor: "var(--brand-base-line)" }
+    : lead.triage_decision === "Watch" ? { background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }
+    : lead.triage_decision === "Signed" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
+    : lead.triage_decision === "Lost" ? { background: "var(--danger-soft)", color: "var(--danger-deep)", borderColor: "var(--danger-soft)" }
+    : { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" };
 
   const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
 
@@ -2936,7 +2936,7 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
     && !["Signed", "Lost"].includes(lead.onboarding_stage);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}>
       <div
         className="bg-background w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -2947,14 +2947,14 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
               {lead.lead_id && (
                 <span className="text-xs font-mono text-muted-foreground border rounded px-1.5 py-0.5">{lead.lead_id}</span>
               )}
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${ratingColor}`}>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full border" style={ratingStyle}>
                 {lead.scout_rating} — {lead.scout_rating === "A" ? "Elite prospect" : lead.scout_rating === "B" ? "Strong watch" : "Monitor"}
               </span>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${triageColor}`}>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full border" style={triageStyle}>
                 {lead.triage_decision}
               </span>
               {isStalled && (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full border" style={{ background: "var(--win-soft)", color: "var(--win-deep)", borderColor: "var(--win-soft)" }}>
                   Stalled {daysSinceStageChange}d
                 </span>
               )}
@@ -3001,21 +3001,24 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
 
           <Section title="Pipeline status">
             <div className="flex flex-wrap gap-1.5">
-              {stages.map((stage) => (
-                <button
-                  key={stage}
-                  onClick={() => onStageChange(lead.id, stage)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    lead.onboarding_stage === stage
-                      ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
-                        : stage === "Lost" ? "bg-muted-foreground/20 text-muted-foreground border-transparent"
-                        : "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  }`}
-                >
-                  {stage}
-                </button>
-              ))}
+              {stages.map((stage) => {
+                const active = lead.onboarding_stage === stage;
+                const activeStyle: React.CSSProperties = stage === "Signed"
+                  ? { background: "var(--success)", color: "#fff", borderColor: "var(--success)" }
+                  : stage === "Lost"
+                  ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
+                  : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" };
+                return (
+                  <button
+                    key={stage}
+                    onClick={() => onStageChange(lead.id, stage)}
+                    className="text-xs px-3 py-1.5 rounded-full border transition-colors"
+                    style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}
+                  >
+                    {stage}
+                  </button>
+                );
+              })}
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <InfoRow label="Date contacted" value={lead.date_contacted} />
@@ -3062,7 +3065,7 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
               {lead.response_hours != null && (
                 <div className="space-y-0.5">
                   <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Agent response time</div>
-                  <div className={`text-sm font-medium ${Number(lead.response_hours) <= 24 ? "text-green-600" : Number(lead.response_hours) <= 72 ? "text-amber-600" : "text-destructive"}`}>
+                  <div className="text-sm font-medium num" style={{ color: Number(lead.response_hours) <= 24 ? "var(--success-deep)" : Number(lead.response_hours) <= 72 ? "var(--win-deep)" : "var(--danger-deep)" }}>
                     {Math.round(Number(lead.response_hours))}h
                     {Number(lead.response_hours) <= 24 ? " — excellent" : Number(lead.response_hours) <= 72 ? " — within target" : " — slow"}
                   </div>
@@ -3081,7 +3084,8 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
         <div className="p-4 pt-3 border-t flex gap-2">
           {lead.onboarding_stage === "Welcome Sent" && (
             <Button
-              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 gap-1.5"
+              style={{ background: "var(--success)", color: "#fff" }}
               onClick={() => { onConvert(lead); onClose(); }}
             >
               <UserPlus className="h-4 w-4" />
@@ -3214,25 +3218,25 @@ function AgentScoutView() {
 
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: "Pursue", value: pursue.length, color: "text-primary", border: "" },
-          { label: "Competition active", value: competition.length, color: competition.length > 0 ? "text-destructive" : "text-muted-foreground", border: competition.length > 0 ? "border-destructive/30" : "" },
-          { label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "text-amber-600" : "text-muted-foreground", border: stalled.length > 0 ? "border-amber-300" : "" },
-          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "text-green-600" : "text-muted-foreground", border: signed.length > 0 ? "border-green-300" : "" },
+          { label: "Pursue", value: pursue.length, color: "hsl(var(--primary))", border: "" },
+          { label: "Competition active", value: competition.length, color: competition.length > 0 ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))", border: competition.length > 0 ? "border-destructive/30" : "" },
+          { label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "var(--win-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "var(--success-deep)" : "hsl(var(--muted-foreground))", border: "" },
         ].map(({ label, value, color, border }) => (
           <div key={label} className={`rounded-lg border bg-card p-3 text-center ${border}`}>
-            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-2xl font-semibold num" style={{ color }}>{value}</div>
             <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
       </div>
 
       {signed.length > 0 && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
-          <div className="text-xs font-semibold text-green-700 uppercase tracking-wide">Signed this year</div>
+        <div className="rounded-lg border p-3 space-y-2" style={{ background: "var(--success-soft)", borderColor: "var(--success-soft)" }}>
+          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--success-deep)" }}>Signed this year</div>
           {signed.map((lead: any) => (
             <div key={lead.id} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-green-900">{lead.first_name} {lead.last_name}</span>
-              <span className="text-xs text-green-600">
+              <span className="font-medium" style={{ color: "var(--success-deep)" }}>{lead.first_name} {lead.last_name}</span>
+              <span className="text-xs" style={{ color: "var(--success-deep)", opacity: 0.75 }}>
                 {lead.date_signed ? new Date(lead.date_signed).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : 'Signed'}
               </span>
             </div>
@@ -3285,7 +3289,7 @@ function AgentScoutView() {
             const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at || lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
             const isStalled = days >= 7 && lead.triage_decision === "Pursue" && !["Signed", "Lost"].includes(lead.onboarding_stage);
             return (
-              <Card key={lead.id} className={isStalled ? "border-amber-300" : ""}>
+              <Card key={lead.id} style={isStalled ? { borderColor: "var(--win)" } : undefined}>
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -3294,7 +3298,7 @@ function AgentScoutView() {
                         {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
                         <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
                         <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
-                        {isStalled && <Badge variant="outline" className="text-xs border-amber-400 text-amber-700">Stalled {days}d</Badge>}
+                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Stalled {days}d</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
@@ -3319,22 +3323,25 @@ function AgentScoutView() {
                   {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
 
                   <div className="flex flex-wrap gap-1.5">
-                    {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((stage) => (
-                      <button key={stage} onClick={() => handleStageChange(lead.id, stage)}
-                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                          lead.onboarding_stage === stage
-                            ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
-                              : stage === "Lost" ? "bg-muted-foreground/20 text-muted-foreground border-transparent"
-                              : "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-muted-foreground border-border hover:bg-muted"
-                        }`}>
-                        {stage}
-                      </button>
-                    ))}
+                    {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((stage) => {
+                      const active = lead.onboarding_stage === stage;
+                      const activeStyle: React.CSSProperties = stage === "Signed"
+                        ? { background: "var(--success)", color: "#fff", borderColor: "var(--success)" }
+                        : stage === "Lost"
+                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
+                        : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" };
+                      return (
+                        <button key={stage} onClick={() => handleStageChange(lead.id, stage)}
+                          className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                          style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
+                          {stage}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {lead.onboarding_stage === "Welcome Sent" && (
-                    <Button size="sm" variant="outline" className="w-full gap-1.5 border-green-500 text-green-700 hover:bg-green-50" onClick={() => handleConvert(lead)}>
+                    <Button size="sm" variant="outline" className="w-full gap-1.5" style={{ borderColor: "var(--success)", color: "var(--success-deep)" }} onClick={() => handleConvert(lead)}>
                       <UserPlus className="h-3.5 w-3.5" />
                       Convert to athlete profile →
                     </Button>
