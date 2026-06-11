@@ -2557,6 +2557,27 @@ function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: (
           </Select>
         </div>
       </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Assign to agent</Label>
+        <Select
+          value={form.assigned_agent_id || undefined}
+          onValueChange={(v) => {
+            const a = (agents as any[]).find((x) => x.id === v);
+            setForm((f) => ({
+              ...f,
+              assigned_agent_id: v,
+              assigned_agent_name: a ? (a.display_name || a.email) : "",
+            }));
+          }}
+        >
+          <SelectTrigger className="h-8"><SelectValue placeholder="Select agent" /></SelectTrigger>
+          <SelectContent>
+            {(agents as any[]).map((a) => (
+              <SelectItem key={a.id} value={a.id}>{a.display_name || a.email}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
       <Button className="w-full" onClick={handleSave} disabled={saving}>
         {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editLead ? "Update lead" : "Add lead"}
