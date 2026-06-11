@@ -305,7 +305,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       mon.setHours(0, 0, 0, 0);
 
       const [tasksRes, reviewsRes, clubCallsRes, scoutRes] = await Promise.all([
-        supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status").in("athlete_id", athleteIds).eq("owner_type", "agent").gte("created_at", mon.toISOString()).order("priority", { ascending: true }),
+        supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status, source, due_date").in("athlete_id", athleteIds).eq("owner_type", "agent").or(`created_at.gte.${mon.toISOString()},due_date.gte.${mon.toISOString().slice(0,10)}`).order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
         (supabase as any)
