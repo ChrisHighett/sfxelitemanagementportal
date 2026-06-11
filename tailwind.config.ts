@@ -8,9 +8,7 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       colors: {
@@ -57,33 +55,68 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Brand tokens — raw colors read from CSS vars (white-label layer)
+        brand: {
+          base: "var(--brand-base)",
+          "base-soft": "var(--brand-base-soft)",
+          "base-line": "var(--brand-base-line)",
+          from: "var(--brand-spectrum-from)",
+          to: "var(--brand-spectrum-to)",
+          accent: "var(--brand-accent)",
+        },
+        canvas: "var(--canvas)",
+        surface: "var(--surface)",
+        ink: "var(--text)",
+        hint: "var(--hint)",
+        success: {
+          DEFAULT: "var(--success)",
+          soft: "var(--success-soft)",
+          deep: "var(--success-deep)",
+        },
+        danger: {
+          DEFAULT: "var(--danger)",
+          soft: "var(--danger-soft)",
+          deep: "var(--danger-deep)",
+        },
+        win: {
+          DEFAULT: "var(--win)",
+          soft: "var(--win-soft)",
+          deep: "var(--win-deep)",
+        },
+      },
+      fontFamily: {
+        display: ["var(--font-display)"],
+        body: ["var(--font-body)"],
+        mono: ["var(--font-mono)"],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "var(--r-sm)",
+        DEFAULT: "var(--r)",
+        md: "var(--r)",
+        lg: "var(--r-lg)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)",
+      },
+      backgroundImage: {
+        "brand-gradient": "var(--brand-gradient)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
+        "arc-spin": { to: { transform: "rotate(360deg)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "arc-spin": "arc-spin 0.8s linear infinite",
       },
     },
   },
