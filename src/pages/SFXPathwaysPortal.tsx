@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
+import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -77,12 +78,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   agent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
@@ -2423,6 +2426,26 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
   const { data: allComms = [] } = useCommsLog();
 
+  const { data: scoutLeads = [] } = useQuery({
+    queryKey: ["scout_leads_summary"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("scout_leads")
+        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at")
+        .neq("onboarding_stage", "Lost");
+      return data || [];
+    },
+  });
+
+  const pursuePipeline = scoutLeads.filter((l: any) => l.triage_decision === "Pursue");
+  const highCompetition = scoutLeads.filter((l: any) => l.competitor_interest && l.competitor_interest.trim() !== "");
+  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
+  const stalledLeads = pursuePipeline.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
+    return days >= 7 && l.onboarding_stage !== "Signed";
+  });
+
+
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
 
   const contractAlerts = useMemo(() => {
@@ -2574,7 +2597,63 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
           </AlertDescription>
         </Alert>
       )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Binoculars className="h-4 w-4 text-primary" /> Scout pipeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-lg border border-primary/30 p-3">
+              <div className="text-2xl font-semibold">{pursuePipeline.length}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Pursue</div>
+            </div>
+            <div className="rounded-lg border border-destructive/30 p-3">
+              <div className="text-2xl font-semibold">{highCompetition.length}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Competition active</div>
+            </div>
+            <div className="rounded-lg border border-amber-500/30 p-3">
+              <div className="text-2xl font-semibold">{stalledLeads.length}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stalled</div>
+            </div>
+            <div className="rounded-lg border border-emerald-500/30 p-3">
+              <div className="text-2xl font-semibold">{signedThisYear.length}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signed {new Date().getFullYear()}</div>
+            </div>
+          </div>
+          {stalledLeads.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs font-semibold text-amber-600 dark:text-amber-400">Stalled — action needed</div>
+              {stalledLeads.slice(0, 3).map((lead: any) => {
+                const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
+                return (
+                  <div key={lead.id} className="flex items-center justify-between text-xs rounded-md border border-border px-2 py-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-medium truncate">{lead.first_name} {lead.last_name}</span>
+                      <span className="text-muted-foreground">{lead.onboarding_stage} · {days}d</span>
+                    </div>
+                    {lead.scout_rating && <Badge variant="secondary" className="text-[10px]">{lead.scout_rating}</Badge>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {highCompetition.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs font-semibold text-destructive">Competition active</div>
+              {highCompetition.slice(0, 3).map((lead: any) => (
+                <div key={lead.id} className="text-xs rounded-md border border-border px-2 py-1.5">
+                  <span className="font-medium">{lead.first_name} {lead.last_name}</span>
+                  <span className="text-muted-foreground"> — {lead.competitor_interest}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <div className="grid gap-4 md:grid-cols-4">
+
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Total Athletes</div><div className="mt-1 text-2xl font-semibold">{athletes.length}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Thriving</div><div className="mt-1 text-2xl font-semibold">{thriving}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Attention Required</div><div className="mt-1 text-2xl font-semibold">{attention}</div></CardContent></Card>
@@ -2868,6 +2947,7 @@ export default function SFXPathwaysPortal() {
         />
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <ScoutPipeline />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (

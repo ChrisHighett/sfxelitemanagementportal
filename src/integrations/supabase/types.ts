@@ -1105,6 +1105,145 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_leads: {
+        Row: {
+          action_due_date: string | null
+          action_outcome: string | null
+          action_required: string | null
+          action_status: string | null
+          age: number | null
+          assigned_agent_id: string | null
+          assigned_agent_name: string | null
+          comp_grade: string | null
+          competitor_interest: string | null
+          converted_athlete_id: string | null
+          created_at: string | null
+          created_by: string | null
+          date_contacted: string | null
+          date_in: string | null
+          date_lost: string | null
+          date_pack_sent: string | null
+          date_signed: string | null
+          date_welcome_sent: string | null
+          first_name: string
+          id: string
+          key_attributes: string | null
+          last_name: string
+          last_stage_change_at: string | null
+          lead_id: string | null
+          next_step: string | null
+          notes: string | null
+          onboarding_stage: string | null
+          position: string | null
+          region: string | null
+          school_club: string | null
+          scout_credited: boolean | null
+          scout_name: string | null
+          scout_rating: string | null
+          source_contact: string | null
+          triage_decision: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_due_date?: string | null
+          action_outcome?: string | null
+          action_required?: string | null
+          action_status?: string | null
+          age?: number | null
+          assigned_agent_id?: string | null
+          assigned_agent_name?: string | null
+          comp_grade?: string | null
+          competitor_interest?: string | null
+          converted_athlete_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_contacted?: string | null
+          date_in?: string | null
+          date_lost?: string | null
+          date_pack_sent?: string | null
+          date_signed?: string | null
+          date_welcome_sent?: string | null
+          first_name: string
+          id?: string
+          key_attributes?: string | null
+          last_name: string
+          last_stage_change_at?: string | null
+          lead_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          onboarding_stage?: string | null
+          position?: string | null
+          region?: string | null
+          school_club?: string | null
+          scout_credited?: boolean | null
+          scout_name?: string | null
+          scout_rating?: string | null
+          source_contact?: string | null
+          triage_decision?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_due_date?: string | null
+          action_outcome?: string | null
+          action_required?: string | null
+          action_status?: string | null
+          age?: number | null
+          assigned_agent_id?: string | null
+          assigned_agent_name?: string | null
+          comp_grade?: string | null
+          competitor_interest?: string | null
+          converted_athlete_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_contacted?: string | null
+          date_in?: string | null
+          date_lost?: string | null
+          date_pack_sent?: string | null
+          date_signed?: string | null
+          date_welcome_sent?: string | null
+          first_name?: string
+          id?: string
+          key_attributes?: string | null
+          last_name?: string
+          last_stage_change_at?: string | null
+          lead_id?: string | null
+          next_step?: string | null
+          notes?: string | null
+          onboarding_stage?: string | null
+          position?: string | null
+          region?: string | null
+          school_club?: string | null
+          scout_credited?: boolean | null
+          scout_name?: string | null
+          scout_rating?: string | null
+          source_contact?: string | null
+          triage_decision?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_leads_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leads_converted_athlete_id_fkey"
+            columns: ["converted_athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scout_leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_athlete_access: {
         Row: {
           approved_at: string | null
@@ -1231,6 +1370,9 @@ export type Database = {
         | "low_engagement"
         | "custom"
         | "club_check_in"
+        | "scout_lead_assigned"
+        | "scout_action_overdue"
+        | "scout_stage_stalled"
       call_type:
         | "monthly_review"
         | "check_in"
@@ -1380,6 +1522,9 @@ export const Constants = {
         "low_engagement",
         "custom",
         "club_check_in",
+        "scout_lead_assigned",
+        "scout_action_overdue",
+        "scout_stage_stalled",
       ],
       call_type: [
         "monthly_review",

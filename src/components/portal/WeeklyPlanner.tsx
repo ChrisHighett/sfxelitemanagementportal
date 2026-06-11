@@ -45,7 +45,9 @@ function generateTasks(
   athletes: Athlete[],
   reviews: { athlete_id: string; review_month: string; follow_up_actions: string | null; wellbeing_score: number | null; parent_engagement_notes: string | null }[],
   existingTaskAthleteIds: Set<string>,
-  latestClubCalls: Record<string, string>
+  latestClubCalls: Record<string, string>,
+  pursueLeads: any[],
+  currentUserId: string | undefined
 ): Omit<PlannerItem, "id" | "source">[] {
   const items: Omit<PlannerItem, "id" | "source">[] = [];
   const currentMonth = new Date().toISOString().slice(0, 7) + "-01";
@@ -109,8 +111,46 @@ function generateTasks(
     }
   }
 
+  // ── Scout lead tasks ──
+  for (const lead of pursueLeads) {
+    if (lead.assigned_agent_id !== currentUserId) continue;
+    const name = `${lead.first_name} ${lead.last_name}`;
+    const stage = lead.onboarding_stage;
+    const daysSinceChange = Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (stage === "New") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Make first contact — ${name}`,
+        reason: "New Pursue lead not yet contacted",
+        suggestedDay: "Monday",
+        priority: 1,
+      });
+    } else if (daysSinceChange >= 5 && stage !== "Signed" && stage !== "Lost") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Follow up scout lead — ${name}`,
+        reason: `${stage} for ${daysSinceChange} days — move this forward`,
+        suggestedDay: "Wednesday",
+        priority: 2,
+      });
+    } else if (lead.action_due_date && new Date(lead.action_due_date) <= new Date() && lead.action_status === "Open") {
+      items.push({
+        athleteId: lead.id,
+        athleteName: name,
+        title: `Scout action overdue — ${name}`,
+        reason: `Action was due ${new Date(lead.action_due_date).toLocaleDateString("en-AU")}`,
+        suggestedDay: "Tuesday",
+        priority: 1,
+      });
+    }
+  }
+
   return items;
 }
+
 
 /* ── Mobile task row ── */
 function MobileTaskRow({ item, completing, onComplete }: { item: PlannerItem; completing: boolean; onComplete: () => void }) {
@@ -192,6 +232,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState<Set<string>>(new Set());
   const [latestClubCalls, setLatestClubCalls] = useState<Record<string, string>>({});
+  const [pursueLeads, setPursueLeads] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -204,11 +245,18 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
       mon.setHours(0, 0, 0, 0);
 
-      const [tasksRes, reviewsRes, clubCallsRes] = await Promise.all([
+      const [tasksRes, reviewsRes, clubCallsRes, scoutRes] = await Promise.all([
         supabase.from("athlete_tasks").select("id, athlete_id, title, description, priority, suggested_day, status").in("athlete_id", athleteIds).eq("owner_type", "agent").gte("created_at", mon.toISOString()).order("priority", { ascending: true }),
         supabase.from("monthly_reviews").select("athlete_id, review_month, follow_up_actions, wellbeing_score, parent_engagement_notes").in("athlete_id", athleteIds).order("review_month", { ascending: false }),
         supabase.from("call_history").select("athlete_id, call_date").in("athlete_id", athleteIds).eq("call_type", "club_conversation" as any).order("call_date", { ascending: false }),
+        (supabase as any)
+          .from("scout_leads")
+          .select("id, first_name, last_name, triage_decision, onboarding_stage, action_due_date, action_status, assigned_agent_id, last_stage_change_at")
+          .eq("triage_decision", "Pursue")
+          .neq("onboarding_stage", "Signed")
+          .neq("onboarding_stage", "Lost"),
       ]);
+      setPursueLeads(scoutRes?.data || []);
 
       setSavedTasks(tasksRes.data || []);
       const seen = new Set<string>();
@@ -240,14 +288,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
         title: t.title, reason: t.description || "", suggestedDay: t.suggested_day || "Monday", priority: t.priority, source: "saved" as const,
       }));
 
-    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls);
+    const generated = generateTasks(athletes, reviews, existingIds, latestClubCalls, pursueLeads, user?.id);
     const newGenerated: PlannerItem[] = generated
       .filter((g) => !savedIds.has(`${g.athleteId}:${g.title}`))
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
     return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews, latestClubCalls]);
+  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id]);
 
   const handleComplete = useCallback(
     async (item: PlannerItem) => {
