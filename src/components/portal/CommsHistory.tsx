@@ -38,7 +38,8 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
   const { user } = useAuth();
   const [entries, setEntries] = useState<CommsEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "athlete" | "parent">("all");
+  const [audienceFilter, setAudienceFilter] = useState<"all" | "athlete" | "parent">("all");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async () => {
@@ -63,13 +64,25 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
     fetchHistory();
   }, [athleteId, fetchHistory]);
 
-  const filtered = filter === "all" ? entries : entries.filter(e => e.email_type === filter);
+  const filtered = useMemo(() => {
+    return entries.filter((e) => {
+      if (audienceFilter !== "all" && e.email_type !== audienceFilter) return false;
+      if (channelFilter !== "all") {
+        const ch = (e.channel || "email").toLowerCase();
+        if (ch !== channelFilter) return false;
+      }
+      return true;
+    });
+  }, [entries, audienceFilter, channelFilter]);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
   const handleCopy = (entry: CommsEntry) => {
-    const text = entry.subject ? `Subject: ${entry.subject}\n\n${entry.body}` : entry.body;
+    const ch = (entry.channel || "email").toLowerCase();
+    const text = ch === "email" && entry.subject
+      ? `Subject: ${entry.subject}\n\n${entry.body}`
+      : entry.body;
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
   };
@@ -92,24 +105,51 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
     return lines.slice(0, 2).join(" ").slice(0, 120) + (lines.join(" ").length > 120 ? "…" : "");
   };
 
+  const audienceChips: Array<"all" | "athlete" | "parent"> = ["all", "athlete", "parent"];
+  const channelChips: Array<{ value: ChannelFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "email", label: "Email" },
+    { value: "sms", label: "SMS" },
+    { value: "whatsapp", label: "WhatsApp" },
+  ];
+
   return (
     <div className="space-y-3">
-      {/* Filter pills */}
-      <div className="flex gap-2">
-        {(["all", "athlete", "parent"] as const).map(f => (
+      {/* Audience pills */}
+      <div className="flex gap-2 flex-wrap">
+        {audienceChips.map(f => (
           <Button
             key={f}
             size="sm"
-            variant={filter === f ? "default" : "outline"}
+            variant={audienceFilter === f ? "default" : "outline"}
             className="h-8 text-xs capitalize"
-            onClick={() => setFilter(f)}
+            onClick={() => setAudienceFilter(f)}
           >
             {f === "all" ? "All" : f === "athlete" ? "Athlete" : "Parent"}
           </Button>
         ))}
         <span className="ml-auto text-xs text-muted-foreground self-center">
-          {filtered.length} {filtered.length === 1 ? "email" : "emails"}
+          {filtered.length} {filtered.length === 1 ? "message" : "messages"}
         </span>
+      </div>
+
+      {/* Channel pills */}
+      <div className="flex gap-2 flex-wrap">
+        {channelChips.map(c => (
+          <button
+            key={c.value}
+            type="button"
+            onClick={() => setChannelFilter(c.value)}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition",
+              channelFilter === c.value
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-background hover:bg-muted"
+            )}
+          >
+            {c.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -119,12 +159,15 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-sm text-muted-foreground">
           <Mail className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          No emails generated yet for {athleteName}.
+          No messages generated yet for {athleteName}.
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map(entry => {
             const isOpen = expandedId === entry.id;
+            const ch = (entry.channel || "email").toLowerCase();
+            const chMeta = CHANNEL_META[ch] || CHANNEL_META.email;
+            const ChIcon = chMeta.Icon;
             return (
               <Collapsible key={entry.id} open={isOpen} onOpenChange={() => setExpandedId(isOpen ? null : entry.id)}>
                 <div className="rounded-lg border bg-card overflow-hidden">
@@ -139,6 +182,10 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className={cn("text-[10px] border gap-1", chMeta.cls)}>
+                            <ChIcon className="h-3 w-3" />
+                            {chMeta.label}
+                          </Badge>
                           <Badge variant="secondary" className="text-[10px] capitalize">
                             {entry.email_type}
                           </Badge>
@@ -149,7 +196,7 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
                           )}
                         </div>
                         <div className="font-medium text-sm truncate">
-                          {entry.subject || "No subject"}
+                          {entry.subject || (ch === "email" ? "No subject" : entry.body.slice(0, 60))}
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-2">{getPreview(entry.body)}</p>
                         <span className="text-[10px] text-muted-foreground">{formatDate(entry.created_at)}</span>
@@ -188,30 +235,33 @@ export default function CommsHistory({ athleteId, athleteName }: Props) {
   );
 }
 
-/** Utility to auto-save a generated email to comms_history */
+/** Utility to auto-save a generated message to comms_history */
 export async function saveCommsEmail({
   athleteId,
   emailType,
   subject,
   body,
+  channel = "email",
   generatedFrom = "call",
   createdBy,
 }: {
   athleteId: string;
   emailType: "athlete" | "parent";
-  subject: string;
+  subject: string | null;
   body: string;
+  channel?: "email" | "sms" | "whatsapp";
   generatedFrom?: string;
   createdBy?: string;
 }) {
   const { error } = await supabase.from("comms_history").insert({
     athlete_id: athleteId,
     email_type: emailType,
-    subject,
+    subject: channel === "email" ? subject : null,
     body,
+    channel,
     generated_from: generatedFrom,
     created_by: createdBy || null,
-  });
+  } as any);
   if (error) {
     console.error("Failed to save comms history:", error);
   }
