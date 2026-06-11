@@ -4,8 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CalendarDays, CheckCircle2, Loader2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Athlete } from "@/hooks/usePortalData";
 
@@ -20,6 +24,20 @@ interface PlannerItem {
   source: "generated" | "saved";
   aiSourced?: boolean;
   dueDate?: string | null;
+  isOverdue?: boolean;
+  daysOverdue?: number;
+}
+
+function todayISO(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+function daysBetween(fromISO: string, toISO: string): number {
+  const a = new Date(fromISO + "T00:00:00").getTime();
+  const b = new Date(toISO + "T00:00:00").getTime();
+  return Math.max(0, Math.round((b - a) / 86400000));
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
