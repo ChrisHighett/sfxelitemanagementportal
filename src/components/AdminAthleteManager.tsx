@@ -47,6 +47,8 @@ function useAgents() {
   });
 }
 
+const AGENT_NAMES = ["Paul Sutton", "Chris Highett", "Chase Stanley", "Steve Shearer", "George Mimis"];
+
 interface GuardianForm {
   parent_name: string;
   parent_email: string;
@@ -83,7 +85,7 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
   const { user } = useAuth();
   const [form, setForm] = useState<AthleteForm>(() => ({
     ...(initial || emptyAthlete),
-    assigned_agent: lockedAgentName ? (lockedAgentId ?? user?.id ?? "") : (initial?.assigned_agent ?? ""),
+    assigned_agent: lockedAgentName ? lockedAgentName : (initial?.assigned_agent ?? ""),
   }));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
@@ -111,11 +113,8 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
       club_contract_expiry: form.club_contract_expiry || null,
       assigned_agent_user_id:
         lockedAgentId ||
-        ((agentList || []).find((a) => a.id === form.assigned_agent)?.id ?? null),
-      assigned_agent_name: lockedAgentName ||
-        (agentList || []).find((a) => a.id === form.assigned_agent)?.display_name ||
-        (agentList || []).find((a) => a.id === form.assigned_agent)?.email ||
-        null,
+        ((agentList || []).find((a) => (a.display_name || a.email) === form.assigned_agent)?.id ?? null),
+      assigned_agent_name: lockedAgentName || form.assigned_agent || null,
       commercial_potential: form.commercial_potential || "Not Scored",
       avatar_url: form.avatar_url || null,
     } as any;
@@ -184,10 +183,8 @@ function AthleteFormDialog({ initial, athleteId, onClose, lockedAgentName, locke
             <Select value={form.assigned_agent} onValueChange={(v) => set("assigned_agent", v)}>
               <SelectTrigger><SelectValue placeholder="Select agent…" /></SelectTrigger>
               <SelectContent>
-                {(agentList || []).map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.display_name || a.email}
-                  </SelectItem>
+                {AGENT_NAMES.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
