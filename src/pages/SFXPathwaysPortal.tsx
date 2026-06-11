@@ -2320,6 +2320,448 @@ function AgentManager() {
   );
 }
 
+function ScoutLeadFormSimple({ editLead, onClose }: { editLead?: any; onClose: () => void }) {
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    first_name: editLead?.first_name || "",
+    last_name: editLead?.last_name || "",
+    age: editLead?.age || "",
+    position: editLead?.position || "",
+    school_club: editLead?.school_club || "",
+    region: editLead?.region || "",
+    comp_grade: editLead?.comp_grade || "",
+    key_attributes: editLead?.key_attributes || "",
+    competitor_interest: editLead?.competitor_interest || "",
+    scout_rating: editLead?.scout_rating || "B",
+    triage_decision: editLead?.triage_decision || "Watch",
+    notes: editLead?.notes || "",
+  });
+  const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleSave() {
+    if (!form.first_name.trim() || !form.last_name.trim()) {
+      toast.error("First name and last name are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = { ...form, age: form.age ? Number(form.age) : null };
+      if (editLead?.id) {
+        const { error } = await supabase.from("scout_leads" as any).update(payload).eq("id", editLead.id);
+        if (error) throw error;
+        toast.success("Lead updated");
+      } else {
+        const { error } = await supabase.from("scout_leads" as any).insert({
+          ...payload,
+          created_by: user?.id,
+          onboarding_stage: "New",
+        });
+        if (error) throw error;
+        toast.success(`${form.first_name} ${form.last_name} added`);
+      }
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label className="text-xs">First name *</Label><Input placeholder="Jake" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Last name *</Label><Input placeholder="Morrison" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Age</Label><Input type="number" placeholder="16" value={form.age} onChange={(e) => set("age", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Position</Label><Input placeholder="Halfback" value={form.position} onChange={(e) => set("position", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">School / Club</Label><Input placeholder="Penrith Panthers" value={form.school_club} onChange={(e) => set("school_club", e.target.value)} className="h-8" /></div>
+        <div className="space-y-1"><Label className="text-xs">Region</Label>
+          <Select value={form.region} onValueChange={(v) => set("region", v)}>
+            <SelectTrigger className="h-8"><SelectValue placeholder="Region" /></SelectTrigger>
+            <SelectContent>{["QLD", "NSW", "VIC", "SA", "WA", "TAS", "ACT", "NZ", "Other"].map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1"><Label className="text-xs">Key attributes</Label><Textarea placeholder="What made you take notice…" value={form.key_attributes} onChange={(e) => set("key_attributes", e.target.value)} rows={2} /></div>
+      <div className="space-y-1"><Label className="text-xs">Competitor interest</Label><Textarea placeholder="Other agents circling? Who?" value={form.competitor_interest} onChange={(e) => set("competitor_interest", e.target.value)} rows={1} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1"><Label className="text-xs">Scout rating</Label>
+          <Select value={form.scout_rating} onValueChange={(v) => set("scout_rating", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="A">A — Elite prospect</SelectItem><SelectItem value="B">B — Strong watch</SelectItem><SelectItem value="C">C — Monitor</SelectItem></SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1"><Label className="text-xs">Decision</Label>
+          <Select value={form.triage_decision} onValueChange={(v) => set("triage_decision", v)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="Pursue">Pursue</SelectItem><SelectItem value="Watch">Watch</SelectItem><SelectItem value="Pass">Pass</SelectItem><SelectItem value="Undecided">Undecided</SelectItem></SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1"><Label className="text-xs">Notes</Label><Textarea placeholder="Any additional context…" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} /></div>
+      <Button className="w-full" onClick={handleSave} disabled={saving}>
+        {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editLead ? "Update lead" : "Add lead"}
+      </Button>
+    </div>
+  );
+}
+
+function ScoutLeadCardSimple({ lead, onEdit, onStageChange, onTriageChange }: {
+  lead: any;
+  onEdit: () => void;
+  onStageChange: (id: string, stage: string) => void;
+  onTriageChange: (id: string, triage: string) => void;
+}) {
+  const stages = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
+  const ratingColor = lead.scout_rating === "A" ? "bg-green-100 text-green-800" : lead.scout_rating === "B" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  const triageColor = lead.triage_decision === "Pursue" ? "bg-primary/10 text-primary" : lead.triage_decision === "Watch" ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground";
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
+              {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ratingColor}`}>{lead.scout_rating}</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${triageColor}`}>{lead.triage_decision}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={onEdit}>Edit</Button>
+        </div>
+        {lead.competitor_interest && (
+          <div className="text-xs text-destructive font-medium bg-destructive/10 rounded-md px-3 py-1.5">⚠️ {lead.competitor_interest}</div>
+        )}
+        {lead.key_attributes && <p className="text-xs text-muted-foreground line-clamp-2">{lead.key_attributes}</p>}
+        <div className="flex flex-wrap gap-1.5">
+          {stages.map((stage) => (
+            <button
+              key={stage}
+              onClick={() => onStageChange(lead.id, stage)}
+              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                lead.onboarding_stage === stage
+                  ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
+                    : stage === "Lost" ? "bg-muted text-muted-foreground border-muted-foreground/30"
+                    : "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
+            >
+              {stage}
+            </button>
+          ))}
+        </div>
+        {lead.assigned_agent_name && (
+          <div className="text-xs text-muted-foreground">Assigned to: <span className="font-medium text-foreground">{lead.assigned_agent_name}</span></div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
+  const { user } = useAuth();
+  const [showForm, setShowForm] = useState(autoOpenForm);
+  const [editingLead, setEditingLead] = useState<any>(null);
+
+  useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
+
+  const { data: leads = [], refetch, isLoading } = useQuery({
+    queryKey: ["scout_my_leads", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scout_leads" as any)
+        .select("*")
+        .eq("created_by", user?.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const pursue = leads.filter((l: any) => l.triage_decision === "Pursue");
+  const watch = leads.filter((l: any) => l.triage_decision === "Watch");
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
+
+  async function handleStageChange(id: string, stage: string) {
+    const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Stage updated");
+  }
+  async function handleTriageChange(id: string, triage: string) {
+    const { error } = await supabase.from("scout_leads" as any).update({ triage_decision: triage }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+  }
+
+  return (
+    <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">My Scout Leads</h1>
+          <p className="text-sm text-muted-foreground">Log prospects, update stages, track your pipeline.</p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+          <Plus className="h-4 w-4" />Add lead
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Pursue", value: pursue.length, color: "text-primary" },
+          { label: "Watch", value: watch.length, color: "text-amber-600" },
+          { label: "Signed", value: signed.length, color: "text-green-600" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-lg border bg-card p-3 text-center">
+            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {showForm && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{editingLead ? "Edit lead" : "New lead"}</CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ScoutLeadFormSimple
+              editLead={editingLead}
+              onClose={() => { setShowForm(false); setEditingLead(null); refetch(); }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading your leads…
+        </div>
+      ) : leads.length === 0 ? (
+        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">No leads yet. Tap "Add lead" to log your first prospect.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {leads.map((lead: any) => (
+            <ScoutLeadCardSimple
+              key={lead.id}
+              lead={lead}
+              onEdit={() => { setEditingLead(lead); setShowForm(true); }}
+              onStageChange={handleStageChange}
+              onTriageChange={handleTriageChange}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgentScoutView() {
+  const { user } = useAuth();
+  const [showForm, setShowForm] = useState(false);
+  const [editingLead, setEditingLead] = useState<any>(null);
+  const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
+  const [stageFilter, setStageFilter] = useState("All");
+
+  const { data: leads = [], refetch, isLoading } = useQuery({
+    queryKey: ["agent_scout_leads", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scout_leads" as any)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const filtered = leads.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    if (filter === "Pursue" && l.triage_decision !== "Pursue") return false;
+    if (filter === "Watch" && l.triage_decision !== "Watch") return false;
+    if (filter === "Mine" && l.assigned_agent_id !== user?.id) return false;
+    if (filter === "Stalled" && !(days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage))) return false;
+    if (stageFilter !== "All" && l.onboarding_stage !== stageFilter) return false;
+    return true;
+  });
+
+  const pursue = leads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
+  const stalled = leads.filter((l: any) => {
+    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    return days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage);
+  });
+  const competition = leads.filter((l: any) => l.competitor_interest?.trim());
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
+
+  async function handleStageChange(id: string, stage: string) {
+    const updates: any = { onboarding_stage: stage };
+    if (stage === "Signed") updates.date_signed = new Date().toISOString().slice(0, 10);
+    if (stage === "Lost") updates.date_lost = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    refetch();
+    toast.success("Stage updated");
+  }
+
+  async function handleConvert(lead: any) {
+    const { data: newAthlete, error } = await supabase
+      .from("athletes")
+      .insert({
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        position: lead.position || null,
+        school: lead.school_club || null,
+        assigned_agent_name: lead.assigned_agent_name || null,
+        assigned_agent_user_id: lead.assigned_agent_id || null,
+        stage: "Emerging",
+      } as any)
+      .select("id")
+      .single();
+    if (error) { toast.error("Could not create athlete profile: " + error.message); return; }
+    await supabase.from("scout_leads" as any).update({
+      onboarding_stage: "Signed",
+      date_signed: new Date().toISOString().slice(0, 10),
+      converted_athlete_id: (newAthlete as any).id,
+    }).eq("id", lead.id);
+    toast.success(`${lead.first_name} ${lead.last_name} — athlete profile created`);
+    refetch();
+  }
+
+  return (
+    <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold">Scout pipeline</h1>
+          <p className="text-sm text-muted-foreground">Prospects logged by your scouts — triage, track, and convert.</p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+          <Plus className="h-4 w-4" />Add lead
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { label: "Pursue", value: pursue.length, color: "text-primary" },
+          { label: "Competition active", value: competition.length, color: "text-destructive" },
+          { label: "Stalled", value: stalled.length, color: "text-amber-600" },
+          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: "text-green-600" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="rounded-lg border bg-card p-3 text-center">
+            <div className={`text-2xl font-semibold ${color}`}>{value}</div>
+            <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5">
+          {(["All", "Pursue", "Watch", "Mine", "Stalled"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${filter === f ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["All", "New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((f) => (
+            <button key={f} onClick={() => setStageFilter(f)}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${stageFilter === f ? "bg-secondary text-secondary-foreground border-secondary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showForm && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{editingLead ? "Edit lead" : "New lead"}</CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ScoutLeadFormSimple editLead={editingLead} onClose={() => { setShowForm(false); setEditingLead(null); refetch(); }} />
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" />Loading leads…
+        </div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No leads match this filter.</CardContent></Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((lead: any) => {
+            const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at || lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+            const isStalled = days >= 7 && lead.triage_decision === "Pursue" && !["Signed", "Lost"].includes(lead.onboarding_stage);
+            return (
+              <Card key={lead.id} className={isStalled ? "border-amber-300" : ""}>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
+                        {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
+                        <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
+                        <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
+                        {isStalled && <Badge variant="outline" className="text-xs border-amber-400 text-amber-700">Stalled {days}d</Badge>}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
+                        {lead.assigned_agent_name && ` · Agent: ${lead.assigned_agent_name}`}
+                        {lead.scout_name && ` · Scout: ${lead.scout_name}`}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={() => { setEditingLead(lead); setShowForm(true); }}>Edit</Button>
+                  </div>
+
+                  {lead.competitor_interest && (
+                    <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
+                  )}
+                  {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((stage) => (
+                      <button key={stage} onClick={() => handleStageChange(lead.id, stage)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                          lead.onboarding_stage === stage
+                            ? stage === "Signed" ? "bg-green-600 text-white border-green-600"
+                              : stage === "Lost" ? "bg-muted-foreground/20 text-muted-foreground border-transparent"
+                              : "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground border-border hover:bg-muted"
+                        }`}>
+                        {stage}
+                      </button>
+                    ))}
+                  </div>
+
+                  {lead.onboarding_stage === "Welcome Sent" && (
+                    <Button size="sm" variant="outline" className="w-full gap-1.5 border-green-500 text-green-700 hover:bg-green-50" onClick={() => handleConvert(lead)}>
+                      <UserPlus className="h-3.5 w-3.5" />
+                      Convert to athlete profile →
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminSecurity() {
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
