@@ -2677,9 +2677,16 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
     enabled: !!user?.id,
   });
 
-  const pursue = leads.filter((l: any) => l.triage_decision === "Pursue");
-  const watch = leads.filter((l: any) => l.triage_decision === "Watch");
+  const pursue = leads.filter((l: any) =>
+    l.triage_decision === "Pursue" &&
+    !["Signed", "Lost"].includes(l.onboarding_stage)
+  );
+  const watch = leads.filter((l: any) =>
+    l.triage_decision === "Watch" &&
+    !["Signed", "Lost"].includes(l.onboarding_stage)
+  );
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
+  const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
     const { error } = await supabase.from("scout_leads" as any).update({ onboarding_stage: stage }).eq("id", id);
