@@ -42,20 +42,24 @@ interface AISummary {
 interface VoiceRecordingFlowProps {
   athlete: Athlete;
   onClose: () => void;
+  /** If provided, skip recording and feed this transcript straight into the AI pipeline. */
+  initialTranscript?: string;
+  /** Label saved on call_history.call_type when importing. */
+  initialCallType?: string;
+  /** Optional ISO date (YYYY-MM-DD) of the meeting being imported. */
+  initialMeetingDate?: string;
+  /** Source label for analytics ("voice" | "transcript_import"). */
+  source?: "voice" | "transcript_import";
 }
 
-const REVIEW_SECTIONS = [
-  { key: "warm_opener", label: "Warm Opener", icon: "👋" },
-  { key: "performance", label: "Performance", icon: "⚽" },
-  { key: "lifestyle", label: "Lifestyle", icon: "🏠" },
-  { key: "personal", label: "Personal", icon: "💪" },
-  { key: "education", label: "Education", icon: "📚" },
-  { key: "brand", label: "Brand", icon: "📱" },
-  { key: "goals", label: "Goals", icon: "🎯" },
-  { key: "focus", label: "Focus Next Month", icon: "🔮" },
-] as const;
-
-export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingFlowProps) {
+export default function VoiceRecordingFlow({
+  athlete,
+  onClose,
+  initialTranscript,
+  initialCallType,
+  initialMeetingDate,
+  source = "voice",
+}: VoiceRecordingFlowProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<FlowStep>("ready");
   const [callHistoryId, setCallHistoryId] = useState<string | null>(null);
