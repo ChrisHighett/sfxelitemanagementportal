@@ -39,6 +39,7 @@ import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
+import TranscriptImportDialog from "@/components/portal/TranscriptImportDialog";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
@@ -933,6 +934,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
+  const [transcriptImportOpen, setTranscriptImportOpen] = useState(false);
+  const [importedTranscript, setImportedTranscript] = useState<{ text: string; callType: string; date: string } | null>(null);
   const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
@@ -941,8 +944,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   
   // Notify parent when call is active so bottom nav can be hidden
   useEffect(() => {
-    onCallActive?.(callSessionActive || voiceRecordingActive);
-  }, [callSessionActive, voiceRecordingActive, onCallActive]);
+    onCallActive?.(callSessionActive || voiceRecordingActive || !!importedTranscript);
+  }, [callSessionActive, voiceRecordingActive, importedTranscript, onCallActive]);
 
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
@@ -1116,6 +1119,19 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     }
   }, [athlete.name, athlete.parentName, athlete.id, user?.id, user?.user_metadata?.display_name]);
 
+  if (importedTranscript) {
+    return (
+      <VoiceRecordingFlow
+        athlete={athlete}
+        onClose={() => setImportedTranscript(null)}
+        initialTranscript={importedTranscript.text}
+        initialCallType={importedTranscript.callType}
+        initialMeetingDate={importedTranscript.date}
+        source="transcript_import"
+      />
+    );
+  }
+
   if (voiceRecordingActive) {
     return (
       <VoiceRecordingFlow
@@ -1176,10 +1192,25 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
               >
                 <Phone className="h-5 w-5" /> Guided Note-Taking
               </Button>
+              <Button
+                variant="outline"
+                className="h-14 text-base gap-3 justify-start sm:col-span-2"
+                onClick={() => setTranscriptImportOpen(true)}
+              >
+                <Upload className="h-5 w-5" /> Import meeting transcript (Teams / Zoom)
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <TranscriptImportDialog
+        open={transcriptImportOpen}
+        onOpenChange={setTranscriptImportOpen}
+        onSubmit={({ transcript, callType, meetingDate }) => {
+          setImportedTranscript({ text: transcript, callType, date: meetingDate });
+        }}
+      />
 
       <Card>
         <CardHeader>

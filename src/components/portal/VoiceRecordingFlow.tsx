@@ -39,11 +39,6 @@ interface AISummary {
   parent_email_summary_points: string[];
 }
 
-interface VoiceRecordingFlowProps {
-  athlete: Athlete;
-  onClose: () => void;
-}
-
 const REVIEW_SECTIONS = [
   { key: "warm_opener", label: "Warm Opener", icon: "👋" },
   { key: "performance", label: "Performance", icon: "⚽" },
@@ -55,7 +50,27 @@ const REVIEW_SECTIONS = [
   { key: "focus", label: "Focus Next Month", icon: "🔮" },
 ] as const;
 
-export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingFlowProps) {
+interface VoiceRecordingFlowProps {
+  athlete: Athlete;
+  onClose: () => void;
+  /** If provided, skip recording and feed this transcript straight into the AI pipeline. */
+  initialTranscript?: string;
+  /** Label saved on call_history.call_type when importing. */
+  initialCallType?: string;
+  /** Optional ISO date (YYYY-MM-DD) of the meeting being imported. */
+  initialMeetingDate?: string;
+  /** Source label for analytics ("voice" | "transcript_import"). */
+  source?: "voice" | "transcript_import";
+}
+
+export default function VoiceRecordingFlow({
+  athlete,
+  onClose,
+  initialTranscript,
+  initialCallType,
+  initialMeetingDate,
+  source = "voice",
+}: VoiceRecordingFlowProps) {
   const { user } = useAuth();
   const [step, setStep] = useState<FlowStep>("ready");
   const [callHistoryId, setCallHistoryId] = useState<string | null>(null);
@@ -110,6 +125,102 @@ export default function VoiceRecordingFlow({ athlete, onClose }: VoiceRecordingF
     }, 1000);
     return () => clearInterval(interval);
   }, [callStart, step]);
+
+  // ── ALTERNATE ENTRY: imported transcript ──
+  // Skip recording entirely, jump straight to AI processing then review.
+  const importStartedRef = useRef(false);
+  useEffect(() => {
+    if (!initialTranscript || importStartedRef.current) return;
+    importStartedRef.current = true;
+    (async () => {
+      setStep("processing");
+      setProcessingStatus("Saving transcript...");
+      const callType = initialCallType || "monthly_review";
+      const meetingISO = initialMeetingDate
+        ? new Date(initialMeetingDate).toISOString()
+        : new Date().toISOString();
+
+      // Create call_history row up-front so saveApprovedReview can update it
+      let newCallId: string | null = null;
+      try {
+        const { data, error } = await supabase.from("call_history").insert({
+          athlete_id: athlete.id,
+          call_type: callType as any,
+          summary: "Imported meeting transcript",
+          transcript_text: initialTranscript,
+          conducted_by: user?.id ?? null,
+          parent_involved: false,
+          follow_up_required: false,
+          call_date: meetingISO,
+        }).select("id").single();
+        if (error) throw error;
+        newCallId = data.id;
+        setCallHistoryId(newCallId);
+      } catch (e: any) {
+        toast.error("Failed to log transcript: " + (e.message || "Unknown"));
+        setStep("review");
+        setEditedSummary({
+          warm_opener: "", performance: initialTranscript, lifestyle: "",
+          personal: "", education: "", brand: "", goals: "", focus: "",
+        });
+        setEditedGoals([]);
+        return;
+      }
+
+      // Run AI summarisation against the imported transcript
+      setProcessingStatus("AI structuring your transcript...");
+      try {
+        const { data, error } = await supabase.functions.invoke("summarise-call", {
+          body: {
+            transcript: initialTranscript,
+            athleteName: athlete.name,
+            athleteStage: athlete.stage,
+            callType,
+            callDate: meetingISO.slice(0, 10),
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        if (data?.raw_text) {
+          toast.info("AI returned unstructured text — review and edit below");
+          setEditedSummary({
+            warm_opener: "", performance: data.raw_text, lifestyle: "",
+            personal: "", education: "", brand: "", goals: "", focus: "",
+          });
+          setEditedGoals([]);
+          setStep("review");
+        } else {
+          const s = data.summary as AISummary;
+          setAiSummary(s);
+          setEditedSummary({
+            warm_opener: s.warm_opener || "",
+            performance: s.performance || "",
+            lifestyle: s.lifestyle || "",
+            personal: s.personal || "",
+            education: s.education || "",
+            brand: s.brand || "",
+            goals: s.goals || "",
+            focus: s.suggested_focus_next_month || "",
+          });
+          setEditedGoals(s.suggested_goals || []);
+          setAttentionRequired(s.attention_required || false);
+          setStep("review");
+          toast.success("AI review draft ready from transcript");
+        }
+      } catch (e: any) {
+        console.error("Imported AI summary error:", e);
+        toast.error(e.message || "AI structuring failed");
+        setEditedSummary({
+          warm_opener: "", performance: initialTranscript, lifestyle: "",
+          personal: "", education: "", brand: "", goals: "", focus: "",
+        });
+        setEditedGoals([]);
+        setStep("review");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
