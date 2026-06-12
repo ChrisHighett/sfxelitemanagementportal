@@ -407,6 +407,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [pursueLeads, setPursueLeads] = useState<any[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [upcomingCount, setUpcomingCount] = useState(0);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const week = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
   const isCurrentWeek = weekOffset === 0;
@@ -417,6 +418,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
   const [selectedDay, setSelectedDay] = useState<string>("today"); // "today" | "Monday".. | "all"
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
+
+  useEffect(() => {
+    const refresh = () => setRefreshTick((n) => n + 1);
+    window.addEventListener("athlete-tasks-changed", refresh);
+    return () => window.removeEventListener("athlete-tasks-changed", refresh);
+  }, []);
 
   // When navigating away from current week, "today" no longer applies
   useEffect(() => {
@@ -502,7 +509,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       setLoading(false);
     }
     load();
-  }, [athletes, weekOffset, isCurrentWeek, week.start, week.end]);
+  }, [athletes, weekOffset, isCurrentWeek, week.start, week.end, refreshTick]);
 
   const plannerItems = useMemo((): PlannerItem[] => {
     const savedIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => `${t.athlete_id}:${t.title}`));
