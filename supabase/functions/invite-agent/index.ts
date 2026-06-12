@@ -67,7 +67,7 @@ serve(async (req) => {
       email,
       options: {
         data: { display_name: displayName, role: safeRole },
-        redirectTo: `${origin}/dashboard`,
+        redirectTo: `${origin}/reset-password`,
       },
     });
     if (linkError) throw linkError;
