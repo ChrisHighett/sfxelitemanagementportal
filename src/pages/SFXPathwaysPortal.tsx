@@ -33,6 +33,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
+import PendingInvitesList from "@/components/portal/PendingInvitesList";
+import InviteDialog from "@/components/portal/InviteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
@@ -3436,7 +3438,8 @@ function AdminSecurity() {
         <TabsContent value="agents" className="mt-4">
           <AgentManager />
         </TabsContent>
-        <TabsContent value="approvals" className="mt-4">
+        <TabsContent value="approvals" className="mt-4 space-y-6">
+          <PendingInvitesList />
           <PendingApprovals />
         </TabsContent>
         <TabsContent value="security" className="mt-4 space-y-6">
