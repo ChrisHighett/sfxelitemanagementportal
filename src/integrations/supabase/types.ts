@@ -830,6 +830,7 @@ export type Database = {
         Row: {
           athlete_id: string
           created_at: string
+          guardian_user_id: string | null
           id: string
           parent_email: string | null
           parent_name: string
@@ -840,6 +841,7 @@ export type Database = {
         Insert: {
           athlete_id: string
           created_at?: string
+          guardian_user_id?: string | null
           id?: string
           parent_email?: string | null
           parent_name: string
@@ -850,6 +852,7 @@ export type Database = {
         Update: {
           athlete_id?: string
           created_at?: string
+          guardian_user_id?: string | null
           id?: string
           parent_email?: string | null
           parent_name?: string
@@ -1338,6 +1341,74 @@ export type Database = {
           },
         ]
       }
+      user_invites: {
+        Row: {
+          activated_at: string | null
+          activated_user_id: string | null
+          activation_token: string | null
+          approved_at: string | null
+          approved_by: string | null
+          athlete_first_name: string | null
+          athlete_id: string | null
+          athlete_last_name: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          relationship: string | null
+          role: string
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_user_id?: string | null
+          activation_token?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          athlete_first_name?: string | null
+          athlete_id?: string | null
+          athlete_last_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          relationship?: string | null
+          role: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_user_id?: string | null
+          activation_token?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          athlete_first_name?: string | null
+          athlete_id?: string | null
+          athlete_last_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          relationship?: string | null
+          role?: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invites_athlete_id_fkey"
+            columns: ["athlete_id"]
+            isOneToOne: false
+            referencedRelation: "athletes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_athlete_score_trends: {
@@ -1383,7 +1454,19 @@ export type Database = {
       }
     }
     Functions: {
+      approve_invite: {
+        Args: { _invite_id: string }
+        Returns: {
+          activation_token: string
+          expires_at: string
+        }[]
+      }
       current_user_role: { Args: never; Returns: string }
+      decline_invite: { Args: { _invite_id: string }; Returns: undefined }
+      finalize_invite_activation: {
+        Args: { _display_name: string; _new_user_id: string; _token: string }
+        Returns: undefined
+      }
       generate_athlete_code: {
         Args: { first_name: string; last_name: string }
         Returns: string
@@ -1432,12 +1515,26 @@ export type Database = {
           tasks_dismissed: number
         }[]
       }
+      get_invite_by_token: {
+        Args: { _token: string }
+        Returns: {
+          athlete_first_name: string
+          athlete_id: string
+          athlete_last_name: string
+          email: string
+          expired: boolean
+          id: string
+          role: string
+          status: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_approved_parent_or_athlete_for: {
         Args: { athlete_uuid: string }
         Returns: boolean
       }
+      is_guardian_of: { Args: { _athlete_id: string }; Returns: boolean }
       is_portal_admin: { Args: { user_id: string }; Returns: boolean }
       user_has_athlete_access: {
         Args: { athlete_uuid: string; user_uuid: string }
