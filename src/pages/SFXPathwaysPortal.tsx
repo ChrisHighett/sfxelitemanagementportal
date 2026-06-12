@@ -4038,7 +4038,10 @@ export default function SFXPathwaysPortal() {
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="athlete" athleteName={athlete.name} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "parent" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
+
 
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "dash" && (
         <ManagerCommandCentre
