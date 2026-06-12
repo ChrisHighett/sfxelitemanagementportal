@@ -427,15 +427,10 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const handleFormatChange = async (nextFormat: Format) => {
     if (nextFormat === format) return;
     setFormat(nextFormat);
-    // Safeguarding: when switching to SMS / WhatsApp for an under-18 athlete,
-    // default the audience to Parent (still overridable by the agent).
-    let nextAudience = audience;
-    if (isMinor && (nextFormat === "sms" || nextFormat === "whatsapp") && audience === "athlete") {
-      nextAudience = "parent";
-      setAudience("parent");
-    }
-    if (saved && nextAudience !== "skip" && notes.trim()) {
-      await handleGenerateEmail(nextFormat, nextAudience);
+    // Direct contact with athletes (any age) is authorised by agency agreement.
+    // No age-based audience switching — agent's selection is respected.
+    if (saved && audience !== "skip" && notes.trim()) {
+      await handleGenerateEmail(nextFormat, audience);
     }
   };
 
