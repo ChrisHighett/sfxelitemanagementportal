@@ -70,45 +70,30 @@ export default function ActionItemConfirmPanel({
       return false;
     }
     try {
-      // Resolve the athlete's assigned agent so the task lands in their workflow
-      // even when an admin is logging the conversation on their behalf.
-      const { data: athleteRow, error: athleteErr } = await supabase
-        .from("athletes")
-        .select("assigned_agent_user_id")
-        .eq("id", athleteId)
-        .maybeSingle();
-      if (athleteErr) {
-        console.error("[ActionItemConfirmPanel] athlete lookup failed", athleteErr);
+      if (!user?.id) {
+        toast.error("Sign in again before adding this task.");
+        return false;
       }
-      const assignedAgentId =
-        (athleteRow as any)?.assigned_agent_user_id ?? user?.id ?? null;
 
-      const payload: any = {
-        athlete_id: athleteId,
-        title: row.task,
-        description: row.relative_phrase
+      const payload = {
+        _athlete_id: athleteId,
+        _title: row.task,
+        _description: row.relative_phrase
           ? `Auto-extracted from conversation (“${row.relative_phrase}”).`
           : "Auto-extracted from conversation.",
-        owner_type: "agent",
-        assigned_to_user_id: assignedAgentId,
-        created_by: user?.id ?? null,
-        due_date: row.due_date,
-        priority: PRIORITY_TO_INT[row.priority],
-        status: "open",
-        source: "conversation_ai",
+        _due_date: row.due_date,
+        _priority: PRIORITY_TO_INT[row.priority],
+        _related_call_id: conversationId || null,
       };
-      // Only include related_call_id when we actually have one (uuid FK).
-      if (conversationId) payload.related_call_id = conversationId;
 
-      console.log("[ActionItemConfirmPanel] inserting task", payload);
+      console.log("[ActionItemConfirmPanel] creating task", payload);
 
-      const { data, error } = await supabase
-        .from("athlete_tasks")
-        .insert(payload)
-        .select("id")
-        .single();
+      const { data, error } = await (supabase as any).rpc(
+        "create_conversation_action_task",
+        payload,
+      );
 
-      if (error || !data?.id) {
+      if (error || !data) {
         console.error("[ActionItemConfirmPanel] insert failed", error, payload);
         toast.error(
           error?.message
@@ -117,7 +102,8 @@ export default function ActionItemConfirmPanel({
         );
         return false;
       }
-      console.log("[ActionItemConfirmPanel] inserted task id", data.id);
+      console.log("[ActionItemConfirmPanel] inserted task id", data);
+      window.dispatchEvent(new CustomEvent("athlete-tasks-changed", { detail: { athleteId } }));
       return true;
     } catch (e: any) {
       console.error("[ActionItemConfirmPanel] unexpected error", e);

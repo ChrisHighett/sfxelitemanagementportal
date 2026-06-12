@@ -1461,6 +1461,17 @@ export type Database = {
           expires_at: string
         }[]
       }
+      create_conversation_action_task: {
+        Args: {
+          _athlete_id: string
+          _description: string
+          _due_date: string
+          _priority: number
+          _related_call_id?: string
+          _title: string
+        }
+        Returns: string
+      }
       current_user_role: { Args: never; Returns: string }
       decline_invite: { Args: { _invite_id: string }; Returns: undefined }
       finalize_invite_activation: {
