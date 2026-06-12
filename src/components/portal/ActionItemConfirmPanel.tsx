@@ -61,37 +61,69 @@ export default function ActionItemConfirmPanel({
     setRows((prev) => prev.map((r) => (r._key === key ? { ...r, ...patch } : r)));
 
   const insertOne = async (row: RowState): Promise<boolean> => {
-    if (!row.due_date) return false;
-    // Resolve the athlete's assigned agent so the task lands in their workflow
-    // even when an admin is logging the conversation on their behalf.
-    const { data: athleteRow } = await supabase
-      .from("athletes")
-      .select("assigned_agent_user_id")
-      .eq("id", athleteId)
-      .maybeSingle();
-    const assignedAgentId =
-      (athleteRow as any)?.assigned_agent_user_id ?? user?.id ?? null;
-
-    const { error } = await supabase.from("athlete_tasks").insert({
-      athlete_id: athleteId,
-      title: row.task,
-      description: row.relative_phrase
-        ? `Auto-extracted from conversation (“${row.relative_phrase}”).`
-        : "Auto-extracted from conversation.",
-      owner_type: "agent" as any,
-      assigned_to_user_id: assignedAgentId,
-      created_by: user?.id ?? null,
-      due_date: row.due_date,
-      priority: PRIORITY_TO_INT[row.priority],
-      status: "open" as any,
-      source: "conversation_ai",
-      related_call_id: conversationId,
-    } as any);
-    if (error) {
-      toast.error(error.message);
+    if (!row.due_date) {
+      toast.error("Set a due date before adding.");
       return false;
     }
-    return true;
+    if (!athleteId) {
+      toast.error("Missing athlete — cannot add task.");
+      return false;
+    }
+    try {
+      // Resolve the athlete's assigned agent so the task lands in their workflow
+      // even when an admin is logging the conversation on their behalf.
+      const { data: athleteRow, error: athleteErr } = await supabase
+        .from("athletes")
+        .select("assigned_agent_user_id")
+        .eq("id", athleteId)
+        .maybeSingle();
+      if (athleteErr) {
+        console.error("[ActionItemConfirmPanel] athlete lookup failed", athleteErr);
+      }
+      const assignedAgentId =
+        (athleteRow as any)?.assigned_agent_user_id ?? user?.id ?? null;
+
+      const payload: any = {
+        athlete_id: athleteId,
+        title: row.task,
+        description: row.relative_phrase
+          ? `Auto-extracted from conversation (“${row.relative_phrase}”).`
+          : "Auto-extracted from conversation.",
+        owner_type: "agent",
+        assigned_to_user_id: assignedAgentId,
+        created_by: user?.id ?? null,
+        due_date: row.due_date,
+        priority: PRIORITY_TO_INT[row.priority],
+        status: "open",
+        source: "conversation_ai",
+      };
+      // Only include related_call_id when we actually have one (uuid FK).
+      if (conversationId) payload.related_call_id = conversationId;
+
+      console.log("[ActionItemConfirmPanel] inserting task", payload);
+
+      const { data, error } = await supabase
+        .from("athlete_tasks")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error || !data?.id) {
+        console.error("[ActionItemConfirmPanel] insert failed", error, payload);
+        toast.error(
+          error?.message
+            ? `Save failed: ${error.message}`
+            : "Save failed — task was not added. Check console for details.",
+        );
+        return false;
+      }
+      console.log("[ActionItemConfirmPanel] inserted task id", data.id);
+      return true;
+    } catch (e: any) {
+      console.error("[ActionItemConfirmPanel] unexpected error", e);
+      toast.error(`Save failed: ${e?.message ?? "unknown error"}`);
+      return false;
+    }
   };
 
   const handleAdd = async (key: string) => {
