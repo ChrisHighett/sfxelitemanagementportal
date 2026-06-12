@@ -39,6 +39,7 @@ import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
+import TranscriptImportDialog from "@/components/portal/TranscriptImportDialog";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
@@ -933,6 +934,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const { user } = useAuth();
   const [callSessionActive, setCallSessionActive] = useState(false);
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
+  const [transcriptImportOpen, setTranscriptImportOpen] = useState(false);
+  const [importedTranscript, setImportedTranscript] = useState<{ text: string; callType: string; date: string } | null>(null);
   const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: true, performance: false, lifestyle: false, personal: false,
@@ -941,8 +944,8 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   
   // Notify parent when call is active so bottom nav can be hidden
   useEffect(() => {
-    onCallActive?.(callSessionActive || voiceRecordingActive);
-  }, [callSessionActive, voiceRecordingActive, onCallActive]);
+    onCallActive?.(callSessionActive || voiceRecordingActive || !!importedTranscript);
+  }, [callSessionActive, voiceRecordingActive, importedTranscript, onCallActive]);
 
   const [athleteEmailDraft, setAthleteEmailDraft] = useState<string | null>(null);
   const [parentEmailDraft, setParentEmailDraft] = useState<string | null>(null);
