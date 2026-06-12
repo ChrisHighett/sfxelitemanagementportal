@@ -165,7 +165,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [extracting, setExtracting] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
 
-  const isMinor = typeof athlete.age === "number" && athlete.age < 18;
+  
 
   const convTypeOptions = CONV_TYPES_BY_CATEGORY[category];
   const counterpartyConfig = COUNTERPARTY_CONFIG[category];
@@ -427,15 +427,10 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const handleFormatChange = async (nextFormat: Format) => {
     if (nextFormat === format) return;
     setFormat(nextFormat);
-    // Safeguarding: when switching to SMS / WhatsApp for an under-18 athlete,
-    // default the audience to Parent (still overridable by the agent).
-    let nextAudience = audience;
-    if (isMinor && (nextFormat === "sms" || nextFormat === "whatsapp") && audience === "athlete") {
-      nextAudience = "parent";
-      setAudience("parent");
-    }
-    if (saved && nextAudience !== "skip" && notes.trim()) {
-      await handleGenerateEmail(nextFormat, nextAudience);
+    // Direct contact with athletes (any age) is authorised by agency agreement.
+    // No age-based audience switching — agent's selection is respected.
+    if (saved && audience !== "skip" && notes.trim()) {
+      await handleGenerateEmail(nextFormat, audience);
     }
   };
 
@@ -778,11 +773,6 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
                     );
                   })}
                 </div>
-                {isMinor && (format === "sms" || format === "whatsapp") && audience === "athlete" && (
-                  <p className="text-[11px] rounded px-2 py-1 border" style={{ color: "var(--win-deep)", background: "var(--win-soft)", borderColor: "var(--win-soft)" }}>
-                    {athlete.name.split(" ")[0]} is under 18 — consider sending this to their parent.
-                  </p>
-                )}
               </div>
 
               {generatingEmail ? (
