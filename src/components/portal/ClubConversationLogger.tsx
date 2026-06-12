@@ -165,7 +165,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
   const [extracting, setExtracting] = useState(false);
   const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
 
-  const isMinor = typeof athlete.age === "number" && athlete.age < 18;
+  
 
   const convTypeOptions = CONV_TYPES_BY_CATEGORY[category];
   const counterpartyConfig = COUNTERPARTY_CONFIG[category];
