@@ -1119,6 +1119,19 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     }
   }, [athlete.name, athlete.parentName, athlete.id, user?.id, user?.user_metadata?.display_name]);
 
+  if (importedTranscript) {
+    return (
+      <VoiceRecordingFlow
+        athlete={athlete}
+        onClose={() => setImportedTranscript(null)}
+        initialTranscript={importedTranscript.text}
+        initialCallType={importedTranscript.callType}
+        initialMeetingDate={importedTranscript.date}
+        source="transcript_import"
+      />
+    );
+  }
+
   if (voiceRecordingActive) {
     return (
       <VoiceRecordingFlow
@@ -1179,10 +1192,25 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
               >
                 <Phone className="h-5 w-5" /> Guided Note-Taking
               </Button>
+              <Button
+                variant="outline"
+                className="h-14 text-base gap-3 justify-start sm:col-span-2"
+                onClick={() => setTranscriptImportOpen(true)}
+              >
+                <Upload className="h-5 w-5" /> Import meeting transcript (Teams / Zoom)
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <TranscriptImportDialog
+        open={transcriptImportOpen}
+        onOpenChange={setTranscriptImportOpen}
+        onSubmit={({ transcript, callType, meetingDate }) => {
+          setImportedTranscript({ text: transcript, callType, date: meetingDate });
+        }}
+      />
 
       <Card>
         <CardHeader>
