@@ -192,8 +192,11 @@ export default function AdminAnalytics() {
           </div>
         )}
       </div>
+      {/* Scout lead response times — agent performance dimension */}
+      <ScoutResponseTimes />
       {/* Task completion scorecard */}
       <AgentTaskScorecard />
+
 
 
       {/* KPI legend */}
