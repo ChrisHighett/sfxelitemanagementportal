@@ -60,20 +60,27 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://sfxelitemanagementportal.lovable.app";
 
-    const { data: authData, error: authError } = await admin.auth.admin.inviteUserByEmail(
+    // Generate an invite link WITHOUT sending an email. The admin copies the
+    // returned action_link and shares it manually (Outlook, WhatsApp, etc.).
+    const { data: linkData, error: linkError } = await (admin.auth.admin as any).generateLink({
+      type: "invite",
       email,
-      {
+      options: {
         data: { display_name: displayName, role: safeRole },
         redirectTo: `${origin}/dashboard`,
       },
-    );
-    if (authError) throw authError;
+    });
+    if (linkError) throw linkError;
+
+    const newUser = linkData?.user;
+    const actionLink: string | undefined = linkData?.properties?.action_link;
+    if (!newUser?.id || !actionLink) throw new Error("Failed to generate invite link");
 
     const { error: puError } = await admin
       .from("portal_users")
       .upsert(
         {
-          id: authData.user.id,
+          id: newUser.id,
           role: safeRole,
           approved: true,
           display_name: displayName,
@@ -83,9 +90,10 @@ serve(async (req) => {
       );
     if (puError) throw puError;
 
-    return new Response(JSON.stringify({ ok: true, userId: authData.user.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ok: true, userId: newUser.id, actionLink, email, role: safeRole }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e: any) {
     console.error("invite-agent error:", e?.message || e);
     return new Response(JSON.stringify({ error: e?.message || "Failed to invite agent" }), {
