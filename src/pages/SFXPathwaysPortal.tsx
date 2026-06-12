@@ -2364,40 +2364,6 @@ function AgentManager() {
     },
   });
 
-  const { data: scoutResponses = [] } = useQuery({
-    queryKey: ["scout_response_times"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scout_leads" as any)
-        .select("assigned_agent_id, assigned_agent_name, triage_decision, response_hours, first_agent_action_at, created_at, onboarding_stage")
-        .eq("triage_decision", "Pursue")
-        .not("assigned_agent_id", "is", null);
-      if (error) throw error;
-      return (data || []) as any[];
-    },
-  });
-
-  const agentResponseStats = useMemo(() => {
-    const byAgent: Record<string, { name: string; leads: number; responded: number; totalHours: number; overdue: number }> = {};
-    for (const lead of scoutResponses) {
-      const key = lead.assigned_agent_id;
-      if (!key) continue;
-      if (!byAgent[key]) byAgent[key] = { name: lead.assigned_agent_name || "Unknown", leads: 0, responded: 0, totalHours: 0, overdue: 0 };
-      byAgent[key].leads++;
-      if (lead.response_hours != null) {
-        byAgent[key].responded++;
-        byAgent[key].totalHours += Number(lead.response_hours);
-      } else if (lead.onboarding_stage === "New") {
-        const daysPending = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
-        if (daysPending > 1) byAgent[key].overdue++;
-      }
-    }
-    return Object.values(byAgent).map((a) => ({
-      ...a,
-      avgHours: a.responded > 0 ? a.totalHours / a.responded : null,
-      responseRate: a.leads > 0 ? Math.round((a.responded / a.leads) * 100) : 0,
-    })).sort((a, b) => (a.avgHours ?? 999) - (b.avgHours ?? 999));
-  }, [scoutResponses]);
 
 
 
