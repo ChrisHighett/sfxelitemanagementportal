@@ -7,6 +7,7 @@ import { ArcLoader } from "@/components/brand/Brand";
 import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
+import ScoutResponseTimes from "./ScoutResponseTimes";
 
 function scoreBadge(score: number) {
   if (score >= 80)
