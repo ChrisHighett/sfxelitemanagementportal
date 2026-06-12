@@ -14,13 +14,16 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [isInvite, setIsInvite] = useState(false);
+
   useEffect(() => {
-    // Check for recovery event
+    // Check for recovery / invite event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    // Also check hash
-    if (window.location.hash.includes("type=recovery")) setReady(true);
+    const hash = window.location.hash;
+    if (hash.includes("type=recovery")) setReady(true);
+    if (hash.includes("type=invite")) { setReady(true); setIsInvite(true); }
     return () => subscription.unsubscribe();
   }, []);
 
@@ -32,8 +35,8 @@ const ResetPassword = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Password updated", description: "You can now sign in with your new password." });
-      navigate("/login");
+      toast({ title: isInvite ? "Welcome — password set" : "Password updated", description: isInvite ? "You're signed in." : "You can now sign in with your new password." });
+      navigate(isInvite ? "/portal" : "/login");
     }
   };
 
