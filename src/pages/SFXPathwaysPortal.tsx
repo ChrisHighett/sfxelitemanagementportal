@@ -2413,17 +2413,35 @@ function AgentManager() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`${inviteRole === "scout" ? "Scout" : "Agent"} invite sent to ${inviteEmail}`);
-      setInviteEmail("");
-      setInviteName("");
-      setShowInviteForm(false);
+      const url = (data as any)?.actionLink as string;
+      if (!url) throw new Error("No link returned");
+      setGeneratedLink({ url, email: inviteEmail.trim(), role: inviteRole });
+      setCopied(false);
+      toast.success(`Invite link ready — copy and send to ${inviteEmail}`);
       refetch();
     } catch (e: any) {
-      toast.error(e.message || "Failed to send invite");
+      toast.error(e.message || "Failed to generate invite link");
     } finally {
       setInviting(false);
     }
   }
+
+  async function copyLink() {
+    if (!generatedLink) return;
+    try {
+      await navigator.clipboard.writeText(generatedLink.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed — select and copy manually");
+    }
+  }
+
+  function resetInviteForm() {
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
+  }
+
 
   async function handleToggleApproved(agentId: string, currentApproved: boolean) {
     const { error } = await supabase
