@@ -75,10 +75,12 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   athlete: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "reviews", label: "My Reviews", icon: ClipboardList },
+    { key: "updates", label: "Updates", icon: Mail },
     { key: "resources", label: "Resources", icon: Library },
   ],
   parent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
+    { key: "updates", label: "Updates", icon: Mail },
     { key: "resources", label: "Resources", icon: Library },
   ],
   agent: [
