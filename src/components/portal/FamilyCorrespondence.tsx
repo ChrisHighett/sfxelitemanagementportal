@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Mail, MessageSquare, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
 import { EmptyState } from "@/components/brand/States";
-import { HeroBanner } from "@/components/portal/ui/HeroBanner";
+import HeroBanner from "@/components/portal/ui/HeroBanner";
 
 interface Entry {
   id: string;
