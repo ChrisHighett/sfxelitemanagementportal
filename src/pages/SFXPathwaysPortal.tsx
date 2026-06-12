@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
+import FamilyCorrespondence from "@/components/portal/FamilyCorrespondence";
 import { BrandMark } from "@/components/brand/Brand";
 import { CommandPalette, CommandHint, type PaletteCommand } from "@/components/brand/CommandPalette";
 import { ThemeSwitcher } from "@/components/brand/ThemeSwitcher";
