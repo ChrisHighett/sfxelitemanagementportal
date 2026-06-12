@@ -2094,11 +2094,11 @@ function usePendingApprovalsCount() {
   const { data = 0 } = useQuery({
     queryKey: ["pending_users_count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("portal_users")
-        .select("id", { count: "exact", head: true })
-        .eq("approved", false);
-      return count ?? 0;
+      const [{ count: pu }, { count: inv }] = await Promise.all([
+        supabase.from("portal_users").select("id", { count: "exact", head: true }).eq("approved", false),
+        supabase.from("user_invites").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ]);
+      return (pu ?? 0) + (inv ?? 0);
     },
     refetchInterval: 30000,
   });
