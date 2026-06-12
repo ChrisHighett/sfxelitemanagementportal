@@ -773,11 +773,6 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
                     );
                   })}
                 </div>
-                {isMinor && (format === "sms" || format === "whatsapp") && audience === "athlete" && (
-                  <p className="text-[11px] rounded px-2 py-1 border" style={{ color: "var(--win-deep)", background: "var(--win-soft)", borderColor: "var(--win-soft)" }}>
-                    {athlete.name.split(" ")[0]} is under 18 — consider sending this to their parent.
-                  </p>
-                )}
               </div>
 
               {generatingEmail ? (
