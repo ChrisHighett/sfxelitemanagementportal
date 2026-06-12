@@ -563,6 +563,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
   const [addingAthlete, setAddingAthlete] = useState(false);
+  const [invitingAthlete, setInvitingAthlete] = useState(false);
   const agentDisplayName = user?.user_metadata?.display_name || user?.email || "";
 
   const filtered = useMemo(() => {
@@ -654,15 +655,31 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <CardTitle>Roster Dashboard</CardTitle>
-            <Button
-              size="sm"
-              className="gap-1.5 shrink-0"
-              onClick={() => setAddingAthlete((v) => !v)}
-            >
-              <Plus className="h-4 w-4" />
-              Add athlete
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 shrink-0"
+                onClick={() => setInvitingAthlete(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Invite athlete
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => setAddingAthlete((v) => !v)}
+              >
+                <Plus className="h-4 w-4" />
+                Add athlete
+              </Button>
+            </div>
           </div>
+          <InviteDialog
+            open={invitingAthlete}
+            onOpenChange={setInvitingAthlete}
+            mode={{ kind: "athlete" }}
+          />
         </CardHeader>
         <CardContent className="space-y-4">
           {addingAthlete && (
@@ -733,6 +750,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const { data: comms = [] } = useCommsLog(athlete.id);
   const [editing, setEditing] = useState(false);
+  const [invitingParent, setInvitingParent] = useState(false);
 
   if (editing) {
     return (
@@ -753,11 +771,20 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         size="md"
       />
 
+      <InviteDialog
+        open={invitingParent}
+        onOpenChange={setInvitingParent}
+        mode={{ kind: "parent", athleteId: athlete.id, athleteName: athlete.name }}
+      />
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle>Athlete Profile</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => setInvitingParent(true)}>
+                Invite parent
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 ✏️ Edit Athlete
               </Button>
