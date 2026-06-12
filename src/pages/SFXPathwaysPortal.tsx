@@ -2348,6 +2348,8 @@ function AgentManager() {
   const [inviteRole, setInviteRole] = useState("agent");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<{ url: string; email: string; role: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: agents = [], isLoading, refetch } = useQuery({
     queryKey: ["portal_agents_and_scouts"],
