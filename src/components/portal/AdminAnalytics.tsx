@@ -7,6 +7,7 @@ import { ArcLoader } from "@/components/brand/Brand";
 import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { useAgentKPIs, type AgentKPI } from "@/hooks/useAgentKPIs";
 import AgentTaskScorecard from "./AgentTaskScorecard";
+import ScoutResponseTimes from "./ScoutResponseTimes";
 
 function scoreBadge(score: number) {
   if (score >= 80)
@@ -191,8 +192,11 @@ export default function AdminAnalytics() {
           </div>
         )}
       </div>
+      {/* Scout lead response times — agent performance dimension */}
+      <ScoutResponseTimes />
       {/* Task completion scorecard */}
       <AgentTaskScorecard />
+
 
 
       {/* KPI legend */}
