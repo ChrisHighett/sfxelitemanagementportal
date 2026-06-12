@@ -2348,6 +2348,8 @@ function AgentManager() {
   const [inviteRole, setInviteRole] = useState("agent");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<{ url: string; email: string; role: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: agents = [], isLoading, refetch } = useQuery({
     queryKey: ["portal_agents_and_scouts"],
@@ -2411,17 +2413,35 @@ function AgentManager() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`${inviteRole === "scout" ? "Scout" : "Agent"} invite sent to ${inviteEmail}`);
-      setInviteEmail("");
-      setInviteName("");
-      setShowInviteForm(false);
+      const url = (data as any)?.actionLink as string;
+      if (!url) throw new Error("No link returned");
+      setGeneratedLink({ url, email: inviteEmail.trim(), role: inviteRole });
+      setCopied(false);
+      toast.success(`Invite link ready — copy and send to ${inviteEmail}`);
       refetch();
     } catch (e: any) {
-      toast.error(e.message || "Failed to send invite");
+      toast.error(e.message || "Failed to generate invite link");
     } finally {
       setInviting(false);
     }
   }
+
+  async function copyLink() {
+    if (!generatedLink) return;
+    try {
+      await navigator.clipboard.writeText(generatedLink.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed — select and copy manually");
+    }
+  }
+
+  function resetInviteForm() {
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
+  }
+
 
   async function handleToggleApproved(agentId: string, currentApproved: boolean) {
     const { error } = await supabase
@@ -2449,7 +2469,7 @@ function AgentManager() {
         <div>
           <h3 className="text-base font-semibold">Agent Accounts</h3>
           <p className="text-sm text-muted-foreground">
-            Invite agents and scouts. They receive an email to set their password and access their portal immediately.
+            Invite agents and scouts. The app generates a secure invite link — copy it and send it yourself (Outlook, WhatsApp, etc.). The recipient sets their own password and lands in their portal.
           </p>
         </div>
         <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setShowInviteForm((v) => !v)}>
@@ -2462,57 +2482,85 @@ function AgentManager() {
         <Card className="border-dashed border-primary/40 bg-primary/5">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Invite new agent</CardTitle>
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowInviteForm(false)}>
+              <CardTitle className="text-base">
+                Invite new staff member
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={resetInviteForm}>
                 Cancel
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Full name *</Label>
-                <Input
-                  placeholder="Jane Smith"
-                  value={inviteName}
-                  onChange={(e) => setInviteName(e.target.value)}
-                  className="h-9"
-                />
+            {!generatedLink ? (
+              <>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Full name *</Label>
+                    <Input
+                      placeholder="Jane Smith"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Work email address *</Label>
+                    <Input
+                      type="email"
+                      placeholder="jane@tgisport.com.au"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Role *</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="agent">Agent</SelectItem>
+                        <SelectItem value="scout">Scout</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  No email is sent. The app generates a secure invite link — you copy it and send it from your own email. The recipient sets their password and joins as {inviteRole === "scout" ? "a scout" : "an agent"}.
+                </p>
+                <Button size="sm" disabled={inviting} onClick={handleInvite}>
+                  {inviting ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Generating link…</>
+                  ) : (
+                    "Generate invite link"
+                  )}
+                </Button>
+              </>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm">
+                  Invite link for <span className="font-semibold">{inviteName || generatedLink.email}</span> ({generatedLink.role}):
+                </div>
+                <div className="flex gap-2">
+                  <Input readOnly value={generatedLink.url} className="h-9 font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+                  <Button size="sm" onClick={copyLink} className="shrink-0">
+                    {copied ? "Copied ✓" : "Copy link"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Copy this link and send it to {inviteName || generatedLink.email} from your own email. It lets them set their password and join as {generatedLink.role === "scout" ? "a scout" : "an agent"}. Link expires per your auth settings (typically 24 hours – 7 days).
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={resetInviteForm}>Done</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setGeneratedLink(null); setInviteEmail(""); setInviteName(""); }}>
+                    Invite another
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Work email address *</Label>
-                <Input
-                  type="email"
-                  placeholder="jane@tgisport.com.au"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Role *</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="scout">Scout</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              An invite email will be sent to this address. The agent clicks the link, sets their password, and their account is ready — already approved and set to agent role.
-            </p>
-            <Button size="sm" disabled={inviting} onClick={handleInvite}>
-              {inviting ? (
-                <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Sending invite…</>
-              ) : (
-                "Send invite email"
-              )}
-            </Button>
+            )}
           </CardContent>
         </Card>
       )}
+
 
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
