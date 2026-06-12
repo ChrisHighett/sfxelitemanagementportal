@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars } from "lucide-react";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
+import FamilyCorrespondence from "@/components/portal/FamilyCorrespondence";
 import { BrandMark } from "@/components/brand/Brand";
 import { CommandPalette, CommandHint, type PaletteCommand } from "@/components/brand/CommandPalette";
 import { ThemeSwitcher } from "@/components/brand/ThemeSwitcher";
@@ -75,10 +76,12 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   athlete: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "reviews", label: "My Reviews", icon: ClipboardList },
+    { key: "updates", label: "Updates", icon: Mail },
     { key: "resources", label: "Resources", icon: Library },
   ],
   parent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
+    { key: "updates", label: "Updates", icon: Mail },
     { key: "resources", label: "Resources", icon: Library },
   ],
   agent: [
@@ -4035,7 +4038,10 @@ export default function SFXPathwaysPortal() {
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
       {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="athlete" athleteName={athlete.name} />}
       {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "parent" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
+
 
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "dash" && (
         <ManagerCommandCentre
