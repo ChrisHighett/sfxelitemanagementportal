@@ -33,6 +33,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useAthletes, useMonthlyReviews, useCommsLog, type Athlete, type MonthlyReview, type CommsLog } from "@/hooks/usePortalData";
 import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
+import PendingInvitesList from "@/components/portal/PendingInvitesList";
+import InviteDialog from "@/components/portal/InviteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
@@ -561,6 +563,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
   const [addingAthlete, setAddingAthlete] = useState(false);
+  const [invitingAthlete, setInvitingAthlete] = useState(false);
   const agentDisplayName = user?.user_metadata?.display_name || user?.email || "";
 
   const filtered = useMemo(() => {
@@ -652,15 +655,31 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <CardTitle>Roster Dashboard</CardTitle>
-            <Button
-              size="sm"
-              className="gap-1.5 shrink-0"
-              onClick={() => setAddingAthlete((v) => !v)}
-            >
-              <Plus className="h-4 w-4" />
-              Add athlete
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 shrink-0"
+                onClick={() => setInvitingAthlete(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Invite athlete
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => setAddingAthlete((v) => !v)}
+              >
+                <Plus className="h-4 w-4" />
+                Add athlete
+              </Button>
+            </div>
           </div>
+          <InviteDialog
+            open={invitingAthlete}
+            onOpenChange={setInvitingAthlete}
+            mode={{ kind: "athlete" }}
+          />
         </CardHeader>
         <CardContent className="space-y-4">
           {addingAthlete && (
@@ -731,6 +750,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const { data: comms = [] } = useCommsLog(athlete.id);
   const [editing, setEditing] = useState(false);
+  const [invitingParent, setInvitingParent] = useState(false);
 
   if (editing) {
     return (
@@ -751,11 +771,20 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         size="md"
       />
 
+      <InviteDialog
+        open={invitingParent}
+        onOpenChange={setInvitingParent}
+        mode={{ kind: "parent", athleteId: athlete.id, athleteName: athlete.name }}
+      />
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle>Athlete Profile</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => setInvitingParent(true)}>
+                Invite parent
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 ✏️ Edit Athlete
               </Button>
@@ -2065,11 +2094,11 @@ function usePendingApprovalsCount() {
   const { data = 0 } = useQuery({
     queryKey: ["pending_users_count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("portal_users")
-        .select("id", { count: "exact", head: true })
-        .eq("approved", false);
-      return count ?? 0;
+      const [{ count: pu }, { count: inv }] = await Promise.all([
+        supabase.from("portal_users").select("id", { count: "exact", head: true }).eq("approved", false),
+        supabase.from("user_invites").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ]);
+      return (pu ?? 0) + (inv ?? 0);
     },
     refetchInterval: 30000,
   });
@@ -3436,7 +3465,8 @@ function AdminSecurity() {
         <TabsContent value="agents" className="mt-4">
           <AgentManager />
         </TabsContent>
-        <TabsContent value="approvals" className="mt-4">
+        <TabsContent value="approvals" className="mt-4 space-y-6">
+          <PendingInvitesList />
           <PendingApprovals />
         </TabsContent>
         <TabsContent value="security" className="mt-4 space-y-6">

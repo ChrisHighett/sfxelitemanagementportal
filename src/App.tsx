@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import SFXPathwaysPortal from "./pages/SFXPathwaysPortal";
 import Install from "./pages/Install";
+import Activate from "./pages/Activate";
 import NotFound from "./pages/NotFound";
 import { BrandGradientDefs } from "@/components/brand/Brand";
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/dashboard" element={<Navigate to="/portal" replace />} />
             <Route path="/portal" element={<ProtectedRoute><SFXPathwaysPortal /></ProtectedRoute>} />
             <Route path="/install" element={<Install />} />
+            <Route path="/activate" element={<Activate />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
