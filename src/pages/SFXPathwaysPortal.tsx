@@ -438,123 +438,218 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
 }
 
 function ParentDashboard({ athlete }: { athlete: Athlete }) {
+  const { user } = useAuth();
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   const smart = review ? resolveSmartFields(review) : null;
-  const hasUpdate = smart && (smart.performance !== "—" || smart.lifestyle !== "—" || smart.personal !== "—" || smart.education !== "—" || smart.focus !== "—");
+
+  const firstName = athlete.name.split(" ")[0] || athlete.name;
+  const parentDisplayName = user?.user_metadata?.display_name || athlete.parentName || "Parent";
+  const parentInitials = parentDisplayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() || "")
+    .join("") || "P";
+
+  const statusVerb =
+    athlete.status === "Thriving" ? "thriving" :
+    athlete.status === "Monitoring" ? "tracking well" :
+    "being closely supported";
+
+  const pathwayLine = [
+    [athlete.club, athlete.school].filter((x) => x && x !== "—").join(" / "),
+    `${athlete.stage} Pathway`,
+    `Managed by ${athlete.assignedAgent}`,
+  ].filter(Boolean).join(" · ");
+
+  const quote =
+    (smart?.focus && smart.focus !== "—" && smart.focus) ||
+    (review?.followUpActions && review.followUpActions) ||
+    `Everything we're doing with ${firstName} right now is about consistency and steady development. We'll keep you in the loop every step of the way.`;
+
+  // Latest parent-addressed update from comms_history
+  const { data: parentUpdates = [] } = useQuery({
+    queryKey: ["parent_updates_dash", athlete.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("comms_history")
+        .select("id, subject, body, created_at, channel")
+        .eq("athlete_id", athlete.id)
+        .eq("email_type", "parent")
+        .eq("sent_status", "sent")
+        .order("created_at", { ascending: false })
+        .limit(4);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const formatShort = (d: string) =>
+    new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+
+  const lastUpdateDate = parentUpdates[0]?.created_at
+    ? new Date(parentUpdates[0].created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })
+    : review?.createdAt
+      ? new Date(review.createdAt).toLocaleDateString("en-AU", { day: "numeric", month: "short" })
+      : "—";
+
+  const careStandard =
+    athlete.status === "Thriving" ? "On track" :
+    athlete.status === "Monitoring" ? "Monitoring" :
+    "Extra support";
+
+  const preview = (body: string) => {
+    const joined = body.split("\n").filter((l) => l.trim()).join(" ");
+    return joined.slice(0, 140) + (joined.length > 140 ? "…" : "");
+  };
+
+  const agentInitials = athlete.assignedAgent
+    .split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() || "").join("") || "A";
 
   return (
-    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-2xl mx-auto">
-      {/* Hero */}
-      <HeroBanner
-        title={`${athlete.name}`}
-        subtitle="Parent Portal — Stay connected with your child's development"
-        badge={statusBadge(athlete.status)}
-        size="md"
-      />
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-        <StatCard
-          label="Check-in"
-          icon={<CalendarDays className="h-4 w-4" />}
-          value={athlete.nextCall}
-        />
-        <StatCard
-          label="Wellbeing"
-          icon={<Sparkles className="h-4 w-4" />}
-          value={scorePill(athlete.wellbeingScore)}
-        />
-        <StatCard
-          label="Focus"
-          icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
-        />
+    <div className="space-y-6 p-3 sm:p-4 md:p-6 max-w-4xl mx-auto">
+      {/* Viewing header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Viewing</p>
+          <h1
+            className="text-xl sm:text-2xl font-semibold tracking-tight truncate"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            {athlete.name}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+            {parentInitials}
+          </div>
+          <div className="text-right leading-tight">
+            <p className="text-sm font-medium">{parentDisplayName}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Parent / Guardian</p>
+          </div>
+        </div>
       </div>
 
-      {/* Latest Update */}
-      <ContentSection title="Latest Update">
-        {hasUpdate ? (
-          <div className="rounded-xl border border-border bg-card divide-y divide-border">
-            {smart!.performance !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Performance</p>
-                <p className="text-sm">{smart!.performance}</p>
-              </div>
-            )}
-            {smart!.lifestyle !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Lifestyle</p>
-                <p className="text-sm">{smart!.lifestyle}</p>
-              </div>
-            )}
-            {smart!.personal !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Personal</p>
-                <p className="text-sm">{smart!.personal}</p>
-              </div>
-            )}
-            {smart!.education !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Education</p>
-                <p className="text-sm">{smart!.education}</p>
-              </div>
-            )}
-            {smart!.focus !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Next Focus</p>
-                <p className="text-sm">{smart!.focus}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-            No update available yet.
-          </div>
-        )}
-      </ContentSection>
-
-      {/* Contact */}
-      <ContentSection title="Contact">
-        <ImageCard
-          title={athlete.assignedAgent}
-          description="Your child's assigned manager"
-          icon={<Phone className="h-4 w-4" />}
+      {/* Hero */}
+      <section
+        className="rounded-2xl border border-border bg-gradient-to-br from-card to-muted/40 p-5 sm:p-7 space-y-3"
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Your child's development
+        </p>
+        <h2
+          className="text-2xl sm:text-3xl font-semibold tracking-tight"
+          style={{ fontFamily: "var(--font-heading)" }}
         >
-          <p className="text-xs text-muted-foreground mt-1">📧 info@tgisport.com.au</p>
+          {firstName} is {statusVerb}.
+        </h2>
+        <p className="text-sm text-muted-foreground">{pathwayLine}</p>
+        <blockquote className="text-sm sm:text-base italic text-foreground/80 border-l-2 border-primary/60 pl-3 mt-2">
+          “{quote}”
+        </blockquote>
+      </section>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Wellbeing</p>
+          <p className="text-2xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+            {athlete.wellbeingScore}/5
+          </p>
+          <Progress value={(athlete.wellbeingScore / 5) * 100} className="h-1.5" />
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Last update</p>
+          <p className="text-2xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+            {lastUpdateDate}
+          </p>
+          <p className="text-xs text-muted-foreground">Development update sent to you</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Care standard</p>
+          <p className="text-2xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+            {careStandard}
+          </p>
+          <p className="text-xs text-muted-foreground">Monthly reviews up to date</p>
+        </div>
+      </div>
+
+      {/* Updates & agent */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Updates */}
+        <div className="md:col-span-2 rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+              Updates about {firstName}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Professional development updates {athlete.assignedAgent.split(" ")[0]} has sent you.
+            </p>
+          </div>
+          {parentUpdates.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-5 text-center text-sm text-muted-foreground">
+              No updates yet — your first development update will appear here.
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {parentUpdates.map((u: any) => (
+                <article key={u.id} className="py-3 first:pt-0 last:pb-0">
+                  <h4 className="text-sm font-semibold">{u.subject || `Update — ${firstName}`}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{preview(u.body || "")}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1.5">
+                    {formatShort(u.created_at)} · {(u.channel || "Email").replace(/^./, (c: string) => c.toUpperCase())}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Agent card */}
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+          <div>
+            <h3 className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+              Your agent
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Here whenever you need.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
+              {agentInitials}
+            </div>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">{athlete.assignedAgent}</p>
+              <p className="text-[11px] text-muted-foreground">Talent Agent · Eleva</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Any questions about {firstName}'s development, schedule, or pathway — reach out any time. {athlete.assignedAgent.split(" ")[0]} will always come back to you.
+          </p>
           <Button
-            variant="secondary"
-            size="sm"
-            className="mt-3 w-full"
+            className="w-full"
             onClick={() => {
               const subject = encodeURIComponent(`Message re: ${athlete.name}`);
-              const body = encodeURIComponent(`Hi,\n\nI wanted to reach out regarding ${athlete.name}.\n\n`);
+              const body = encodeURIComponent(`Hi ${athlete.assignedAgent.split(" ")[0]},\n\nI wanted to reach out regarding ${firstName}.\n\n`);
               window.location.href = `mailto:info@tgisport.com.au?subject=${subject}&body=${body}`;
             }}
           >
-            Send Message
+            Message {athlete.assignedAgent.split(" ")[0]}
           </Button>
-        </ImageCard>
-      </ContentSection>
-
-      {/* How TGI Sport Supports Your Athlete */}
-      <ContentSection title="How TGI Sport Supports Your Athlete">
-        <div className="grid gap-2 sm:grid-cols-2">
-          {[
-            "Monthly athlete development calls",
-            "Structured development tracker updates",
-            "Professional parent communication summaries",
-            "Guidance on performance and lifestyle habits",
-            "Support during setbacks and pressure periods",
-            "Long-term career and character development",
-          ].map((item, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-xl border border-border bg-card p-3">
-              <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
-              <span className="text-sm">{item}</span>
-            </div>
-          ))}
         </div>
-      </ContentSection>
+      </div>
+
+      {/* Reassurance footer */}
+      <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 to-card p-5 sm:p-6 text-center space-y-2">
+        <h3 className="text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+          Your child is in good hands.
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          {firstName}'s wellbeing, goals, and every conversation are tracked and looked after.
+          You'll receive a professional update every month — and you can reach {athlete.assignedAgent.split(" ")[0]} any time in between.
+        </p>
+      </section>
     </div>
   );
 }
