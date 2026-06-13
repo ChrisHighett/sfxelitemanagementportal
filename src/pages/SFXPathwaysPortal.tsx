@@ -424,7 +424,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           </div>
           <div className="text-right leading-tight">
             <p className="text-sm font-medium">{parentDisplayName}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Parent / Guardian</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{viewerRoleLabel}</p>
           </div>
         </div>
       </div>
