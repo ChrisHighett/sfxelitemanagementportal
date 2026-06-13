@@ -1248,14 +1248,51 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     );
   }
 
+  const athleteInitials = athlete.name
+    .split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() || "").join("") || "A";
+
+  const scrollToLogger = () => {
+    const el = document.getElementById("log-conversation");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setCommsTab("tools");
+    }
+  };
+
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
-      {/* Hero */}
-      <HeroBanner
-        title={`Comms — ${athlete.name}`}
-        subtitle="Record calls, generate summaries, and track follow-ups"
-        size="sm"
-      />
+      {/* Page header strip */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1
+          className="text-xl sm:text-2xl font-semibold tracking-tight"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          Athlete Comms <span className="text-muted-foreground font-normal">· {athlete.name}</span>
+        </h1>
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card pl-2 pr-3 py-1">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Athlete</span>
+          <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold">
+            {athleteInitials}
+          </div>
+          <span className="text-sm font-medium">{athlete.name}</span>
+        </div>
+      </div>
+
+      {/* Section header */}
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+            Comms — {athlete.name}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Record calls, generate summaries, and track follow-ups.
+          </p>
+        </div>
+        <Button size="sm" className="gap-1.5" onClick={scrollToLogger}>
+          <Plus className="h-4 w-4" /> New update
+        </Button>
+      </div>
 
       {/* Tabs: Call Tools | Comms History */}
       <Tabs value={commsTab} onValueChange={(v) => setCommsTab(v as "tools" | "history")}>
@@ -1265,41 +1302,52 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         </TabsList>
 
         <TabsContent value="tools" className="mt-4 space-y-5">
-          {/* Start Call Session button — prominent on mobile */}
-      <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col gap-4">
+          {/* Workflow chooser */}
+          <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
             <div>
-              <h3 className="font-bold text-base md:text-lg">Call Tools</h3>
-              <p className="text-sm text-muted-foreground">
-                Choose a workflow for your call with {athlete.name}
-              </p>
+              <h3 className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+                Choose a workflow for this call
+              </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button
-                className="h-14 text-base gap-3 justify-start"
+              <button
+                type="button"
                 onClick={() => setVoiceRecordingActive(true)}
+                className="text-left rounded-xl border border-border bg-background hover:border-primary/60 hover:bg-primary/[0.03] transition p-4 space-y-2 group"
               >
-                <Mic className="h-5 w-5" /> Voice Record + AI Auto-Fill
-              </Button>
-              <Button
-                variant="secondary"
-                className="h-14 text-base gap-3 justify-start"
+                <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Mic className="h-4 w-4" />
+                </div>
+                <div className="font-semibold text-sm">Voice record + AI auto-fill</div>
+                <p className="text-xs text-muted-foreground">
+                  Speak after the call — AI writes the review &amp; emails.
+                </p>
+              </button>
+              <button
+                type="button"
                 onClick={() => setCallSessionActive(true)}
+                className="text-left rounded-xl border border-border bg-background hover:border-primary/60 hover:bg-primary/[0.03] transition p-4 space-y-2 group"
               >
-                <Phone className="h-5 w-5" /> Guided Note-Taking
-              </Button>
-              <Button
-                variant="outline"
-                className="h-14 text-base gap-3 justify-start sm:col-span-2"
-                onClick={() => setTranscriptImportOpen(true)}
-              >
-                <Upload className="h-5 w-5" /> Import meeting transcript (Teams / Zoom)
-              </Button>
+                <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Phone className="h-4 w-4" />
+                </div>
+                <div className="font-semibold text-sm">Guided note-taking</div>
+                <p className="text-xs text-muted-foreground">
+                  Structured prompts to capture as you talk.
+                </p>
+              </button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+            <button
+              type="button"
+              onClick={() => setTranscriptImportOpen(true)}
+              className="w-full flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition py-2 border-t border-border/60"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Import meeting transcript (Teams / Zoom)
+            </button>
+          </section>
+
+
 
       <TranscriptImportDialog
         open={transcriptImportOpen}
