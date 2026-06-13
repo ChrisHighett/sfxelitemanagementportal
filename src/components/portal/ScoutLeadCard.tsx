@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { ScoutLead } from "./ScoutLeadForm";
 import ScoutFootage, { FootageChip, useFootageCount } from "./ScoutFootage";
 
