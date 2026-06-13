@@ -47,6 +47,7 @@ import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
 import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import TrendTracking from "@/components/portal/TrendTracking";
 import AthleteScorecard from "@/components/portal/AthleteScorecard";
+import AthleteSparkDashboard from "@/components/portal/AthleteSparkDashboard";
 import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
