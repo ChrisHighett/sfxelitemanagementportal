@@ -90,11 +90,11 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   agent: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
-    { key: "roster", label: "Roster", icon: Users },
-    { key: "scout", label: "Scout", icon: Binoculars },
-    { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
+    { key: "roster", label: "Roster", icon: Users },
+    { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "scout", label: "Scout", icon: Binoculars },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
