@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, ArrowRight, AlertTriangle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { ScoutLead } from "./ScoutLeadForm";
 import ScoutFootage, { FootageChip, useFootageCount } from "./ScoutFootage";
 
@@ -96,6 +96,20 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
           </div>
         </div>
       </div>
+
+      {lead.footage_url && (
+        <div className="text-xs">
+          <a
+            href={lead.footage_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Watch footage
+          </a>
+        </div>
+      )}
 
       {/* Stage pills */}
       <div className="flex flex-wrap items-center gap-1">

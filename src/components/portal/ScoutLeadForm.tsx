@@ -23,6 +23,7 @@ export interface ScoutLead {
   position?: string | null;
   comp_grade?: string | null;
   key_attributes?: string | null;
+  footage_url?: string | null;
   competitor_interest?: string | null;
   scout_rating?: "A" | "B" | "C" | null;
   triage_decision?: "Pursue" | "Watch" | "Pass" | "Undecided" | null;
