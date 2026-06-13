@@ -65,11 +65,9 @@ function platformLabel(p: Platform) {
 
 function FootagePlayer({ item }: { item: Footage }) {
   const [loaded, setLoaded] = useState(false);
+  const [signed, setSigned] = useState<string | null>(null);
 
   if (item.kind === "file") {
-    const { data } = supabase.storage.from("scout-footage").getPublicUrl(item.url);
-    // Private bucket → need signed URL
-    const [signed, setSigned] = useState<string | null>(null);
     if (!signed) {
       supabase.storage.from("scout-footage").createSignedUrl(item.url, 3600).then(({ data: d }) => {
         if (d?.signedUrl) setSigned(d.signedUrl);
