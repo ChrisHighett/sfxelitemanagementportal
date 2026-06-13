@@ -495,9 +495,11 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <MessageSquarePlus className="h-4 w-4 text-primary" />
-        <h3 className="font-semibold text-sm">Log Conversation</h3>
+      <div>
+        <h3 className="text-base font-semibold tracking-tight flex items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
+          <MessageSquarePlus className="h-4 w-4 text-primary" />
+          Log a conversation
+        </h3>
       </div>
 
       {/* Category pills */}
@@ -697,7 +699,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           {saving ? (
             <><ArcLoader size={16} /> Saving…</>
           ) : (
-            <><MessageSquarePlus className="h-4 w-4" /> Save to athlete file</>
+            <><MessageSquarePlus className="h-4 w-4" /> Save &amp; generate</>
           )}
         </Button>
       ) : (
