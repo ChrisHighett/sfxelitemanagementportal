@@ -10,6 +10,7 @@ import { ArcLoader } from "@/components/brand/Brand";
 import { toast } from "sonner";
 import ScoutLeadForm, { type ScoutLead } from "./ScoutLeadForm";
 import ScoutLeadCard from "./ScoutLeadCard";
+import LostReasonModal from "./LostReasonModal";
 import { useUserRole } from "@/hooks/useUserRole";
 
 type TopFilter = "All" | "Pursue" | "Watch" | "Mine" | "Stalled";
