@@ -621,7 +621,9 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
             </div>
             <div className="leading-tight">
               <p className="text-sm font-semibold">{athlete.assignedAgent}</p>
-              <p className="text-[11px] text-muted-foreground">Talent Agent · Eleva</p>
+              <p className="text-[11px] text-muted-foreground">
+                Talent Agent{import.meta.env.VITE_AGENCY_NAME ? ` · ${import.meta.env.VITE_AGENCY_NAME}` : ""}
+              </p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
