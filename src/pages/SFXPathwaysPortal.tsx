@@ -336,9 +336,21 @@ function AthleteDashboard({ athlete }: { athlete: Athlete }) {
 
 function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const { user } = useAuth();
+  const { data: roleData } = useUserRole();
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   const smart = review ? resolveSmartFields(review) : null;
+
+  // Derive the viewer's role label from data — never hardcoded.
+  const viewerRoleLabel = (() => {
+    switch (roleData?.role) {
+      case "parent":   return "Parent / Guardian";
+      case "athlete":  return "Athlete";
+      case "agent":    return "Agent";
+      case "admin":    return "Admin";
+      default:         return "Viewer";
+    }
+  })();
 
   const firstName = athlete.name.split(" ")[0] || athlete.name;
   const parentDisplayName = user?.user_metadata?.display_name || athlete.parentName || "Parent";
@@ -424,7 +436,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           </div>
           <div className="text-right leading-tight">
             <p className="text-sm font-medium">{parentDisplayName}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Parent / Guardian</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{viewerRoleLabel}</p>
           </div>
         </div>
       </div>

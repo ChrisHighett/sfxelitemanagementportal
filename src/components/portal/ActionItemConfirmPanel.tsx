@@ -75,23 +75,45 @@ export default function ActionItemConfirmPanel({
         return false;
       }
 
+      // Resolve the agent owner: the athlete's assigned agent, falling back to the current user.
+      const { data: athleteRow, error: athleteErr } = await supabase
+        .from("athletes")
+        .select("assigned_agent_user_id")
+        .eq("id", athleteId)
+        .maybeSingle();
+
+      if (athleteErr) {
+        console.error("[ActionItemConfirmPanel] athlete lookup failed", athleteErr);
+        toast.error(`Save failed (athlete lookup): ${athleteErr.message}`);
+        return false;
+      }
+
+      const assignedAgentId =
+        (athleteRow as any)?.assigned_agent_user_id || user.id;
+
       const payload = {
-        _athlete_id: athleteId,
-        _title: row.task,
-        _description: row.relative_phrase
+        athlete_id: athleteId,
+        title: row.task,
+        description: row.relative_phrase
           ? `Auto-extracted from conversation (“${row.relative_phrase}”).`
           : "Auto-extracted from conversation.",
-        _due_date: row.due_date,
-        _priority: PRIORITY_TO_INT[row.priority],
-        _related_call_id: conversationId || null,
+        owner_type: "agent" as const,
+        assigned_to_user_id: assignedAgentId,
+        created_by: user.id,
+        due_date: row.due_date, // YYYY-MM-DD
+        priority: PRIORITY_TO_INT[row.priority], // NUMBER 1..5
+        status: "open" as const,
+        source: "conversation_ai",
+        related_call_id: conversationId || null,
       };
 
-      console.log("[ActionItemConfirmPanel] creating task", payload);
+      console.log("[ActionItemConfirmPanel] inserting task", payload);
 
-      const { data, error } = await (supabase as any).rpc(
-        "create_conversation_action_task",
-        payload,
-      );
+      const { data, error } = await supabase
+        .from("athlete_tasks")
+        .insert(payload)
+        .select("id")
+        .single();
 
       if (error || !data) {
         console.error("[ActionItemConfirmPanel] insert failed", error, payload);
@@ -99,10 +121,11 @@ export default function ActionItemConfirmPanel({
           error?.message
             ? `Save failed: ${error.message}`
             : "Save failed — task was not added. Check console for details.",
+          { duration: 8000 },
         );
         return false;
       }
-      console.log("[ActionItemConfirmPanel] inserted task id", data);
+      console.log("[ActionItemConfirmPanel] inserted task id", data.id);
       window.dispatchEvent(new CustomEvent("athlete-tasks-changed", { detail: { athleteId } }));
       return true;
     } catch (e: any) {
