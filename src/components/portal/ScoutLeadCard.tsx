@@ -178,6 +178,15 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
         </div>
       )}
 
+      {/* Expanded detail panel */}
+      {expanded && (
+        <div className="pt-3 border-t border-border/50">
+          <ScoutFootage scoutLeadId={lead.id} />
+        </div>
+      )}
+
+
+
       {/* Terminal stage actions */}
       {lead.onboarding_stage === "Signed" && !lead.converted_athlete_id && (
         <Button
