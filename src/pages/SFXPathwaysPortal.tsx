@@ -1605,9 +1605,9 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CardContent>
         </Card>
       )}
-      <div className="border-t border-border pt-4 mt-4">
-            <ClubConversationLogger athlete={athlete} />
-          </div>
+      <section id="log-conversation" className="rounded-2xl border border-border bg-card p-5 scroll-mt-20">
+        <ClubConversationLogger athlete={athlete} />
+      </section>
         </TabsContent>
 
 
