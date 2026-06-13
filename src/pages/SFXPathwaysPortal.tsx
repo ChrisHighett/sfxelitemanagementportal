@@ -48,6 +48,7 @@ import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import TrendTracking from "@/components/portal/TrendTracking";
 import AthleteScorecard from "@/components/portal/AthleteScorecard";
 import AthleteSparkDashboard from "@/components/portal/AthleteSparkDashboard";
+import AthleteClimbDashboard from "@/components/portal/AthleteClimbDashboard";
 import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
@@ -331,6 +332,9 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
 }
 
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
+  // Age 17+ → The Climb. Younger → The Spark.
+  const age = athlete.age ?? 0;
+  if (age >= 17) return <AthleteClimbDashboard athlete={athlete} />;
   return <AthleteSparkDashboard athlete={athlete} />;
 }
 
