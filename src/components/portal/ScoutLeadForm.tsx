@@ -228,6 +228,16 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
                 <Textarea rows={3} value={keyAttributes} onChange={(e) => setKeyAttributes(e.target.value)} />
               </div>
               <div className="space-y-1">
+                <Label>Footage / highlights link</Label>
+                <Input
+                  type="url"
+                  placeholder="Paste a YouTube, Hudl, or Instagram link"
+                  value={footageUrl}
+                  onChange={(e) => setFootageUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Link-first for now — paste any video URL.</p>
+              </div>
+              <div className="space-y-1">
                 <Label>Other agents / interest</Label>
                 <Textarea rows={2} value={competitorInterest} onChange={(e) => setCompetitorInterest(e.target.value)} />
               </div>
