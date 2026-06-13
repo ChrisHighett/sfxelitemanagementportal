@@ -4133,6 +4133,28 @@ export default function SFXPathwaysPortal() {
     return (
       <Shell role={effectiveRole} active={active} onNav={handleNav}>
         <CommandPalette commands={paletteCommands} />
+        {isAdmin && (
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+            <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+              <SelectTrigger className="w-36 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="scout">Scout</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="athlete">Athlete</SelectItem>
+              </SelectContent>
+            </Select>
+            {roleOverride && (
+              <Badge variant="secondary" className="text-xs gap-1">
+                Previewing {roleOverride}
+              </Badge>
+            )}
+          </div>
+        )}
         <ScoutPortal autoOpenForm={active === "add"} />
       </Shell>
     );
