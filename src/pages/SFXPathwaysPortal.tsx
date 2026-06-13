@@ -47,6 +47,7 @@ import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
 import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import TrendTracking from "@/components/portal/TrendTracking";
 import AthleteScorecard from "@/components/portal/AthleteScorecard";
+import AthleteSparkDashboard from "@/components/portal/AthleteSparkDashboard";
 import ExpandedTimeline from "@/components/portal/ExpandedTimeline";
 import { resolveSmartFields } from "@/lib/smart-review-fields";
 import HeroBanner from "@/components/portal/ui/HeroBanner";
@@ -330,112 +331,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
 }
 
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
-  const { data: reviews = [] } = useMonthlyReviews(athlete.id);
-  const review = reviews[0];
-  const smart = review ? resolveSmartFields(review) : null;
-
-  return (
-    <div className="space-y-4 p-3 sm:p-4 md:p-6 max-w-2xl mx-auto">
-      {/* Hero */}
-      <HeroBanner
-        title={`Welcome back, ${athlete.name.split(" ")[0]}`}
-        subtitle={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-        imageUrl={athlete.photoUrl}
-        badge={statusBadge(athlete.status)}
-        size="md"
-      />
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-        <StatCard
-          label="Check-in"
-          icon={<CalendarDays className="h-4 w-4" />}
-          value={athlete.nextCall}
-        />
-        <StatCard
-          label="Wellbeing"
-          icon={<Sparkles className="h-4 w-4" />}
-          value={scorePill(athlete.wellbeingScore)}
-        />
-        <StatCard
-          label="Focus"
-          icon={<ClipboardList className="h-4 w-4" />}
-          value={<span className="text-xs font-medium">{smart?.focus && smart.focus !== "—" ? smart.focus : "Set after first review"}</span>}
-        />
-      </div>
-
-      {/* Goals */}
-      {review?.goals && review.goals.length > 0 && (
-        <ContentSection title="Your Goals">
-          <div className="rounded-xl border border-border bg-card p-4 space-y-2">
-            {review.goals.map((g, idx) => (
-              <div key={idx} className="flex items-start gap-3 py-1">
-                <div className="mt-1.5 h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
-                <span className="text-sm">{g}</span>
-              </div>
-            ))}
-          </div>
-        </ContentSection>
-      )}
-
-      {/* Review Summary */}
-      {smart && (smart.performance !== "—" || smart.lifestyle !== "—" || smart.personal !== "—") && (
-        <ContentSection title="Latest Review">
-          <div className="rounded-xl border border-border bg-card divide-y divide-border">
-            {smart.performance !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Performance</p>
-                <p className="text-sm">{smart.performance}</p>
-              </div>
-            )}
-            {smart.lifestyle !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Lifestyle</p>
-                <p className="text-sm">{smart.lifestyle}</p>
-              </div>
-            )}
-            {smart.personal !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Personal</p>
-                <p className="text-sm">{smart.personal}</p>
-              </div>
-            )}
-            {smart.education !== "—" && (
-              <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Education</p>
-                <p className="text-sm">{smart.education}</p>
-              </div>
-            )}
-          </div>
-        </ContentSection>
-      )}
-
-      {/* Profile & Contact */}
-      <ContentSection title="Your Profile">
-        <ImageCard
-          title={athlete.name}
-          description={`${athlete.club} · ${athlete.position} · ${athlete.stage}`}
-          icon={<Users className="h-4 w-4" />}
-        >
-          <div className="space-y-1 text-sm text-muted-foreground pt-1">
-            <div>Agent: {athlete.assignedAgent}</div>
-          </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="mt-3 w-full"
-            onClick={() => {
-              const subject = encodeURIComponent(`Message from ${athlete.name}`);
-              const body = encodeURIComponent(`Hi ${athlete.assignedAgent},\n\n`);
-              window.location.href = `mailto:info@tgisport.com.au?subject=${subject}&body=${body}`;
-            }}
-          >
-            Message My Manager
-          </Button>
-        </ImageCard>
-      </ContentSection>
-    </div>
-  );
+  return <AthleteSparkDashboard athlete={athlete} />;
 }
 
 function ParentDashboard({ athlete }: { athlete: Athlete }) {
