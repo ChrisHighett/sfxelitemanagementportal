@@ -70,6 +70,7 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
   const [position, setPosition] = useState(editLead?.position ?? "");
   const [compGrade, setCompGrade] = useState(editLead?.comp_grade ?? "");
   const [keyAttributes, setKeyAttributes] = useState(editLead?.key_attributes ?? "");
+  const [footageUrl, setFootageUrl] = useState((editLead as any)?.footage_url ?? "");
   const [competitorInterest, setCompetitorInterest] = useState(editLead?.competitor_interest ?? "");
   const [scoutRating, setScoutRating] = useState<"A" | "B" | "C" | "">(editLead?.scout_rating ?? "");
   const [triage, setTriage] = useState<ScoutLead["triage_decision"]>(editLead?.triage_decision ?? "Undecided");
