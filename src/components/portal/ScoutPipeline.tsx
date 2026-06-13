@@ -35,6 +35,7 @@ export default function ScoutPipeline() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<ScoutLead | null>(null);
   const [showConvertModal, setShowConvertModal] = useState<ScoutLead | null>(null);
+  const [lostLead, setLostLead] = useState<ScoutLead | null>(null);
   const [converting, setConverting] = useState(false);
 
   const { data: leads = [], isLoading, refetch } = useQuery({
