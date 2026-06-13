@@ -3,8 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, ArrowRight, AlertTriangle } from "lucide-react";
+import { Pencil, ArrowRight, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import type { ScoutLead } from "./ScoutLeadForm";
+import ScoutFootage, { FootageChip, useFootageCount } from "./ScoutFootage";
 
 const STAGES = ["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"];
 
@@ -43,6 +44,8 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
   const [dueDate, setDueDate] = useState(lead.action_due_date ?? "");
   const [actionStatus, setActionStatus] = useState(lead.action_status ?? "Open");
   const [nextStep, setNextStep] = useState(lead.next_step ?? "");
+  const [expanded, setExpanded] = useState(false);
+  const { data: footageCount = 0 } = useFootageCount(lead.id);
 
   const showActionRow = ["Contacted", "Pack Sent", "Welcome Sent"].includes(lead.onboarding_stage || "");
   const hasCompetition = !!(lead.competitor_interest && lead.competitor_interest.trim() !== "");
@@ -63,10 +66,16 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
           </span>
           {ratingBadge(lead.scout_rating)}
           {triageBadge(lead.triage_decision)}
+          <FootageChip count={footageCount} />
         </div>
-        <Button variant="ghost" size="sm" onClick={() => onEdit(lead)} className="h-7 px-2">
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)} className="h-7 px-2" title={expanded ? "Hide details" : "Show details"}>
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onEdit(lead)} className="h-7 px-2">
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
       {/* Body row */}
@@ -168,6 +177,15 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
           />
         </div>
       )}
+
+      {/* Expanded detail panel */}
+      {expanded && (
+        <div className="pt-3 border-t border-border/50">
+          <ScoutFootage scoutLeadId={lead.id} />
+        </div>
+      )}
+
+
 
       {/* Terminal stage actions */}
       {lead.onboarding_stage === "Signed" && !lead.converted_athlete_id && (
