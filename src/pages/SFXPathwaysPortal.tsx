@@ -1137,7 +1137,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <VoiceRecordingFlow
         athlete={athlete}
-        onClose={() => setImportedTranscript(null)}
+        onClose={() => { setImportedTranscript(null); setCaptureMethod(null); }}
         initialTranscript={importedTranscript.text}
         initialCallType={importedTranscript.callType}
         initialMeetingDate={importedTranscript.date}
@@ -1150,7 +1150,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <VoiceRecordingFlow
         athlete={athlete}
-        onClose={() => setVoiceRecordingActive(false)}
+        onClose={() => { setVoiceRecordingActive(false); setCaptureMethod(null); }}
       />
     );
   }
@@ -1159,7 +1159,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <MobileCallScreen
         athlete={athlete}
-        onClose={() => setCallSessionActive(false)}
+        onClose={() => { setCallSessionActive(false); setCaptureMethod(null); }}
         onCreateEmail={handleMobileCallEmail}
       />
     );
