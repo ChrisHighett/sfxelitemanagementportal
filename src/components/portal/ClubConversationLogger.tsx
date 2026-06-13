@@ -699,7 +699,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           {saving ? (
             <><ArcLoader size={16} /> Saving…</>
           ) : (
-            <><MessageSquarePlus className="h-4 w-4" /> Save to athlete file</>
+            <><MessageSquarePlus className="h-4 w-4" /> Save &amp; generate</>
           )}
         </Button>
       ) : (
