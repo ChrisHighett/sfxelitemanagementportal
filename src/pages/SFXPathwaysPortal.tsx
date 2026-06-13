@@ -1360,31 +1360,83 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Call Script Guide</CardTitle>
-          <p className="text-sm text-muted-foreground">Expand each section to view detailed scripts and prompts</p>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full">
-            {scriptGuides.map((guide) => (
-              <AccordionItem key={guide.k} value={guide.k}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center justify-between flex-1 pr-4">
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        checked={scriptChecked[guide.k]}
-                        onCheckedChange={(v) => {
-                          setScriptChecked((s) => ({ ...s, [guide.k]: v }));
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="text-left">
-                        <div className="font-medium">{guide.title}</div>
-                        <div className="text-xs text-muted-foreground">{guide.duration}</div>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionTrigger>
+        <Collapsible open={scriptGuideOpen} onOpenChange={setScriptGuideOpen}>
+          <CollapsibleTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors rounded-t-lg"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium leading-tight">Call Script Guide</div>
+                  <div className="text-xs text-muted-foreground truncate">Your call structure — scripts & prompts</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {(() => {
+                  const total = scriptGuides.length;
+                  const done = scriptGuides.filter((g) => scriptChecked[g.k]).length;
+                  return done > 0 ? (
+                    <span className="text-xs font-mono tabular-nums text-muted-foreground">
+                      {done} / {total} covered
+                    </span>
+                  ) : null;
+                })()}
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${scriptGuideOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <Accordion type="single" collapsible className="w-full">
+                {scriptGuides.map((guide) => {
+                  const covered = !!scriptChecked[guide.k];
+                  return (
+                    <AccordionItem key={guide.k} value={guide.k}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center justify-between flex-1 pr-4">
+                          <div className="flex items-center gap-3">
+                            <span
+                              role="checkbox"
+                              aria-checked={covered}
+                              tabIndex={0}
+                              title={covered ? "Covered" : "Mark covered"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setScriptChecked((s) => ({ ...s, [guide.k]: !covered }));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === " " || e.key === "Enter") {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setScriptChecked((s) => ({ ...s, [guide.k]: !covered }));
+                                }
+                              }}
+                              className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition-colors cursor-pointer shrink-0 ${
+                                covered
+                                  ? "bg-[var(--brand-accent)] border-[var(--brand-accent)] text-[var(--brand-base)]"
+                                  : "border-border bg-background hover:border-[var(--brand-accent)]"
+                              }`}
+                            >
+                              {covered && <Check className="h-3 w-3" strokeWidth={3} />}
+                            </span>
+                            <div className="text-left">
+                              <div className="font-medium flex items-center gap-2">
+                                {guide.title}
+                                {covered && (
+                                  <span className="text-[10px] uppercase tracking-wide font-medium text-[var(--brand-accent-deep)]">
+                                    Covered
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{guide.duration}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
                 <AccordionContent className="space-y-3 pt-3">
                   <div className="rounded-lg bg-muted p-4 space-y-3">
                     <div>
