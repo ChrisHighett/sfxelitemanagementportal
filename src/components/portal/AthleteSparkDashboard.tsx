@@ -46,122 +46,128 @@ export default function AthleteSparkDashboard({ athlete }: { athlete: Athlete })
             </div>
           </div>
 
-          {/* HERO */}
-          <div className="hero">
-            <div className="status">
-              <span className="live" />
-              ON THE RADAR
-            </div>
-            <div className="face">
-              {athlete.photoUrl ? (
-                <img src={athlete.photoUrl} alt={athlete.name} />
-              ) : (
-                <span>{initials.toUpperCase()}</span>
-              )}
-            </div>
-            <div className="pos">{athlete.position || "Athlete"}</div>
-            <h1>
-              {firstName}
-              {lastName ? <><br />{lastName}</> : null}
-            </h1>
-            <div className="club">
-              {athlete.club || "—"}
-              <span className="dot" />
-              {athlete.stage}
-              {athlete.age ? <><span className="dot" />{athlete.age}y</> : null}
-            </div>
+          <div className="content">
+            {/* HERO */}
+            <div className="hero">
+              <div className="status">
+                <span className="live" />
+                ON THE RADAR
+              </div>
+              <div className="face">
+                {athlete.photoUrl ? (
+                  <img src={athlete.photoUrl} alt={athlete.name} />
+                ) : (
+                  <span>{initials.toUpperCase()}</span>
+                )}
+              </div>
+              <div className="pos">{athlete.position || "Athlete"}</div>
+              <h1>
+                {firstName}
+                {lastName ? <><br />{lastName}</> : null}
+              </h1>
+              <div className="club">
+                {athlete.club || "—"}
+                <span className="dot" />
+                {athlete.stage}
+                {athlete.age ? <><span className="dot" />{athlete.age}y</> : null}
+              </div>
 
-            <div className="weekrow">
-              <div className="wk">
-                <div className="n">5</div>
-                <div className="l">Sessions this week</div>
-              </div>
-              <div className="wk">
-                <div className="n">13<small>▲</small></div>
-                <div className="l">Tackle busts</div>
-              </div>
-              <div className="wk">
-                <div className="n">{wellbeing >= 4 ? "12d" : "—"}</div>
-                <div className="l">Feeling good streak</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Highlights */}
-          <div className="sh">
-            <div className="t">
-              <span className="bar3"><i /><i /><i /></span>
-              Your highlights
-            </div>
-            <a className="more" href="#">See all</a>
-          </div>
-          <div className="reel">
-            {clips.map((c, i) => (
-              <div key={i} className={`clip ${c.tone}`}>
-                <div className="play"><Play size={13} fill="currentColor" /></div>
-                <div className="cap">
-                  <div className="ct">{c.title}</div>
-                  <div className="cd">{c.meta}</div>
+              <div className="weekrow">
+                <div className="wk">
+                  <div className="n">5</div>
+                  <div className="l">Sessions this week</div>
+                </div>
+                <div className="wk">
+                  <div className="n">13<small>▲</small></div>
+                  <div className="l">Tackle busts</div>
+                </div>
+                <div className="wk">
+                  <div className="n">{wellbeing >= 4 ? "12d" : "—"}</div>
+                  <div className="l">Feeling good streak</div>
                 </div>
               </div>
-            ))}
-            <div className="clip add">
-              <Plus size={24} />
-              <span>Add a clip</span>
             </div>
-          </div>
 
-          {/* Momentum */}
-          <div className="sh">
-            <div className="t">
-              <span className="bar3"><i /><i /><i /></span>
-              Your momentum
-            </div>
-          </div>
-          <div className="rings">
-            <div className="ring">
-              <div className="rn">5<span>/6</span></div>
-              <div className="rl"><b>Training</b><br />this week</div>
-            </div>
-            <div className="ring">
-              <div className="rn">{wellbeing}<span>/5</span></div>
-              <div className="rl"><b>Wellbeing</b><br />feeling good</div>
-            </div>
-            <div className="ring">
-              <div className="rn">+44%</div>
-              <div className="rl"><b>Tackle busts</b><br />vs last block</div>
-            </div>
-          </div>
+            <div className="zone-main">
+              {/* Highlights */}
+              <div className="sh">
+                <div className="t">
+                  <span className="bar3"><i /><i /><i /></span>
+                  Your highlights
+                </div>
+                <a className="more" href="#">See all</a>
+              </div>
+              <div className="reel">
+                {clips.map((c, i) => (
+                  <div key={i} className={`clip ${c.tone}`}>
+                    <div className="play"><Play size={13} fill="currentColor" /></div>
+                    <div className="cap">
+                      <div className="ct">{c.title}</div>
+                      <div className="cd">{c.meta}</div>
+                    </div>
+                  </div>
+                ))}
+                <div className="clip add">
+                  <Plus size={24} />
+                  <span>Add a clip</span>
+                </div>
+              </div>
 
-          {/* Belief / agent quote */}
-          <div className="sh">
-            <div className="t">
-              <span className="bar3"><i /><i /><i /></span>
-              From your agent
-            </div>
-          </div>
-          <div className="belief">
-            <div className="bh">
-              <div className="av">{agentInitials || "—"}</div>
-              <div className="who">
-                <div className="n">{athlete.assignedAgent}</div>
-                <div className="r">Your agent</div>
+              {/* Momentum */}
+              <div className="sh">
+                <div className="t">
+                  <span className="bar3"><i /><i /><i /></span>
+                  Your momentum
+                </div>
+              </div>
+              <div className="rings">
+                <div className="ring">
+                  <div className="rn">5<span>/6</span></div>
+                  <div className="rl"><b>Training</b><br />this week</div>
+                </div>
+                <div className="ring">
+                  <div className="rn">{wellbeing}<span>/5</span></div>
+                  <div className="rl"><b>Wellbeing</b><br />feeling good</div>
+                </div>
+                <div className="ring">
+                  <div className="rn">+44%</div>
+                  <div className="rl"><b>Tackle busts</b><br />vs last block</div>
+                </div>
               </div>
             </div>
-            <div className="quote">
-              "{firstName} — <span className="hl">{focus}</span> Proud of how you're training, mate."
-            </div>
-          </div>
 
-          {/* Milestone */}
-          <div className="milestone">
-            <div className="ml">Next milestone</div>
-            <div className="mt">{athlete.stage === "Pre-Pro" ? "First-grade debut" : "NSW SG Ball squad"}</div>
-            <div className="ms">You're tracking. Keep the form and the work-rate up.</div>
-            <div className="track"><i style={{ width: "74%" }} /></div>
-            <div className="mfoot">
-              <span>On track</span>
-              <span>74%</span>
+            <div className="zone-side">
+              {/* Belief / agent quote */}
+              <div className="sh">
+                <div className="t">
+                  <span className="bar3"><i /><i /><i /></span>
+                  From your agent
+                </div>
+              </div>
+              <div className="belief">
+                <div className="bh">
+                  <div className="av">{agentInitials || "—"}</div>
+                  <div className="who">
+                    <div className="n">{athlete.assignedAgent}</div>
+                    <div className="r">Your agent</div>
+                  </div>
+                </div>
+                <div className="quote">
+                  "{firstName} — <span className="hl">{focus}</span> Proud of how you're training, mate."
+                </div>
+              </div>
+
+              {/* Milestone */}
+              <div className="milestone">
+                <div className="ml">Next milestone</div>
+                <div className="mt">{athlete.stage === "Pre-Pro" ? "First-grade debut" : "NSW SG Ball squad"}</div>
+                <div className="ms">You're tracking. Keep the form and the work-rate up.</div>
+                <div className="track"><i style={{ width: "74%" }} /></div>
+                <div className="mfoot">
+                  <span>On track</span>
+                  <span>74%</span>
+                </div>
+              </div>
             </div>
           </div>
 
