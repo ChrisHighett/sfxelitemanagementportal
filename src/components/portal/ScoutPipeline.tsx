@@ -323,6 +323,14 @@ export default function ScoutPipeline() {
           ))}
         </div>
       )}
+
+      {lostLead && (
+        <LostReasonModal
+          lead={lostLead}
+          onClose={() => setLostLead(null)}
+          onConfirm={handleConfirmLost}
+        />
+      )}
     </div>
   );
 }
