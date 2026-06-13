@@ -111,6 +111,7 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
         position: position || null,
         comp_grade: compGrade || null,
         key_attributes: keyAttributes || null,
+        footage_url: footageUrl.trim() || null,
         competitor_interest: competitorInterest || null,
         scout_rating: scoutRating || null,
         triage_decision: triage,
