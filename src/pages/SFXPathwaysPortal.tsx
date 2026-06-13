@@ -332,6 +332,9 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
 }
 
 function AthleteDashboard({ athlete }: { athlete: Athlete }) {
+  // Age 17+ → The Climb. Younger → The Spark.
+  const age = athlete.age ?? 0;
+  if (age >= 17) return <AthleteClimbDashboard athlete={athlete} />;
   return <AthleteSparkDashboard athlete={athlete} />;
 }
 
