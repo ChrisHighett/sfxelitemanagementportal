@@ -10,6 +10,7 @@ import { ArcLoader } from "@/components/brand/Brand";
 import { toast } from "sonner";
 import ScoutLeadForm, { type ScoutLead } from "./ScoutLeadForm";
 import ScoutLeadCard from "./ScoutLeadCard";
+import LostReasonModal from "./LostReasonModal";
 import { useUserRole } from "@/hooks/useUserRole";
 
 type TopFilter = "All" | "Pursue" | "Watch" | "Mine" | "Stalled";
@@ -34,6 +35,7 @@ export default function ScoutPipeline() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<ScoutLead | null>(null);
   const [showConvertModal, setShowConvertModal] = useState<ScoutLead | null>(null);
+  const [lostLead, setLostLead] = useState<ScoutLead | null>(null);
   const [converting, setConverting] = useState(false);
 
   const { data: leads = [], isLoading, refetch } = useQuery({
@@ -109,18 +111,34 @@ export default function ScoutPipeline() {
   ).length;
 
   async function handleStageChange(id: string, stage: string) {
+    if (stage === "Lost") {
+      const lead = leads.find((l) => l.id === id);
+      if (lead) { setLostLead(lead); return; }
+    }
     const fields: any = { onboarding_stage: stage };
     const today = new Date().toISOString().slice(0, 10);
     if (stage === "Contacted") fields.date_contacted = today;
     if (stage === "Pack Sent") fields.date_pack_sent = today;
     if (stage === "Welcome Sent") fields.date_welcome_sent = today;
     if (stage === "Signed") fields.date_signed = today;
-    if (stage === "Lost") fields.date_lost = today;
     const { error } = await (supabase as any).from("scout_leads").update(fields).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Stage → ${stage}`);
     refetch();
   }
+
+  async function handleConfirmLost(reason: string) {
+    if (!lostLead) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await (supabase as any)
+      .from("scout_leads")
+      .update({ onboarding_stage: "Lost", date_lost: today, lost_reason: reason })
+      .eq("id", lostLead.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Marked as lost");
+    refetch();
+  }
+
 
   async function handleActionUpdate(id: string, fields: Partial<ScoutLead>) {
     const { error } = await (supabase as any).from("scout_leads").update(fields).eq("id", id);
@@ -304,6 +322,14 @@ export default function ScoutPipeline() {
             />
           ))}
         </div>
+      )}
+
+      {lostLead && (
+        <LostReasonModal
+          lead={lostLead}
+          onClose={() => setLostLead(null)}
+          onConfirm={handleConfirmLost}
+        />
       )}
     </div>
   );
