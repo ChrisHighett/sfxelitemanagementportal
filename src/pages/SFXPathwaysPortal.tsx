@@ -1036,9 +1036,10 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const [importedTranscript, setImportedTranscript] = useState<{ text: string; callType: string; date: string } | null>(null);
   const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
-    opener: true, performance: false, lifestyle: false, personal: false,
+    opener: false, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
   });
+  const [scriptGuideOpen, setScriptGuideOpen] = useState(false);
   
   // Notify parent when call is active so bottom nav can be hidden
   useEffect(() => {
