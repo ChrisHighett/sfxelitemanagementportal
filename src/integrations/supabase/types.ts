@@ -1138,6 +1138,53 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_footage: {
+        Row: {
+          added_by: string | null
+          captured_on: string | null
+          consent_acknowledged: boolean
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          scout_lead_id: string
+          source: string | null
+          url: string
+        }
+        Insert: {
+          added_by?: string | null
+          captured_on?: string | null
+          consent_acknowledged?: boolean
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          scout_lead_id: string
+          source?: string | null
+          url: string
+        }
+        Update: {
+          added_by?: string | null
+          captured_on?: string | null
+          consent_acknowledged?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          scout_lead_id?: string
+          source?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_footage_scout_lead_id_fkey"
+            columns: ["scout_lead_id"]
+            isOneToOne: false
+            referencedRelation: "scout_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scout_leads: {
         Row: {
           action_due_date: string | null
