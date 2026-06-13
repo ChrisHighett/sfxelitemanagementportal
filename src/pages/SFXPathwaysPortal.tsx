@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import FamilyCorrespondence from "@/components/portal/FamilyCorrespondence";
@@ -942,7 +942,14 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
   const [transcriptImportOpen, setTranscriptImportOpen] = useState(false);
   const [importedTranscript, setImportedTranscript] = useState<{ text: string; callType: string; date: string } | null>(null);
-  const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
+  const [commsTab, setCommsTab] = useState<"capture" | "history">("capture");
+  // Capture method: which form to show when the agent picks one.
+  // null = method chooser visible; "quick" = inline Quick Update form.
+  // The other three open full-screen takeovers (handled by the early-returns below)
+  // and all four ultimately feed the same backend (AI write-up + athlete/parent
+  // update + follow-up tasks + Comms History save).
+  type CaptureMethod = null | "quick" | "monthly" | "import" | "guided";
+  const [captureMethod, setCaptureMethod] = useState<CaptureMethod>(null);
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: false, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
@@ -1130,7 +1137,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <VoiceRecordingFlow
         athlete={athlete}
-        onClose={() => setImportedTranscript(null)}
+        onClose={() => { setImportedTranscript(null); setCaptureMethod(null); }}
         initialTranscript={importedTranscript.text}
         initialCallType={importedTranscript.callType}
         initialMeetingDate={importedTranscript.date}
@@ -1143,7 +1150,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <VoiceRecordingFlow
         athlete={athlete}
-        onClose={() => setVoiceRecordingActive(false)}
+        onClose={() => { setVoiceRecordingActive(false); setCaptureMethod(null); }}
       />
     );
   }
@@ -1152,7 +1159,7 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     return (
       <MobileCallScreen
         athlete={athlete}
-        onClose={() => setCallSessionActive(false)}
+        onClose={() => { setCallSessionActive(false); setCaptureMethod(null); }}
         onCreateEmail={handleMobileCallEmail}
       />
     );
@@ -1162,24 +1169,56 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
     .split(/\s+/).filter(Boolean).slice(0, 2)
     .map((s) => s[0]?.toUpperCase() || "").join("") || "A";
 
-  const scrollToLogger = () => {
-    const el = document.getElementById("log-conversation");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setCommsTab("tools");
-    }
+  // Total script-guide sections we report progress against ("X of N covered").
+  const scriptTotal = scriptGuides.length;
+  const scriptDone = scriptGuides.filter((g) => scriptChecked[g.k]).length;
+  const resetScriptChecklist = () =>
+    setScriptChecked({
+      opener: false, performance: false, lifestyle: false, personal: false,
+      education: false, brand: false, goals: false, close: false,
+    });
+
+  const captureMethods: Array<{
+    key: Exclude<CaptureMethod, null>;
+    title: string;
+    blurb: string;
+    Icon: React.ElementType;
+  }> = [
+    { key: "quick",   title: "Quick Update",     blurb: "Log a short conversation now — AI drafts the follow-up.", Icon: MessageSquarePlus },
+    { key: "monthly", title: "Monthly Check-in", blurb: "Voice-record the catch-up — AI fills the full tracker.",    Icon: Mic },
+    { key: "import",  title: "Meeting Import",   blurb: "Paste / upload a Teams or Zoom transcript.",                Icon: Upload },
+    { key: "guided",  title: "Guided Notes",     blurb: "Structured prompts to capture as you talk.",                Icon: Phone },
+  ];
+
+  const pickMethod = (m: Exclude<CaptureMethod, null>) => {
+    resetScriptChecklist(); // checklist is per-call
+    setCaptureMethod(m);
+    if (m === "monthly")     setVoiceRecordingActive(true);
+    else if (m === "import") setTranscriptImportOpen(true);
+    else if (m === "guided") setCallSessionActive(true);
+    // "quick" is rendered inline below
+  };
+
+  const clearMethod = () => {
+    setCaptureMethod(null);
+    setTranscriptImportOpen(false);
   };
 
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
-      {/* Page header strip */}
+      {/* Single header — page title + athlete chip */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1
-          className="text-xl sm:text-2xl font-semibold tracking-tight"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          Athlete Comms <span className="text-muted-foreground font-normal">· {athlete.name}</span>
-        </h1>
+        <div>
+          <h1
+            className="text-xl sm:text-2xl font-semibold tracking-tight"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Athlete Comms
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Capture conversations and track follow-ups.
+          </p>
+        </div>
         <div className="flex items-center gap-2 rounded-full border border-border bg-card pl-2 pr-3 py-1">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Athlete</span>
           <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold">
@@ -1189,85 +1228,71 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
         </div>
       </div>
 
-      {/* Section header */}
-      <div className="flex items-end justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-            Comms — {athlete.name}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Record calls, generate summaries, and track follow-ups.
-          </p>
-        </div>
-        <Button size="sm" className="gap-1.5" onClick={scrollToLogger}>
-          <Plus className="h-4 w-4" /> New update
-        </Button>
-      </div>
-
-      {/* Tabs: Call Tools | Comms History */}
-      <Tabs value={commsTab} onValueChange={(v) => setCommsTab(v as "tools" | "history")}>
+      {/* Tabs: Capture | History */}
+      <Tabs value={commsTab} onValueChange={(v) => setCommsTab(v as "capture" | "history")}>
         <TabsList className="w-full">
-          <TabsTrigger value="tools" className="flex-1">Call Tools</TabsTrigger>
-          <TabsTrigger value="history" className="flex-1">Comms History</TabsTrigger>
+          <TabsTrigger value="capture" className="flex-1">Capture</TabsTrigger>
+          <TabsTrigger value="history" className="flex-1">History</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tools" className="mt-4 space-y-5">
-          {/* Workflow chooser */}
-          <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
-            <div>
-              <h3 className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-                Choose a workflow for this call
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setVoiceRecordingActive(true)}
-                className="text-left rounded-xl border border-border bg-background hover:border-primary/60 hover:bg-primary/[0.03] transition p-4 space-y-2 group"
-              >
-                <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Mic className="h-4 w-4" />
-                </div>
-                <div className="font-semibold text-sm">Voice record + AI auto-fill</div>
-                <p className="text-xs text-muted-foreground">
-                  Speak after the call — AI writes the review &amp; emails.
+        <TabsContent value="capture" className="mt-4 space-y-5">
+          {/* Method chooser — picking one shows only that form. */}
+          {captureMethod === null ? (
+            <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
+              <div>
+                <h3 className="text-base font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+                  How do you want to capture this?
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  All four methods feed the same engine — AI write-up, athlete &amp; parent update, follow-up tasks, Comms History.
                 </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setCallSessionActive(true)}
-                className="text-left rounded-xl border border-border bg-background hover:border-primary/60 hover:bg-primary/[0.03] transition p-4 space-y-2 group"
-              >
-                <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <Phone className="h-4 w-4" />
-                </div>
-                <div className="font-semibold text-sm">Guided note-taking</div>
-                <p className="text-xs text-muted-foreground">
-                  Structured prompts to capture as you talk.
-                </p>
-              </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {captureMethods.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => pickMethod(m.key)}
+                    className="text-left rounded-xl border border-border bg-background hover:border-primary/60 hover:bg-primary/[0.03] transition p-4 space-y-2"
+                  >
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                      <m.Icon className="h-4 w-4" />
+                    </div>
+                    <div className="font-semibold text-sm">{m.title}</div>
+                    <p className="text-xs text-muted-foreground">{m.blurb}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Method:</span>{" "}
+                <span className="font-semibold">
+                  {captureMethods.find((m) => m.key === captureMethod)?.title}
+                </span>
+              </div>
+              <Button size="sm" variant="ghost" onClick={clearMethod}>
+                ← Change method
+              </Button>
             </div>
-            <button
-              type="button"
-              onClick={() => setTranscriptImportOpen(true)}
-              className="w-full flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition py-2 border-t border-border/60"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Import meeting transcript (Teams / Zoom)
-            </button>
-          </section>
+          )}
 
+          {/* Transcript import dialog — triggered by "Meeting Import" */}
+          <TranscriptImportDialog
+            open={transcriptImportOpen}
+            onOpenChange={(o) => {
+              setTranscriptImportOpen(o);
+              if (!o && !importedTranscript && captureMethod === "import") setCaptureMethod(null);
+            }}
+            onSubmit={({ transcript, callType, meetingDate }) => {
+              setImportedTranscript({ text: transcript, callType, date: meetingDate });
+            }}
+          />
 
-
-      <TranscriptImportDialog
-        open={transcriptImportOpen}
-        onOpenChange={setTranscriptImportOpen}
-        onSubmit={({ transcript, callType, meetingDate }) => {
-          setImportedTranscript({ text: transcript, callType, date: meetingDate });
-        }}
-      />
-
-      <Card>
+          {/* Call Script Guide — collapsed by default, "X of N covered" hint on the bar */}
+          {captureMethod === "quick" || captureMethod === null ? (
+            <Card>
         <Collapsible open={scriptGuideOpen} onOpenChange={setScriptGuideOpen}>
           <CollapsibleTrigger asChild>
             <button
@@ -1278,19 +1303,24 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
                 <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="min-w-0">
                   <div className="text-sm font-medium leading-tight">Call Script Guide</div>
-                  <div className="text-xs text-muted-foreground truncate">Your call structure — scripts & prompts</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    Covered on this call — {scriptDone} of {scriptTotal}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                {(() => {
-                  const total = scriptGuides.length;
-                  const done = scriptGuides.filter((g) => scriptChecked[g.k]).length;
-                  return done > 0 ? (
-                    <span className="text-xs font-mono tabular-nums text-muted-foreground">
-                      {done} / {total} covered
-                    </span>
-                  ) : null;
-                })()}
+                {scriptDone > 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); resetScriptChecklist(); }}
+                    className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    Reset
+                  </button>
+                )}
+                <span className="text-xs font-mono tabular-nums text-muted-foreground">
+                  {scriptDone} / {scriptTotal}
+                </span>
                 <ChevronDown
                   className={`h-4 w-4 text-muted-foreground transition-transform ${scriptGuideOpen ? "rotate-180" : ""}`}
                 />
@@ -1523,56 +1553,67 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
           </CollapsibleContent>
         </Collapsible>
       </Card>
+          ) : null}
 
-      {/* Email Drafts (generated from Call Tools) */}
-      {athleteEmailDraft && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  navigator.clipboard.writeText(athleteEmailDraft);
-                  toast.success("Copied to clipboard");
-                }}
-              >
-                Copy
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
-          </CardContent>
-        </Card>
-      )}
+          {/* Email Drafts (generated by any of the four methods) */}
+          {athleteEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Athlete Email Draft</CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(athleteEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{athleteEmailDraft}</div>
+              </CardContent>
+            </Card>
+          )}
 
-      {parentEmailDraft && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  navigator.clipboard.writeText(parentEmailDraft);
-                  toast.success("Copied to clipboard");
+          {parentEmailDraft && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">📧 Parent Email Draft</CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(parentEmailDraft);
+                      toast.success("Copied to clipboard");
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Update — inline form, only when this method is chosen */}
+          {captureMethod === "quick" && (
+            <section id="log-conversation" className="rounded-2xl border border-border bg-card p-5 scroll-mt-20">
+              <ClubConversationLogger
+                athlete={athlete}
+                onSaved={() => {
+                  // Keep the agent on the form so they can review the draft + tasks,
+                  // but expose the method picker again via the "Change method" button.
                 }}
-              >
-                Copy
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap text-sm bg-muted/50 p-4 rounded-lg">{parentEmailDraft}</div>
-          </CardContent>
-        </Card>
-      )}
-      <section id="log-conversation" className="rounded-2xl border border-border bg-card p-5 scroll-mt-20">
-        <ClubConversationLogger athlete={athlete} />
-      </section>
+              />
+            </section>
+          )}
         </TabsContent>
 
 
