@@ -1608,9 +1608,12 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            ))}
-          </Accordion>
-        </CardContent>
+                  );
+                })}
+              </Accordion>
+            </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       {/* Email Drafts (generated from Call Tools) */}
