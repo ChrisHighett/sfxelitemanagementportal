@@ -97,6 +97,20 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
         </div>
       </div>
 
+      {lead.footage_url && (
+        <div className="text-xs">
+          <a
+            href={lead.footage_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Watch footage
+          </a>
+        </div>
+      )}
+
       {/* Stage pills */}
       <div className="flex flex-wrap items-center gap-1">
         {STAGES.map((s, i) => {
