@@ -70,6 +70,7 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
   const [position, setPosition] = useState(editLead?.position ?? "");
   const [compGrade, setCompGrade] = useState(editLead?.comp_grade ?? "");
   const [keyAttributes, setKeyAttributes] = useState(editLead?.key_attributes ?? "");
+  const [footageUrl, setFootageUrl] = useState((editLead as any)?.footage_url ?? "");
   const [competitorInterest, setCompetitorInterest] = useState(editLead?.competitor_interest ?? "");
   const [scoutRating, setScoutRating] = useState<"A" | "B" | "C" | "">(editLead?.scout_rating ?? "");
   const [triage, setTriage] = useState<ScoutLead["triage_decision"]>(editLead?.triage_decision ?? "Undecided");
@@ -110,6 +111,7 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
         position: position || null,
         comp_grade: compGrade || null,
         key_attributes: keyAttributes || null,
+        footage_url: footageUrl.trim() || null,
         competitor_interest: competitorInterest || null,
         scout_rating: scoutRating || null,
         triage_decision: triage,
@@ -224,6 +226,16 @@ export default function ScoutLeadForm({ onClose, onSaved, editLead }: Props) {
               <div className="space-y-1">
                 <Label>Key attributes</Label>
                 <Textarea rows={3} value={keyAttributes} onChange={(e) => setKeyAttributes(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Footage / highlights link</Label>
+                <Input
+                  type="url"
+                  placeholder="Paste a YouTube, Hudl, or Instagram link"
+                  value={footageUrl}
+                  onChange={(e) => setFootageUrl(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Link-first for now — paste any video URL.</p>
               </div>
               <div className="space-y-1">
                 <Label>Other agents / interest</Label>

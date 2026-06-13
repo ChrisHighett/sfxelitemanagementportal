@@ -1207,6 +1207,7 @@ export type Database = {
           date_welcome_sent: string | null
           first_agent_action_at: string | null
           first_name: string
+          footage_url: string | null
           id: string
           key_attributes: string | null
           last_name: string
@@ -1249,6 +1250,7 @@ export type Database = {
           date_welcome_sent?: string | null
           first_agent_action_at?: string | null
           first_name: string
+          footage_url?: string | null
           id?: string
           key_attributes?: string | null
           last_name: string
@@ -1291,6 +1293,7 @@ export type Database = {
           date_welcome_sent?: string | null
           first_agent_action_at?: string | null
           first_name?: string
+          footage_url?: string | null
           id?: string
           key_attributes?: string | null
           last_name?: string

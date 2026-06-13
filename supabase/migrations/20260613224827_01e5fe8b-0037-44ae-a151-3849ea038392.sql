@@ -1,0 +1,1 @@
+ALTER TABLE public.scout_leads ADD COLUMN IF NOT EXISTS footage_url text;
