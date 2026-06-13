@@ -942,7 +942,14 @@ function AthleteComms({ athlete, onCallActive }: { athlete: Athlete; onCallActiv
   const [voiceRecordingActive, setVoiceRecordingActive] = useState(false);
   const [transcriptImportOpen, setTranscriptImportOpen] = useState(false);
   const [importedTranscript, setImportedTranscript] = useState<{ text: string; callType: string; date: string } | null>(null);
-  const [commsTab, setCommsTab] = useState<"tools" | "history">("tools");
+  const [commsTab, setCommsTab] = useState<"capture" | "history">("capture");
+  // Capture method: which form to show when the agent picks one.
+  // null = method chooser visible; "quick" = inline Quick Update form.
+  // The other three open full-screen takeovers (handled by the early-returns below)
+  // and all four ultimately feed the same backend (AI write-up + athlete/parent
+  // update + follow-up tasks + Comms History save).
+  type CaptureMethod = null | "quick" | "monthly" | "import" | "guided";
+  const [captureMethod, setCaptureMethod] = useState<CaptureMethod>(null);
   const [scriptChecked, setScriptChecked] = useState<Record<string, boolean>>({
     opener: false, performance: false, lifestyle: false, personal: false,
     education: false, brand: false, goals: false, close: false,
