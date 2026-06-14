@@ -2995,12 +2995,29 @@ async function convertScoutLeadToAthlete(lead: any): Promise<string> {
 
 function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
+
+  function openAthleteProfile(id: string) {
+    navigate(`/portal?view=agent&tab=athlete&athleteId=${id}`);
+  }
+  async function handleConvert(lead: any) {
+    try {
+      const athleteId = await convertScoutLeadToAthlete(lead);
+      qc.invalidateQueries({ queryKey: ["athletes"] });
+      toast.success(`${lead.first_name} ${lead.last_name} added to ${lead.assigned_agent_name || "agent"}'s roster`);
+      openAthleteProfile(athleteId);
+    } catch (e: any) {
+      toast.error(e.message || "Could not add athlete to roster");
+    }
+  }
+
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["scout_my_leads", user?.id],
