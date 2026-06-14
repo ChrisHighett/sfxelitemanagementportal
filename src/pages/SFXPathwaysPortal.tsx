@@ -3158,12 +3158,13 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   );
 }
 
-function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert }: {
+function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert, onOpenAthlete }: {
   lead: any;
   onClose: () => void;
   onEdit: () => void;
   onStageChange: (id: string, stage: string) => void;
   onConvert: (lead: any) => void;
+  onOpenAthlete?: (athleteId: string) => void;
 }) {
   const ratingStyle: React.CSSProperties =
     lead.scout_rating === "A" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
