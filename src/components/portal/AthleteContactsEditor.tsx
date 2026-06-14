@@ -412,11 +412,15 @@ function ContactList({
   onEdit,
   onRemove,
   onMakePrimary,
+  inviteByEmail,
+  onInvite,
 }: {
   contacts: Contact[];
   onEdit: (c: Contact) => void;
   onRemove: (c: Contact) => void;
   onMakePrimary: (c: Contact) => void;
+  inviteByEmail?: Map<string, InviteRecord>;
+  onInvite?: (c: Contact) => void;
 }) {
   if (contacts.length === 0) {
     return <div className="text-xs text-muted-foreground italic">No contacts yet.</div>;
@@ -424,7 +428,11 @@ function ContactList({
   const sorted = [...contacts].sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
   return (
     <div className="space-y-2">
-      {sorted.map((c, idx) => (
+      {sorted.map((c, idx) => {
+        const emailKey = c.email?.trim().toLowerCase();
+        const invite = emailKey ? inviteByEmail?.get(emailKey) : undefined;
+        const canInvite = !!onInvite && !!emailKey && (!invite || invite.status === "declined");
+        return (
         <Card key={c.id ?? c._localId ?? idx} className="p-3 flex flex-wrap items-start justify-between gap-2">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -435,6 +443,7 @@ function ContactList({
                   <Star className="h-3 w-3 fill-current" /> Primary
                 </Badge>
               )}
+              {inviteByEmail && emailKey && <ParentPortalBadge invite={invite} />}
             </div>
             <div className="flex items-center gap-3 text-xs flex-wrap">
               {c.phone && (
@@ -451,6 +460,11 @@ function ContactList({
             {c.notes && <div className="text-xs text-muted-foreground">{c.notes}</div>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {canInvite && (
+              <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onInvite!(c)} title="Invite to parent portal">
+                <Send className="h-3.5 w-3.5 mr-1" /> Invite
+              </Button>
+            )}
             {!c.is_primary && (
               <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => onMakePrimary(c)} title="Make primary">
                 <Star className="h-3.5 w-3.5" />
@@ -464,10 +478,35 @@ function ContactList({
             </Button>
           </div>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
+
+function ParentPortalBadge({ invite }: { invite?: InviteRecord }) {
+  if (!invite || invite.status === "declined") {
+    return (
+      <Badge variant="outline" className="text-[10px] text-muted-foreground">
+        Parent portal: not invited
+      </Badge>
+    );
+  }
+  if (invite.status === "activated") {
+    return (
+      <Badge className="text-[10px] gap-1 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20">
+        <CheckCircle2 className="h-3 w-3" /> Parent portal: active
+      </Badge>
+    );
+  }
+  // pending or approved
+  return (
+    <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-600">
+      <Clock className="h-3 w-3" /> Parent portal: invited
+    </Badge>
+  );
+}
+
 
 function ContactForm({
   value,
