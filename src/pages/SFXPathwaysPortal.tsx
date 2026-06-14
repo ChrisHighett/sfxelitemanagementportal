@@ -4378,7 +4378,7 @@ export default function SFXPathwaysPortal() {
             )}
           </div>
         )}
-        <ScoutPortal autoOpenForm={active === "add"} />
+        <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
       </Shell>
     );
   }
