@@ -56,6 +56,45 @@ export type Database = {
           },
         ]
       }
+      agent_voice_profiles: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          formality: string | null
+          greeting_style: string | null
+          how_i_write: string | null
+          length: string | null
+          sample_messages: string | null
+          sign_off: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          formality?: string | null
+          greeting_style?: string | null
+          how_i_write?: string | null
+          length?: string | null
+          sample_messages?: string | null
+          sign_off?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          formality?: string | null
+          greeting_style?: string | null
+          how_i_write?: string | null
+          length?: string | null
+          sample_messages?: string | null
+          sign_off?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       athlete_alerts: {
         Row: {
           alert_type: Database["public"]["Enums"]["alert_type"]
