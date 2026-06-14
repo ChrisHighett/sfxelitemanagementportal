@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -2906,14 +2906,118 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
   );
 }
 
+/**
+ * Stage derivation matching AddAthleteDialog options.
+ * <16 = Emerging, 16-17 = Elite, 18+ = Pre-Pro.
+ */
+function deriveStageFromAge(age: number | null): "Emerging" | "Elite" | "Pre-Pro" {
+  if (age == null) return "Emerging";
+  if (age >= 18) return "Pre-Pro";
+  if (age >= 16) return "Elite";
+  return "Emerging";
+}
+
+/**
+ * Convert a scout lead into a fully-linked athlete record on the assigned
+ * agent's roster. Idempotent — reuses an existing converted athlete if found
+ * (either via scout_leads.converted_athlete_id or athletes.source_lead_id).
+ * Returns the athlete id.
+ *
+ * Requires lead.assigned_agent_id (the agent USER UUID) — the roster query
+ * filters by athletes.assigned_agent_user_id.
+ */
+async function convertScoutLeadToAthlete(lead: any): Promise<string> {
+  if (!lead?.assigned_agent_id) {
+    throw new Error("Assign an agent to this lead before adding to a roster.");
+  }
+
+  // 1) Reuse via stored link
+  if (lead.converted_athlete_id) {
+    const { data } = await (supabase as any)
+      .from("athletes").select("id").eq("id", lead.converted_athlete_id).maybeSingle();
+    if (data?.id) return data.id as string;
+  }
+  // 2) Reuse via source_lead_id on athletes
+  const { data: bySource } = await (supabase as any)
+    .from("athletes").select("id").eq("source_lead_id", lead.id).maybeSingle();
+  if (bySource?.id) {
+    await (supabase as any).from("scout_leads")
+      .update({ converted_athlete_id: bySource.id }).eq("id", lead.id);
+    return bySource.id as string;
+  }
+
+  // Derive DOB from age if no DOB available (Jan 1 of birth year)
+  let dob: string | null = null;
+  const ageNum = typeof lead.age === "number" ? lead.age : (lead.age ? parseInt(lead.age, 10) : null);
+  if (ageNum && ageNum > 0 && ageNum < 100) {
+    dob = `${new Date().getFullYear() - ageNum}-01-01`;
+  }
+  const stage = deriveStageFromAge(ageNum);
+  const todayISO = new Date().toISOString().slice(0, 10);
+
+  const { data: athlete, error } = await (supabase as any)
+    .from("athletes")
+    .insert({
+      first_name: lead.first_name,
+      last_name: lead.last_name,
+      position: lead.position || null,
+      school: lead.school_club || null,
+      region: lead.region || null,
+      date_of_birth: dob,
+      stage,
+      footage_url: lead.footage_url || null,
+      key_attributes: lead.key_attributes || null,
+      scout_rating: lead.scout_rating || null,
+      scout_notes: lead.notes || null,
+      scout_credited: !!lead.scout_credited,
+      date_signed: lead.date_signed || todayISO,
+      assigned_agent_name: lead.assigned_agent_name || null,
+      assigned_agent_user_id: lead.assigned_agent_id, // CRITICAL: matches roster filter
+      source_lead_id: lead.id,
+      source: "scout-converted",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await (supabase as any).from("scout_leads")
+    .update({
+      converted_athlete_id: athlete.id,
+      onboarding_stage: "Signed",
+      triage_decision: "Signed",
+      date_signed: lead.date_signed || todayISO,
+    })
+    .eq("id", lead.id);
+
+  return athlete.id as string;
+}
+
+
 function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [editingLead, setEditingLead] = useState<any>(null);
   const [reviewingLead, setReviewingLead] = useState<any>(null);
   const [lostModalLead, setLostModalLead] = useState<any>(null);
 
   useEffect(() => { if (autoOpenForm) { setEditingLead(null); setShowForm(true); } }, [autoOpenForm]);
+
+  function openAthleteProfile(id: string) {
+    navigate(`/portal?view=agent&tab=athlete&athleteId=${id}`);
+  }
+  async function handleConvert(lead: any) {
+    try {
+      const athleteId = await convertScoutLeadToAthlete(lead);
+      qc.invalidateQueries({ queryKey: ["athletes"] });
+      toast.success(`${lead.first_name} ${lead.last_name} added to ${lead.assigned_agent_name || "agent"}'s roster`);
+      openAthleteProfile(athleteId);
+    } catch (e: any) {
+      toast.error(e.message || "Could not add athlete to roster");
+    }
+  }
+
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["scout_my_leads", user?.id],
@@ -3056,7 +3160,8 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
             handleStageChange(id, stage);
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
-          onConvert={() => {}}
+          onConvert={handleConvert}
+          onOpenAthlete={openAthleteProfile}
         />
       )}
 
@@ -3071,12 +3176,13 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   );
 }
 
-function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert }: {
+function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert, onOpenAthlete }: {
   lead: any;
   onClose: () => void;
   onEdit: () => void;
   onStageChange: (id: string, stage: string) => void;
   onConvert: (lead: any) => void;
+  onOpenAthlete?: (athleteId: string) => void;
 }) {
   const ratingStyle: React.CSSProperties =
     lead.scout_rating === "A" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
@@ -3290,17 +3396,34 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert 
           )}
         </div>
 
-        <div className="p-4 pt-3 border-t flex gap-2">
-          {lead.onboarding_stage === "Welcome Sent" && (
-            <Button
-              className="flex-1 gap-1.5"
-              style={{ background: "var(--success)", color: "#fff" }}
-              onClick={() => { onConvert(lead); onClose(); }}
-            >
-              <UserPlus className="h-4 w-4" />
-              Convert to athlete
-            </Button>
-          )}
+        <div className="p-4 pt-3 border-t flex gap-2 flex-wrap">
+          {lead.onboarding_stage === "Signed" ? (
+            lead.converted_athlete_id ? (
+              <Button
+                className="flex-1 gap-1.5"
+                style={{ background: "var(--success)", color: "#fff" }}
+                onClick={() => { onOpenAthlete?.(lead.converted_athlete_id); onClose(); }}
+              >
+                <UserPlus className="h-4 w-4" />
+                View athlete on roster
+              </Button>
+            ) : lead.assigned_agent_id ? (
+              <Button
+                className="flex-1 gap-1.5"
+                style={{ background: "var(--success)", color: "#fff" }}
+                onClick={() => { onConvert(lead); onClose(); }}
+              >
+                <UserPlus className="h-4 w-4" />
+                Add to {lead.assigned_agent_name || "agent"}'s roster
+              </Button>
+            ) : (
+              <Button className="flex-1 gap-1.5" variant="outline" disabled>
+                <UserPlus className="h-4 w-4" />
+                Assign an agent first
+              </Button>
+            )
+          ) : null}
+
           <Button variant="outline" className="flex-1 gap-1.5" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             Edit lead
@@ -3389,29 +3512,27 @@ function AgentScoutView() {
   }
 
 
-  async function handleConvert(lead: any) {
-    const { data: newAthlete, error } = await supabase
-      .from("athletes")
-      .insert({
-        first_name: lead.first_name,
-        last_name: lead.last_name,
-        position: lead.position || null,
-        school: lead.school_club || null,
-        assigned_agent_name: lead.assigned_agent_name || null,
-        assigned_agent_user_id: lead.assigned_agent_id || null,
-        stage: "Emerging",
-      } as any)
-      .select("id")
-      .single();
-    if (error) { toast.error("Could not create athlete profile: " + error.message + " — " + ((error as any).details || "")); return; }
-    await supabase.from("scout_leads" as any).update({
-      onboarding_stage: "Signed",
-      date_signed: new Date().toISOString().slice(0, 10),
-      converted_athlete_id: (newAthlete as any).id,
-    }).eq("id", lead.id);
-    toast.success(`${lead.first_name} ${lead.last_name} — athlete profile created`);
-    refetch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  function openAthleteProfile(athleteId: string) {
+    navigate(`/portal?view=agent&tab=athlete&athleteId=${athleteId}`);
   }
+
+  async function handleConvert(lead: any) {
+    try {
+      const athleteId = await convertScoutLeadToAthlete(lead);
+      qc.invalidateQueries({ queryKey: ["athletes"] });
+      refetch();
+      toast.success(`${lead.first_name} ${lead.last_name} added to ${lead.assigned_agent_name || "agent"}'s roster`, {
+        action: { label: "Open profile", onClick: () => openAthleteProfile(athleteId) },
+      });
+      openAthleteProfile(athleteId);
+    } catch (e: any) {
+      toast.error(e.message || "Could not add athlete to roster");
+    }
+  }
+
 
   return (
     <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
@@ -3549,12 +3670,29 @@ function AgentScoutView() {
                     })}
                   </div>
 
-                  {lead.onboarding_stage === "Welcome Sent" && (
-                    <Button size="sm" variant="outline" className="w-full gap-1.5" style={{ borderColor: "var(--success)", color: "var(--success-deep)" }} onClick={() => handleConvert(lead)}>
-                      <UserPlus className="h-3.5 w-3.5" />
-                      Convert to athlete profile →
-                    </Button>
+                  {lead.onboarding_stage === "Signed" && (
+                    lead.converted_athlete_id ? (
+                      <Button size="sm" variant="outline" className="w-full gap-1.5"
+                        style={{ borderColor: "var(--success)", color: "var(--success-deep)" }}
+                        onClick={() => openAthleteProfile(lead.converted_athlete_id)}>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        View athlete on roster
+                      </Button>
+                    ) : lead.assigned_agent_id ? (
+                      <Button size="sm" className="w-full gap-1.5"
+                        style={{ background: "var(--success)", color: "#fff" }}
+                        onClick={() => handleConvert(lead)}>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Add to {lead.assigned_agent_name || "agent"}'s roster
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="w-full gap-1.5" disabled>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Assign an agent first
+                      </Button>
+                    )
                   )}
+
                 </CardContent>
               </Card>
             );
@@ -3576,6 +3714,7 @@ function AgentScoutView() {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={handleConvert}
+          onOpenAthlete={openAthleteProfile}
         />
       )}
       {lostModalLead && (
