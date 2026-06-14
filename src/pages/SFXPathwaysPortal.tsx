@@ -3494,29 +3494,27 @@ function AgentScoutView() {
   }
 
 
-  async function handleConvert(lead: any) {
-    const { data: newAthlete, error } = await supabase
-      .from("athletes")
-      .insert({
-        first_name: lead.first_name,
-        last_name: lead.last_name,
-        position: lead.position || null,
-        school: lead.school_club || null,
-        assigned_agent_name: lead.assigned_agent_name || null,
-        assigned_agent_user_id: lead.assigned_agent_id || null,
-        stage: "Emerging",
-      } as any)
-      .select("id")
-      .single();
-    if (error) { toast.error("Could not create athlete profile: " + error.message + " — " + ((error as any).details || "")); return; }
-    await supabase.from("scout_leads" as any).update({
-      onboarding_stage: "Signed",
-      date_signed: new Date().toISOString().slice(0, 10),
-      converted_athlete_id: (newAthlete as any).id,
-    }).eq("id", lead.id);
-    toast.success(`${lead.first_name} ${lead.last_name} — athlete profile created`);
-    refetch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  function openAthleteProfile(athleteId: string) {
+    navigate(`/portal?view=agent&tab=athlete&athleteId=${athleteId}`);
   }
+
+  async function handleConvert(lead: any) {
+    try {
+      const athleteId = await convertScoutLeadToAthlete(lead);
+      qc.invalidateQueries({ queryKey: ["athletes"] });
+      refetch();
+      toast.success(`${lead.first_name} ${lead.last_name} added to ${lead.assigned_agent_name || "agent"}'s roster`, {
+        action: { label: "Open profile", onClick: () => openAthleteProfile(athleteId) },
+      });
+      openAthleteProfile(athleteId);
+    } catch (e: any) {
+      toast.error(e.message || "Could not add athlete to roster");
+    }
+  }
+
 
   return (
     <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
