@@ -295,10 +295,11 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
   );
 }
 
-function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
+function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes, onAddAthlete }: {
   role: Role;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
   athletes: Athlete[];
+  onAddAthlete?: () => void;
 }) {
   return (
     <div className="border-b border-border bg-card px-4 md:px-6 py-3">
@@ -325,6 +326,12 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
           )}
           {athletes.length <= 1 && athletes.length > 0 && (
             <span className="text-sm font-medium">{athletes[0]?.name}</span>
+          )}
+          {onAddAthlete && (role === "agent" || role === "admin") && (
+            <Button size="sm" className="h-9 gap-1.5" onClick={onAddAthlete}>
+              <Plus className="h-4 w-4" />
+              Add athlete
+            </Button>
           )}
         </div>
       </div>
