@@ -4010,6 +4010,7 @@ export default function SFXPathwaysPortal() {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [roleOverride, setRoleOverride] = useState<Role | null>(null);
   const [callActive, setCallActive] = useState(false);
+  const [addAthleteOpen, setAddAthleteOpen] = useState(false);
 
   const isAdmin = userRoleData?.role === "admin";
   const effectiveRole = roleOverride || role;
