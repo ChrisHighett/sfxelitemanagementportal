@@ -110,6 +110,8 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "signed", label: "Signed", icon: CheckCircle2 },
+    { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
   ],
 };
