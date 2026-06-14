@@ -3160,7 +3160,8 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
             handleStageChange(id, stage);
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
-          onConvert={() => {}}
+          onConvert={handleConvert}
+          onOpenAthlete={openAthleteProfile}
         />
       )}
 
