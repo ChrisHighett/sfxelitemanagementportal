@@ -2995,7 +2995,7 @@ async function convertScoutLeadToAthlete(lead: any): Promise<string> {
 }
 
 
-function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
+function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?: boolean; view?: "active" | "signed" | "lost" }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
