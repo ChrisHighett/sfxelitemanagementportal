@@ -4227,6 +4227,16 @@ export default function SFXPathwaysPortal() {
         selectedAthleteId={currentAthleteId}
         setSelectedAthleteId={setSelectedAthleteId}
         athletes={athletes}
+        onAddAthlete={() => setAddAthleteOpen(true)}
+      />
+
+      <AddAthleteDialog
+        open={addAthleteOpen}
+        onOpenChange={setAddAthleteOpen}
+        onCreated={(id) => {
+          setSelectedAthleteId(id);
+          setActive("athlete");
+        }}
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
