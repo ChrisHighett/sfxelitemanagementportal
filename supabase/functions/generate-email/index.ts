@@ -407,7 +407,9 @@ Rules:
       });
     }
 
-    const result = await callAIWithRetry(LOVABLE_API_KEY, systemPrompt, userPrompt);
+    const voiceBlock = buildVoiceBlock(voiceProfile);
+    const finalSystemPrompt = voiceBlock ? systemPrompt + voiceBlock : systemPrompt;
+    const result = await callAIWithRetry(LOVABLE_API_KEY, finalSystemPrompt, userPrompt);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
