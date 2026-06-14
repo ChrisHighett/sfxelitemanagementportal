@@ -30,14 +30,14 @@ export default function ScoutPipeline() {
   const { data: roleData } = useUserRole();
   const isAdmin = roleData?.role === "admin";
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [filter, setFilter] = useState<TopFilter>("All");
   const [stageFilter, setStageFilter] = useState<StageFilter>("All");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<ScoutLead | null>(null);
-  const [showConvertModal, setShowConvertModal] = useState<ScoutLead | null>(null);
   const [lostLead, setLostLead] = useState<ScoutLead | null>(null);
-  const [converting, setConverting] = useState(false);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["scout_leads", user?.id, isAdmin],
