@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle } from "lucide-react";
+import VoiceProfileSettings from "@/components/portal/VoiceProfileSettings";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import FamilyCorrespondence from "@/components/portal/FamilyCorrespondence";
@@ -99,6 +100,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "voice", label: "My Voice", icon: Mic2 },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
@@ -106,6 +108,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "voice", label: "My Voice", icon: Mic2 },
     { key: "admin", label: "Admin", icon: Shield },
   ],
   scout: [
@@ -4527,6 +4530,9 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "voice" && (
+        <div className="p-4 md:p-6"><VoiceProfileSettings /></div>
+      )}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
       <CommandPalette commands={paletteCommands} />
     </Shell>

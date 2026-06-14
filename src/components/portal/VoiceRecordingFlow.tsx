@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
+import { getVoiceProfileForAthlete } from "@/lib/voice-profile";
 
 type FlowStep = "ready" | "recording" | "processing" | "review" | "done";
 
@@ -574,6 +575,7 @@ export default function VoiceRecordingFlow({
         suggested_goals: editedGoals.filter(g => g.trim()),
         attention_required: attentionRequired,
       };
+      const voiceProfile = await getVoiceProfileForAthlete(athlete.id, user?.id);
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
           type: "athlete",
@@ -582,6 +584,7 @@ export default function VoiceRecordingFlow({
           summaryPoints: aiSummary?.athlete_email_summary_points || [],
           agentName:
             user?.user_metadata?.display_name || user?.email || "Your TGI Sport Manager",
+          voiceProfile,
         },
       });
       if (error) throw error;
@@ -614,6 +617,7 @@ export default function VoiceRecordingFlow({
         suggested_goals: editedGoals.filter(g => g.trim()),
         attention_required: attentionRequired,
       };
+      const voiceProfile = await getVoiceProfileForAthlete(athlete.id, user?.id);
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
           type: "parent",
@@ -623,6 +627,7 @@ export default function VoiceRecordingFlow({
           summaryPoints: aiSummary?.parent_email_summary_points || [],
           agentName:
             user?.user_metadata?.display_name || user?.email || "Your TGI Sport Manager",
+          voiceProfile,
         },
       });
       if (error) throw error;

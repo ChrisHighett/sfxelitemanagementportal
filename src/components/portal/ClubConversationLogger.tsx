@@ -387,6 +387,8 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
     }
 
     try {
+      const { getVoiceProfileForAthlete } = await import("@/lib/voice-profile");
+      const voiceProfile = await getVoiceProfileForAthlete(athlete.id, (user as any)?.id);
       const { data, error } = await supabase.functions.invoke("generate-email", {
         body: {
           type: "conversation_update",
@@ -401,6 +403,7 @@ export default function ClubConversationLogger({ athlete, onSaved }: Props) {
           agentNotes: notes.trim(),
           outcome: outcome.trim() || null,
           agentName: (user as any)?.user_metadata?.display_name || user?.email || "Your TGI Sport Manager",
+          voiceProfile,
         },
       });
 
