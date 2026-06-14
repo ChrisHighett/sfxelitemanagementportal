@@ -8,9 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Plus, Star, Trash2, Pencil, Phone, Mail } from "lucide-react";
+import { Plus, Star, Trash2, Pencil, Phone, Mail, Send, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { ArcLoader } from "@/components/brand/Brand";
+
+type InviteStatus = "pending" | "approved" | "activated" | "declined";
+type InviteRecord = { id: string; email: string; status: InviteStatus };
 
 export const RELATIONSHIP_OPTIONS = [
   { value: "mother", label: "Mother" },
@@ -226,6 +229,52 @@ function LiveEditor({ athleteId, title, helper, athleteAge }: LiveProps & { titl
     enabled: !!athleteId,
   });
 
+  const { data: invites = [], refetch: refetchInvites } = useQuery<InviteRecord[]>({
+    queryKey: ["athlete_parent_invites", athleteId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_invites")
+        .select("id, email, status, created_at")
+        .eq("athlete_id", athleteId)
+        .eq("role", "parent")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((r: any) => ({ id: r.id, email: (r.email || "").toLowerCase(), status: r.status as InviteStatus }));
+    },
+    enabled: !!athleteId,
+  });
+
+  const inviteByEmail = useMemo(() => {
+    const m = new Map<string, InviteRecord>();
+    // first occurrence wins (most recent due to ordering)
+    for (const inv of invites) {
+      if (!m.has(inv.email)) m.set(inv.email, inv);
+    }
+    return m;
+  }, [invites]);
+
+  async function inviteContact(c: Contact) {
+    const email = c.email?.trim().toLowerCase();
+    if (!email) { toast.error("Add an email first."); return; }
+    const existing = inviteByEmail.get(email);
+    if (existing && existing.status !== "declined") {
+      toast.info("This contact already has a parent-portal invite.");
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await (supabase as any).from("user_invites").insert({
+      email,
+      role: "parent",
+      invited_by: user?.id,
+      athlete_id: athleteId,
+      relationship: c.relationship === "other" ? (c.relationship_other || "guardian") : c.relationship,
+      status: "pending",
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invite submitted for admin approval");
+    await refetchInvites();
+  }
+
   function startAdd() {
     setDraft(emptyContact(contacts.length === 0));
   }
@@ -318,7 +367,10 @@ function LiveEditor({ athleteId, title, helper, athleteAge }: LiveProps & { titl
           onEdit={startEdit}
           onRemove={removeContact}
           onMakePrimary={makePrimary}
+          inviteByEmail={inviteByEmail}
+          onInvite={inviteContact}
         />
+
       )}
       {draft && (
         <ContactForm
@@ -360,11 +412,15 @@ function ContactList({
   onEdit,
   onRemove,
   onMakePrimary,
+  inviteByEmail,
+  onInvite,
 }: {
   contacts: Contact[];
   onEdit: (c: Contact) => void;
   onRemove: (c: Contact) => void;
   onMakePrimary: (c: Contact) => void;
+  inviteByEmail?: Map<string, InviteRecord>;
+  onInvite?: (c: Contact) => void;
 }) {
   if (contacts.length === 0) {
     return <div className="text-xs text-muted-foreground italic">No contacts yet.</div>;
@@ -372,7 +428,11 @@ function ContactList({
   const sorted = [...contacts].sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
   return (
     <div className="space-y-2">
-      {sorted.map((c, idx) => (
+      {sorted.map((c, idx) => {
+        const emailKey = c.email?.trim().toLowerCase();
+        const invite = emailKey ? inviteByEmail?.get(emailKey) : undefined;
+        const canInvite = !!onInvite && !!emailKey && (!invite || invite.status === "declined");
+        return (
         <Card key={c.id ?? c._localId ?? idx} className="p-3 flex flex-wrap items-start justify-between gap-2">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -383,6 +443,7 @@ function ContactList({
                   <Star className="h-3 w-3 fill-current" /> Primary
                 </Badge>
               )}
+              {inviteByEmail && emailKey && <ParentPortalBadge invite={invite} />}
             </div>
             <div className="flex items-center gap-3 text-xs flex-wrap">
               {c.phone && (
@@ -399,6 +460,11 @@ function ContactList({
             {c.notes && <div className="text-xs text-muted-foreground">{c.notes}</div>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {canInvite && (
+              <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onInvite!(c)} title="Invite to parent portal">
+                <Send className="h-3.5 w-3.5 mr-1" /> Invite
+              </Button>
+            )}
             {!c.is_primary && (
               <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => onMakePrimary(c)} title="Make primary">
                 <Star className="h-3.5 w-3.5" />
@@ -412,10 +478,35 @@ function ContactList({
             </Button>
           </div>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
+
+function ParentPortalBadge({ invite }: { invite?: InviteRecord }) {
+  if (!invite || invite.status === "declined") {
+    return (
+      <Badge variant="outline" className="text-[10px] text-muted-foreground">
+        Parent portal: not invited
+      </Badge>
+    );
+  }
+  if (invite.status === "activated") {
+    return (
+      <Badge className="text-[10px] gap-1 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20">
+        <CheckCircle2 className="h-3 w-3" /> Parent portal: active
+      </Badge>
+    );
+  }
+  // pending or approved
+  return (
+    <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-600">
+      <Clock className="h-3 w-3" /> Parent portal: invited
+    </Badge>
+  );
+}
+
 
 function ContactForm({
   value,
