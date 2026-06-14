@@ -166,6 +166,7 @@ export default function ScoutPipeline() {
         assigned_agent_name: lead.assigned_agent_name,
         assigned_agent_user_id: lead.assigned_agent_id,
         source_lead_id: lead.id,
+        source: "scout",
       })
       .select("id")
       .single();
