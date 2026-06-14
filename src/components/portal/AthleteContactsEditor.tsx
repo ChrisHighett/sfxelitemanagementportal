@@ -229,6 +229,52 @@ function LiveEditor({ athleteId, title, helper, athleteAge }: LiveProps & { titl
     enabled: !!athleteId,
   });
 
+  const { data: invites = [], refetch: refetchInvites } = useQuery<InviteRecord[]>({
+    queryKey: ["athlete_parent_invites", athleteId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_invites")
+        .select("id, email, status, created_at")
+        .eq("athlete_id", athleteId)
+        .eq("role", "parent")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).map((r: any) => ({ id: r.id, email: (r.email || "").toLowerCase(), status: r.status as InviteStatus }));
+    },
+    enabled: !!athleteId,
+  });
+
+  const inviteByEmail = useMemo(() => {
+    const m = new Map<string, InviteRecord>();
+    // first occurrence wins (most recent due to ordering)
+    for (const inv of invites) {
+      if (!m.has(inv.email)) m.set(inv.email, inv);
+    }
+    return m;
+  }, [invites]);
+
+  async function inviteContact(c: Contact) {
+    const email = c.email?.trim().toLowerCase();
+    if (!email) { toast.error("Add an email first."); return; }
+    const existing = inviteByEmail.get(email);
+    if (existing && existing.status !== "declined") {
+      toast.info("This contact already has a parent-portal invite.");
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await (supabase as any).from("user_invites").insert({
+      email,
+      role: "parent",
+      invited_by: user?.id,
+      athlete_id: athleteId,
+      relationship: c.relationship === "other" ? (c.relationship_other || "guardian") : c.relationship,
+      status: "pending",
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invite submitted for admin approval");
+    await refetchInvites();
+  }
+
   function startAdd() {
     setDraft(emptyContact(contacts.length === 0));
   }
