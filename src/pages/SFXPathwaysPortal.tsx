@@ -44,6 +44,7 @@ import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import TranscriptImportDialog from "@/components/portal/TranscriptImportDialog";
 
 import AthleteResourceFiles from "@/components/portal/AthleteResourceFiles";
+import AthleteContactsEditor from "@/components/portal/AthleteContactsEditor";
 import CommsHistory, { saveCommsEmail } from "@/components/portal/CommsHistory";
 import ClubConversationLogger from "@/components/portal/ClubConversationLogger";
 import TrendTracking from "@/components/portal/TrendTracking";
