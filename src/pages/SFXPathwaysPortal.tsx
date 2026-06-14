@@ -36,6 +36,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import PendingInvitesList from "@/components/portal/PendingInvitesList";
 import InviteDialog from "@/components/portal/InviteDialog";
+import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
@@ -294,10 +295,11 @@ function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; a
   );
 }
 
-function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
+function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes, onAddAthlete }: {
   role: Role;
   selectedAthleteId: string; setSelectedAthleteId: (id: string) => void;
   athletes: Athlete[];
+  onAddAthlete?: () => void;
 }) {
   return (
     <div className="border-b border-border bg-card px-4 md:px-6 py-3">
@@ -324,6 +326,12 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes }: {
           )}
           {athletes.length <= 1 && athletes.length > 0 && (
             <span className="text-sm font-medium">{athletes[0]?.name}</span>
+          )}
+          {onAddAthlete && (role === "agent" || role === "admin") && (
+            <Button size="sm" className="h-9 gap-1.5" onClick={onAddAthlete}>
+              <Plus className="h-4 w-4" />
+              Add athlete
+            </Button>
           )}
         </div>
       </div>
@@ -569,11 +577,10 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   );
 }
 
-function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
+function RosterDashboard({ athletes, onOpenProfile, onAddAthlete }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void; onAddAthlete?: () => void }) {
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [onlyAttention, setOnlyAttention] = useState(false);
-  const [addingAthlete, setAddingAthlete] = useState(false);
   const [invitingAthlete, setInvitingAthlete] = useState(false);
   const agentDisplayName = user?.user_metadata?.display_name || user?.email || "";
 
@@ -679,7 +686,7 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
               <Button
                 size="sm"
                 className="gap-1.5 shrink-0"
-                onClick={() => setAddingAthlete((v) => !v)}
+                onClick={() => onAddAthlete?.()}
               >
                 <Plus className="h-4 w-4" />
                 Add athlete
@@ -693,25 +700,6 @@ function RosterDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onO
           />
         </CardHeader>
         <CardContent className="space-y-4">
-          {addingAthlete && (
-            <Card className="border-dashed border-primary/40 bg-primary/5">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">New athlete</CardTitle>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setAddingAthlete(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <AdminAthleteManager
-                  lockedAgentName={agentDisplayName}
-                  lockedAgentId={user?.id}
-                  onBack={() => setAddingAthlete(false)}
-                />
-              </CardContent>
-            </Card>
-          )}
           <div className="flex flex-wrap items-center gap-4">
             <Input placeholder="Search athletes…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-72" />
           </div>
@@ -4022,6 +4010,7 @@ export default function SFXPathwaysPortal() {
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
   const [roleOverride, setRoleOverride] = useState<Role | null>(null);
   const [callActive, setCallActive] = useState(false);
+  const [addAthleteOpen, setAddAthleteOpen] = useState(false);
 
   const isAdmin = userRoleData?.role === "admin";
   const effectiveRole = roleOverride || role;
@@ -4238,6 +4227,16 @@ export default function SFXPathwaysPortal() {
         selectedAthleteId={currentAthleteId}
         setSelectedAthleteId={setSelectedAthleteId}
         athletes={athletes}
+        onAddAthlete={() => setAddAthleteOpen(true)}
+      />
+
+      <AddAthleteDialog
+        open={addAthleteOpen}
+        onOpenChange={setAddAthleteOpen}
+        onCreated={(id) => {
+          setSelectedAthleteId(id);
+          setActive("athlete");
+        }}
       />
 
       {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
@@ -4253,7 +4252,7 @@ export default function SFXPathwaysPortal() {
           onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
         />
       )}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <AgentScoutView />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}

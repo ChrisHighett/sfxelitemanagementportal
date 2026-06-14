@@ -484,6 +484,7 @@ export type Database = {
           scout_credited: boolean | null
           scout_notes: string | null
           scout_rating: string | null
+          source: string
           source_lead_id: string | null
           stage: string | null
           updated_at: string
@@ -513,6 +514,7 @@ export type Database = {
           scout_credited?: boolean | null
           scout_notes?: string | null
           scout_rating?: string | null
+          source?: string
           source_lead_id?: string | null
           stage?: string | null
           updated_at?: string
@@ -542,6 +544,7 @@ export type Database = {
           scout_credited?: boolean | null
           scout_notes?: string | null
           scout_rating?: string | null
+          source?: string
           source_lead_id?: string | null
           stage?: string | null
           updated_at?: string
