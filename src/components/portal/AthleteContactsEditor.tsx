@@ -367,7 +367,10 @@ function LiveEditor({ athleteId, title, helper, athleteAge }: LiveProps & { titl
           onEdit={startEdit}
           onRemove={removeContact}
           onMakePrimary={makePrimary}
+          inviteByEmail={inviteByEmail}
+          onInvite={inviteContact}
         />
+
       )}
       {draft && (
         <ContactForm
