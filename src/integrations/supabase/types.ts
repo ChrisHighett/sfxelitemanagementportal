@@ -866,10 +866,13 @@ export type Database = {
           created_at: string
           guardian_user_id: string | null
           id: string
+          is_primary: boolean
+          notes: string | null
           parent_email: string | null
           parent_name: string
           phone: string | null
           relationship: string | null
+          relationship_other: string | null
           updated_at: string
         }
         Insert: {
@@ -877,10 +880,13 @@ export type Database = {
           created_at?: string
           guardian_user_id?: string | null
           id?: string
+          is_primary?: boolean
+          notes?: string | null
           parent_email?: string | null
           parent_name: string
           phone?: string | null
           relationship?: string | null
+          relationship_other?: string | null
           updated_at?: string
         }
         Update: {
@@ -888,10 +894,13 @@ export type Database = {
           created_at?: string
           guardian_user_id?: string | null
           id?: string
+          is_primary?: boolean
+          notes?: string | null
           parent_email?: string | null
           parent_name?: string
           phone?: string | null
           relationship?: string | null
+          relationship_other?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import AthleteContactsEditor, { type Contact, validateContacts } from "./AthleteContactsEditor";
 
 const STAGE_OPTIONS = ["Emerging", "Elite", "Pre-Pro"] as const;
 
@@ -21,6 +22,21 @@ interface Props {
   /** Override agent (admin previewing). Defaults to signed-in user. */
   agentUserId?: string;
   agentDisplayName?: string;
+}
+
+function deriveAge(age: string, dob: string): number | null {
+  if (dob) {
+    const d = new Date(dob);
+    if (!isNaN(d.getTime())) {
+      const diff = Date.now() - d.getTime();
+      return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+    }
+  }
+  if (age) {
+    const n = parseInt(age, 10);
+    if (!Number.isNaN(n) && n > 0 && n < 100) return n;
+  }
+  return null;
 }
 
 export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentUserId, agentDisplayName }: Props) {
@@ -38,15 +54,14 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
   const [stage, setStage] = useState<string>("Emerging");
   const [footageUrl, setFootageUrl] = useState("");
   const [notes, setNotes] = useState("");
-  const [parentName, setParentName] = useState("");
-  const [parentEmail, setParentEmail] = useState("");
-  const [parentPhone, setParentPhone] = useState("");
+  const [contacts, setContacts] = useState<Contact[]>([]);
+
+  const derivedAge = useMemo(() => deriveAge(age, dob), [age, dob]);
 
   function reset() {
     setFirstName(""); setLastName(""); setAge(""); setDob("");
     setPosition(""); setClub(""); setRegion(""); setStage("Emerging");
-    setFootageUrl(""); setNotes("");
-    setParentName(""); setParentEmail(""); setParentPhone("");
+    setFootageUrl(""); setNotes(""); setContacts([]);
   }
 
   async function handleSave() {
@@ -54,11 +69,15 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
       toast.error("First name and last name are required");
       return;
     }
+    const contactsCheck = validateContacts(contacts, derivedAge);
+    if (!contactsCheck.ok) {
+      toast.error(contactsCheck.error || "Check contacts");
+      return;
+    }
 
     const effectiveAgentId = agentUserId || user?.id || null;
     const effectiveAgentName = agentDisplayName || user?.user_metadata?.display_name || user?.email || null;
 
-    // Derive DOB from age if DOB not provided
     let derivedDob: string | null = dob || null;
     if (!derivedDob && age) {
       const ageNum = parseInt(age, 10);
@@ -89,18 +108,24 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
         .single();
       if (error) throw error;
 
-      // Optional guardian
-      if (parentName.trim() || parentEmail.trim() || parentPhone.trim()) {
-        await (supabase as any).from("guardians").insert({
+      // Flush contacts to guardians (one of them is_primary)
+      if (contacts.length > 0) {
+        const rows = contacts.map((c) => ({
           athlete_id: athlete.id,
-          parent_name: parentName.trim() || "Guardian",
-          parent_email: parentEmail.trim() || null,
-          parent_phone: parentPhone.trim() || null,
-          relationship: "guardian",
-        });
+          parent_name: c.name.trim(),
+          parent_email: c.email?.trim() || null,
+          phone: c.phone?.trim() || null,
+          relationship: c.relationship,
+          relationship_other: c.relationship === "other" ? (c.relationship_other?.trim() || null) : null,
+          is_primary: !!c.is_primary,
+          notes: c.notes?.trim() || null,
+        }));
+        const { error: gErr } = await (supabase as any).from("guardians").insert(rows);
+        if (gErr) throw gErr;
       }
 
       qc.invalidateQueries({ queryKey: ["athletes"] });
+      qc.invalidateQueries({ queryKey: ["athlete_contacts", athlete.id] });
       toast.success(`${firstName} ${lastName} added to your roster`);
       onCreated?.(athlete.id);
       reset();
@@ -126,11 +151,11 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">First name *</Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <Input value={firstName} maxLength={80} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Last name *</Label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              <Input value={lastName} maxLength={80} onChange={(e) => setLastName(e.target.value)} />
             </div>
           </div>
 
@@ -154,18 +179,18 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">Position</Label>
-              <Input value={position} onChange={(e) => setPosition(e.target.value)} />
+              <Input value={position} maxLength={80} onChange={(e) => setPosition(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Club / School</Label>
-              <Input value={club} onChange={(e) => setClub(e.target.value)} />
+              <Input value={club} maxLength={120} onChange={(e) => setClub(e.target.value)} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">Region</Label>
-              <Input value={region} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. NSW, QLD" />
+              <Input value={region} maxLength={80} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. NSW, QLD" />
             </div>
             <div>
               <Label className="text-xs">Status</Label>
@@ -185,6 +210,7 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
             <Input
               type="url"
               value={footageUrl}
+              maxLength={500}
               onChange={(e) => setFootageUrl(e.target.value)}
               placeholder="Paste a YouTube, Hudl, or Instagram link"
             />
@@ -196,28 +222,18 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              maxLength={1000}
               placeholder="Anything worth noting — context, attributes, sign story…"
             />
           </div>
 
-          <div className="rounded-md border border-border p-3 space-y-2">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Parent / guardian contact (optional)
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Name</Label>
-                <Input value={parentName} onChange={(e) => setParentName(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Phone</Label>
-                <Input value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Email</Label>
-              <Input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} />
-            </div>
+          <div className="rounded-md border border-border p-3">
+            <AthleteContactsEditor
+              mode="buffer"
+              athleteAge={derivedAge}
+              initialContacts={contacts}
+              onChange={setContacts}
+            />
           </div>
         </div>
 
