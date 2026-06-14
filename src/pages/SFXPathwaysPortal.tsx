@@ -193,21 +193,50 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
           <div className="mt-6 space-y-2">
             <CommandHint />
             {role === "admin" && <ThemeSwitcher />}
-            <div
-              className="rounded-[12px] p-3 text-xs"
-              style={{
-                background: "var(--brand-base-soft)",
-                border: "1px solid var(--brand-base-line)",
-                color: "rgba(255,255,255,0.78)",
-              }}
-            >
-              <div className="font-medium text-white truncate">
-                {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
-              </div>
-              <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
-                {role}
-              </div>
-            </div>
+            {(() => {
+              // In preview mode (admin previewing another role), never expose the
+              // logged-in admin's identity. For parent/athlete, optionally show the
+              // athlete's assigned managing agent instead.
+              if (isPreview) {
+                if ((role === "parent" || role === "athlete") && previewAgentName) {
+                  return (
+                    <div
+                      className="rounded-[12px] p-3 text-xs"
+                      style={{
+                        background: "var(--brand-base-soft)",
+                        border: "1px solid var(--brand-base-line)",
+                        color: "rgba(255,255,255,0.78)",
+                      }}
+                    >
+                      <div className="font-mono text-[10px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        Managing Agent
+                      </div>
+                      <div className="font-medium text-white truncate mt-0.5">
+                        {previewAgentName}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }
+              return (
+                <div
+                  className="rounded-[12px] p-3 text-xs"
+                  style={{
+                    background: "var(--brand-base-soft)",
+                    border: "1px solid var(--brand-base-line)",
+                    color: "rgba(255,255,255,0.78)",
+                  }}
+                >
+                  <div className="font-medium text-white truncate">
+                    {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+                  </div>
+                  <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {role}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </aside>
