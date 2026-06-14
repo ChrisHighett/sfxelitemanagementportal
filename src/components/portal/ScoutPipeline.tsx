@@ -370,7 +370,7 @@ export default function ScoutPipeline() {
               onEdit={(l) => { setShowAddForm(false); setEditingLead(l); }}
               onStageChange={handleStageChange}
               onActionUpdate={handleActionUpdate}
-              onConvertToAthlete={(l) => setShowConvertModal(l)}
+              onConvertToAthlete={(l) => handleSignLead(l)}
             />
           ))}
         </div>
