@@ -161,7 +161,7 @@ export default function ScoutPipeline() {
         key_attributes: lead.key_attributes,
         scout_rating: lead.scout_rating,
         scout_notes: lead.notes,
-        scout_credited: !!lead.scout_credited,
+        scout_credited: !!(lead as any).scout_credited,
         date_signed: lead.date_signed || todayISO,
         assigned_agent_name: lead.assigned_agent_name,
         assigned_agent_user_id: lead.assigned_agent_id,
