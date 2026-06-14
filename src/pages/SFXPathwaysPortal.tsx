@@ -3378,17 +3378,34 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert,
           )}
         </div>
 
-        <div className="p-4 pt-3 border-t flex gap-2">
-          {lead.onboarding_stage === "Welcome Sent" && (
-            <Button
-              className="flex-1 gap-1.5"
-              style={{ background: "var(--success)", color: "#fff" }}
-              onClick={() => { onConvert(lead); onClose(); }}
-            >
-              <UserPlus className="h-4 w-4" />
-              Convert to athlete
-            </Button>
-          )}
+        <div className="p-4 pt-3 border-t flex gap-2 flex-wrap">
+          {lead.onboarding_stage === "Signed" ? (
+            lead.converted_athlete_id ? (
+              <Button
+                className="flex-1 gap-1.5"
+                style={{ background: "var(--success)", color: "#fff" }}
+                onClick={() => { onOpenAthlete?.(lead.converted_athlete_id); onClose(); }}
+              >
+                <UserPlus className="h-4 w-4" />
+                View athlete on roster
+              </Button>
+            ) : lead.assigned_agent_id ? (
+              <Button
+                className="flex-1 gap-1.5"
+                style={{ background: "var(--success)", color: "#fff" }}
+                onClick={() => { onConvert(lead); onClose(); }}
+              >
+                <UserPlus className="h-4 w-4" />
+                Add to {lead.assigned_agent_name || "agent"}'s roster
+              </Button>
+            ) : (
+              <Button className="flex-1 gap-1.5" variant="outline" disabled>
+                <UserPlus className="h-4 w-4" />
+                Assign an agent first
+              </Button>
+            )
+          ) : null}
+
           <Button variant="outline" className="flex-1 gap-1.5" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             Edit lead
