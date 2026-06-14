@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,14 +30,14 @@ export default function ScoutPipeline() {
   const { data: roleData } = useUserRole();
   const isAdmin = roleData?.role === "admin";
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [filter, setFilter] = useState<TopFilter>("All");
   const [stageFilter, setStageFilter] = useState<StageFilter>("All");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<ScoutLead | null>(null);
-  const [showConvertModal, setShowConvertModal] = useState<ScoutLead | null>(null);
   const [lostLead, setLostLead] = useState<ScoutLead | null>(null);
-  const [converting, setConverting] = useState(false);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   const { data: leads = [], isLoading, refetch } = useQuery({
     queryKey: ["scout_leads", user?.id, isAdmin],
@@ -110,17 +111,128 @@ export default function ScoutPipeline() {
     l.onboarding_stage !== "New"
   ).length;
 
-  async function handleStageChange(id: string, stage: string) {
-    if (stage === "Lost") {
-      const lead = leads.find((l) => l.id === id);
-      if (lead) { setLostLead(lead); return; }
+  function openAthlete(athleteId: string) {
+    navigate(`/portal?view=agent&tab=athlete&athleteId=${athleteId}`);
+  }
+
+  async function convertLeadToAthlete(lead: ScoutLead): Promise<string | null> {
+    // Reuse existing linked athlete if present
+    if (lead.converted_athlete_id) {
+      // Confirm it still exists
+      const { data: existing } = await (supabase as any)
+        .from("athletes")
+        .select("id")
+        .eq("id", lead.converted_athlete_id)
+        .maybeSingle();
+      if (existing?.id) return existing.id;
     }
+    // Also catch any athlete already linked via source_lead_id
+    const { data: bySource } = await (supabase as any)
+      .from("athletes")
+      .select("id")
+      .eq("source_lead_id", lead.id)
+      .maybeSingle();
+    if (bySource?.id) {
+      await (supabase as any)
+        .from("scout_leads")
+        .update({ converted_athlete_id: bySource.id })
+        .eq("id", lead.id);
+      return bySource.id;
+    }
+
+    // Derive a DOB from age if provided (Jan 1 of birth year)
+    let dob: string | null = null;
+    if (lead.age && lead.age > 0 && lead.age < 100) {
+      const year = new Date().getFullYear() - lead.age;
+      dob = `${year}-01-01`;
+    }
+
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const { data: athlete, error: athErr } = await (supabase as any)
+      .from("athletes")
+      .insert({
+        first_name: lead.first_name,
+        last_name: lead.last_name,
+        position: lead.position,
+        school: lead.school_club,
+        region: lead.region,
+        date_of_birth: dob,
+        footage_url: (lead as any).footage_url ?? null,
+        key_attributes: lead.key_attributes,
+        scout_rating: lead.scout_rating,
+        scout_notes: lead.notes,
+        scout_credited: !!(lead as any).scout_credited,
+        date_signed: lead.date_signed || todayISO,
+        assigned_agent_name: lead.assigned_agent_name,
+        assigned_agent_user_id: lead.assigned_agent_id,
+        source_lead_id: lead.id,
+      })
+      .select("id")
+      .single();
+    if (athErr) throw athErr;
+
+    await (supabase as any)
+      .from("scout_leads")
+      .update({ converted_athlete_id: athlete.id })
+      .eq("id", lead.id);
+
+    return athlete.id;
+  }
+
+  async function handleSignLead(lead: ScoutLead) {
+    if (!lead.assigned_agent_id) {
+      toast.error("Assign an agent to this lead before marking as Signed.", {
+        description: "Open the lead, set Assigned agent, then try again.",
+      });
+      return;
+    }
+    setConvertingId(lead.id);
+    try {
+      const reuseId = lead.converted_athlete_id;
+      const athleteId = await convertLeadToAthlete(lead);
+      if (!athleteId) throw new Error("Conversion failed");
+
+      const todayISO = new Date().toISOString().slice(0, 10);
+      await (supabase as any)
+        .from("scout_leads")
+        .update({
+          onboarding_stage: "Signed",
+          date_signed: lead.date_signed || todayISO,
+        })
+        .eq("id", lead.id);
+
+      qc.invalidateQueries({ queryKey: ["athletes"] });
+      refetch();
+
+      toast.success(
+        reuseId
+          ? `Reopened ${lead.first_name} ${lead.last_name}'s athlete profile`
+          : `${lead.first_name} ${lead.last_name} added to ${lead.assigned_agent_name || "agent"}'s roster`,
+        {
+          action: {
+            label: "Open athlete profile",
+            onClick: () => openAthlete(athleteId),
+          },
+        }
+      );
+    } catch (e: any) {
+      toast.error(e.message || "Conversion failed");
+    } finally {
+      setConvertingId(null);
+    }
+  }
+
+  async function handleStageChange(id: string, stage: string) {
+    const lead = leads.find((l) => l.id === id);
+    if (!lead) return;
+    if (stage === "Lost") { setLostLead(lead); return; }
+    if (stage === "Signed") { await handleSignLead(lead); return; }
+
     const fields: any = { onboarding_stage: stage };
     const today = new Date().toISOString().slice(0, 10);
     if (stage === "Contacted") fields.date_contacted = today;
     if (stage === "Pack Sent") fields.date_pack_sent = today;
     if (stage === "Welcome Sent") fields.date_welcome_sent = today;
-    if (stage === "Signed") fields.date_signed = today;
     const { error } = await (supabase as any).from("scout_leads").update(fields).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Stage → ${stage}`);
@@ -139,52 +251,12 @@ export default function ScoutPipeline() {
     refetch();
   }
 
-
   async function handleActionUpdate(id: string, fields: Partial<ScoutLead>) {
     const { error } = await (supabase as any).from("scout_leads").update(fields).eq("id", id);
     if (error) return toast.error(error.message);
     refetch();
   }
 
-  async function handleConfirmConvert() {
-    if (!showConvertModal) return;
-    setConverting(true);
-    const lead = showConvertModal;
-    try {
-      const { data: athlete, error: athErr } = await (supabase as any)
-        .from("athletes")
-        .insert({
-          first_name: lead.first_name,
-          last_name: lead.last_name,
-          position: lead.position,
-          school: lead.school_club,
-          assigned_agent_name: lead.assigned_agent_name,
-          assigned_agent_user_id: lead.assigned_agent_id,
-        })
-        .select("id")
-        .single();
-      if (athErr) throw athErr;
-
-      const { error: updErr } = await (supabase as any)
-        .from("scout_leads")
-        .update({
-          onboarding_stage: "Signed",
-          date_signed: new Date().toISOString().slice(0, 10),
-          converted_athlete_id: athlete.id,
-        })
-        .eq("id", lead.id);
-      if (updErr) throw updErr;
-
-      toast.success(`${lead.first_name} ${lead.last_name} profile created — find them in your Roster`);
-      setShowConvertModal(null);
-      qc.invalidateQueries({ queryKey: ["athletes"] });
-      refetch();
-    } catch (e: any) {
-      toast.error(e.message || "Conversion failed");
-    } finally {
-      setConverting(false);
-    }
-  }
 
   return (
     <div className="space-y-4 p-3 sm:p-6 max-w-6xl mx-auto">
@@ -270,33 +342,13 @@ export default function ScoutPipeline() {
         />
       )}
 
-      {/* Convert modal */}
-      {showConvertModal && (
-        <Card style={{ borderColor: "var(--success)" }}>
-          <CardHeader>
-            <CardTitle className="text-base">Convert {showConvertModal.first_name} {showConvertModal.last_name} to athlete profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              This will create a full athlete profile for {showConvertModal.first_name} {showConvertModal.last_name} pre-filled from their scout record. Their scout lead will be marked as Signed.
-            </p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">First name:</span> <span className="font-medium">{showConvertModal.first_name}</span></div>
-              <div><span className="text-muted-foreground">Last name:</span> <span className="font-medium">{showConvertModal.last_name}</span></div>
-              <div><span className="text-muted-foreground">Position:</span> <span className="font-medium">{showConvertModal.position || "—"}</span></div>
-              <div><span className="text-muted-foreground">School/Club:</span> <span className="font-medium">{showConvertModal.school_club || "—"}</span></div>
-              <div className="col-span-2"><span className="text-muted-foreground">Assigned agent:</span> <span className="font-medium">{showConvertModal.assigned_agent_name || "Unassigned"}</span></div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowConvertModal(null)} disabled={converting}>Cancel</Button>
-              <Button onClick={handleConfirmConvert} disabled={converting} style={{ background: "var(--success)", color: "#fff" }}>
-                {converting && <span className="mr-2"><ArcLoader size={16} /></span>}
-                Create athlete profile
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Convert in-flight indicator */}
+      {convertingId && (
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          <ArcLoader size={14} /> Creating athlete profile…
+        </div>
       )}
+
 
       {/* List */}
       {isLoading ? (
@@ -318,7 +370,7 @@ export default function ScoutPipeline() {
               onEdit={(l) => { setShowAddForm(false); setEditingLead(l); }}
               onStageChange={handleStageChange}
               onActionUpdate={handleActionUpdate}
-              onConvertToAthlete={(l) => setShowConvertModal(l)}
+              onConvertToAthlete={(l) => handleSignLead(l)}
             />
           ))}
         </div>

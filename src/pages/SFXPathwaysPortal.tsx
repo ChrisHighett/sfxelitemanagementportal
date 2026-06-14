@@ -4057,6 +4057,22 @@ export default function SFXPathwaysPortal() {
     }
   }, [effectiveRole, active, roleLoading]);
 
+  // Honor ?athleteId=… deep link (used after Scout → Signed conversion)
+  useEffect(() => {
+    const aId = searchParams.get("athleteId");
+    if (!aId || !athletes.length) return;
+    if (athletes.some((a) => a.id === aId)) {
+      setSelectedAthleteId(aId);
+      if (isValidNavKeyForRole(effectiveRole || "agent", "athlete")) {
+        setActive("athlete");
+      }
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("athleteId");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [athletes.length, searchParams.get("athleteId")]);
+
   // When admin switches role preview, reset to first tab of that role
   const handleRoleSwitch = (newRole: Role) => {
     if (newRole === userRoleData?.role) {
