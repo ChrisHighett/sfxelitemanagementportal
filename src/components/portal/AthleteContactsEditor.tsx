@@ -8,9 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Plus, Star, Trash2, Pencil, Phone, Mail } from "lucide-react";
+import { Plus, Star, Trash2, Pencil, Phone, Mail, Send, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { ArcLoader } from "@/components/brand/Brand";
+
+type InviteStatus = "pending" | "approved" | "activated" | "declined";
+type InviteRecord = { id: string; email: string; status: InviteStatus };
 
 export const RELATIONSHIP_OPTIONS = [
   { value: "mother", label: "Mother" },
