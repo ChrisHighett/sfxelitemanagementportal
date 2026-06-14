@@ -5,6 +5,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface VoiceProfileInput {
+  agent_name?: string | null;
+  how_i_write?: string | null;
+  formality?: string | null;
+  length?: string | null;
+  emoji?: string | null;
+  greeting_style?: string | null;
+  sign_off?: string | null;
+  sample_messages?: string | null;
+}
+
+function buildVoiceBlock(vp: VoiceProfileInput | null | undefined): string {
+  if (!vp) return "";
+  const parts: string[] = [];
+  parts.push(`\n\n=== AGENT VOICE PROFILE — MATCH THIS STYLE ===`);
+  parts.push(`You are writing AS ${vp.agent_name || "this agent"}. Match THEIR voice — not generic AI tone.`);
+  parts.push(`CRITICAL: Keep all facts, names, numbers and next steps from the input intact. Only adapt phrasing, rhythm and vocabulary to match the agent's style below.`);
+  if (vp.how_i_write?.trim()) {
+    parts.push(`\nHow this agent describes their own writing style:\n"${vp.how_i_write.trim()}"`);
+  }
+  const settings: string[] = [];
+  if (vp.formality) settings.push(`Formality: ${vp.formality}`);
+  if (vp.length) settings.push(`Length preference: ${vp.length}`);
+  if (vp.emoji) settings.push(`Emoji use: ${vp.emoji}`);
+  if (vp.greeting_style?.trim()) settings.push(`Greeting style: ${vp.greeting_style.trim()}`);
+  if (vp.sign_off?.trim()) settings.push(`Sign off with: ${vp.sign_off.trim()} (use this exact sign-off line)`);
+  if (settings.length) parts.push(`\nSettings:\n- ${settings.join("\n- ")}`);
+  if (vp.sample_messages?.trim()) {
+    parts.push(
+      `\nSample messages the agent has actually sent (use ONLY as STYLE/voice examples — do not copy their content, names or facts):\n"""\n${vp.sample_messages.trim()}\n"""`,
+    );
+  }
+  parts.push(`\nWhen the agent's voice profile conflicts with generic tone guidance above, prefer the voice profile.`);
+  parts.push(`=== END VOICE PROFILE ===`);
+  return parts.join("\n");
+}
+
+
 function buildAthleteSystemPrompt(agentName: string): string {
   return `You are writing a follow-up email from ${agentName} at TGI Sport to a young elite pathways athlete.
 
