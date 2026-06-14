@@ -470,13 +470,21 @@ export type Database = {
           commercial_potential: string | null
           created_at: string
           date_of_birth: string | null
+          date_signed: string | null
           email: string | null
           first_name: string
+          footage_url: string | null
           id: string
+          key_attributes: string | null
           last_name: string
           management_contract_expiry: string | null
           position: string | null
+          region: string | null
           school: string | null
+          scout_credited: boolean | null
+          scout_notes: string | null
+          scout_rating: string | null
+          source_lead_id: string | null
           stage: string | null
           updated_at: string
         }
@@ -491,13 +499,21 @@ export type Database = {
           commercial_potential?: string | null
           created_at?: string
           date_of_birth?: string | null
+          date_signed?: string | null
           email?: string | null
           first_name: string
+          footage_url?: string | null
           id?: string
+          key_attributes?: string | null
           last_name: string
           management_contract_expiry?: string | null
           position?: string | null
+          region?: string | null
           school?: string | null
+          scout_credited?: boolean | null
+          scout_notes?: string | null
+          scout_rating?: string | null
+          source_lead_id?: string | null
           stage?: string | null
           updated_at?: string
         }
@@ -512,13 +528,21 @@ export type Database = {
           commercial_potential?: string | null
           created_at?: string
           date_of_birth?: string | null
+          date_signed?: string | null
           email?: string | null
           first_name?: string
+          footage_url?: string | null
           id?: string
+          key_attributes?: string | null
           last_name?: string
           management_contract_expiry?: string | null
           position?: string | null
+          region?: string | null
           school?: string | null
+          scout_credited?: boolean | null
+          scout_notes?: string | null
+          scout_rating?: string | null
+          source_lead_id?: string | null
           stage?: string | null
           updated_at?: string
         }
@@ -535,6 +559,13 @@ export type Database = {
             columns: ["assigned_agent_user_id"]
             isOneToOne: false
             referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "athletes_source_lead_id_fkey"
+            columns: ["source_lead_id"]
+            isOneToOne: false
+            referencedRelation: "scout_leads"
             referencedColumns: ["id"]
           },
         ]
