@@ -2906,6 +2906,93 @@ function ScoutLeadCardSimple({ lead, onEdit, onReview, onStageChange, onTriageCh
   );
 }
 
+/**
+ * Stage derivation matching AddAthleteDialog options.
+ * <16 = Emerging, 16-17 = Elite, 18+ = Pre-Pro.
+ */
+function deriveStageFromAge(age: number | null): "Emerging" | "Elite" | "Pre-Pro" {
+  if (age == null) return "Emerging";
+  if (age >= 18) return "Pre-Pro";
+  if (age >= 16) return "Elite";
+  return "Emerging";
+}
+
+/**
+ * Convert a scout lead into a fully-linked athlete record on the assigned
+ * agent's roster. Idempotent — reuses an existing converted athlete if found
+ * (either via scout_leads.converted_athlete_id or athletes.source_lead_id).
+ * Returns the athlete id.
+ *
+ * Requires lead.assigned_agent_id (the agent USER UUID) — the roster query
+ * filters by athletes.assigned_agent_user_id.
+ */
+async function convertScoutLeadToAthlete(lead: any): Promise<string> {
+  if (!lead?.assigned_agent_id) {
+    throw new Error("Assign an agent to this lead before adding to a roster.");
+  }
+
+  // 1) Reuse via stored link
+  if (lead.converted_athlete_id) {
+    const { data } = await (supabase as any)
+      .from("athletes").select("id").eq("id", lead.converted_athlete_id).maybeSingle();
+    if (data?.id) return data.id as string;
+  }
+  // 2) Reuse via source_lead_id on athletes
+  const { data: bySource } = await (supabase as any)
+    .from("athletes").select("id").eq("source_lead_id", lead.id).maybeSingle();
+  if (bySource?.id) {
+    await (supabase as any).from("scout_leads")
+      .update({ converted_athlete_id: bySource.id }).eq("id", lead.id);
+    return bySource.id as string;
+  }
+
+  // Derive DOB from age if no DOB available (Jan 1 of birth year)
+  let dob: string | null = null;
+  const ageNum = typeof lead.age === "number" ? lead.age : (lead.age ? parseInt(lead.age, 10) : null);
+  if (ageNum && ageNum > 0 && ageNum < 100) {
+    dob = `${new Date().getFullYear() - ageNum}-01-01`;
+  }
+  const stage = deriveStageFromAge(ageNum);
+  const todayISO = new Date().toISOString().slice(0, 10);
+
+  const { data: athlete, error } = await (supabase as any)
+    .from("athletes")
+    .insert({
+      first_name: lead.first_name,
+      last_name: lead.last_name,
+      position: lead.position || null,
+      school: lead.school_club || null,
+      region: lead.region || null,
+      date_of_birth: dob,
+      stage,
+      footage_url: lead.footage_url || null,
+      key_attributes: lead.key_attributes || null,
+      scout_rating: lead.scout_rating || null,
+      scout_notes: lead.notes || null,
+      scout_credited: !!lead.scout_credited,
+      date_signed: lead.date_signed || todayISO,
+      assigned_agent_name: lead.assigned_agent_name || null,
+      assigned_agent_user_id: lead.assigned_agent_id, // CRITICAL: matches roster filter
+      source_lead_id: lead.id,
+      source: "scout-converted",
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await (supabase as any).from("scout_leads")
+    .update({
+      converted_athlete_id: athlete.id,
+      onboarding_stage: "Signed",
+      triage_decision: "Signed",
+      date_signed: lead.date_signed || todayISO,
+    })
+    .eq("id", lead.id);
+
+  return athlete.id as string;
+}
+
+
 function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(autoOpenForm);
