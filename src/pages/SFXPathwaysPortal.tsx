@@ -3696,6 +3696,7 @@ function AgentScoutView() {
             setReviewingLead((prev: any) => prev ? { ...prev, onboarding_stage: stage } : null);
           }}
           onConvert={handleConvert}
+          onOpenAthlete={openAthleteProfile}
         />
       )}
       {lostModalLead && (
