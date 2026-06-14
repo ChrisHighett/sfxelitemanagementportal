@@ -3050,13 +3050,28 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
       setLostModalLead(lead || { id });
       return;
     }
+    if (stage === "Signed") {
+      const lead = leads.find((l: any) => l.id === id);
+      if (!lead) return;
+      if (!lead.assigned_agent_id) {
+        toast.error("Assign an agent first");
+        return;
+      }
+      try {
+        // convertScoutLeadToAthlete is idempotent (reuses converted_athlete_id
+        // or source_lead_id) and also writes onboarding_stage=Signed on success.
+        await convertScoutLeadToAthlete(lead);
+        qc.invalidateQueries({ queryKey: ["athletes"] });
+        refetch();
+        toast.success("Signed — added to agent's roster");
+      } catch (e: any) {
+        toast.error(e?.message || "Could not add athlete to roster — lead not marked Signed");
+      }
+      return;
+    }
     const updates: any = { onboarding_stage: stage };
     if (stage === "Contacted") {
       updates.first_agent_action_at = new Date().toISOString();
-    }
-    if (stage === "Signed") {
-      updates.date_signed = new Date().toISOString().slice(0, 10);
-      updates.triage_decision = "Signed";
     }
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
@@ -3482,13 +3497,28 @@ function AgentScoutView() {
       setLostModalLead(lead || { id });
       return;
     }
+    if (stage === "Signed") {
+      const lead = leads.find((l: any) => l.id === id);
+      if (!lead) return;
+      if (!lead.assigned_agent_id) {
+        toast.error("Assign an agent first");
+        return;
+      }
+      try {
+        // convertScoutLeadToAthlete is idempotent and writes onboarding_stage=Signed
+        // on success — only marks the lead Signed after the athlete record exists.
+        await convertScoutLeadToAthlete(lead);
+        qc.invalidateQueries({ queryKey: ["athletes"] });
+        refetch();
+        toast.success("Signed — added to agent's roster");
+      } catch (e: any) {
+        toast.error(e?.message || "Could not add athlete to roster — lead not marked Signed");
+      }
+      return;
+    }
     const updates: any = { onboarding_stage: stage };
     if (stage === "Contacted") {
       updates.first_agent_action_at = new Date().toISOString();
-    }
-    if (stage === "Signed") {
-      updates.date_signed = new Date().toISOString().slice(0, 10);
-      updates.triage_decision = "Signed";
     }
     const { error } = await supabase.from("scout_leads" as any).update(updates).eq("id", id);
     if (error) { toast.error(error.message); return; }
