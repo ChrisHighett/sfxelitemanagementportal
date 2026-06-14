@@ -342,33 +342,13 @@ export default function ScoutPipeline() {
         />
       )}
 
-      {/* Convert modal */}
-      {showConvertModal && (
-        <Card style={{ borderColor: "var(--success)" }}>
-          <CardHeader>
-            <CardTitle className="text-base">Convert {showConvertModal.first_name} {showConvertModal.last_name} to athlete profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              This will create a full athlete profile for {showConvertModal.first_name} {showConvertModal.last_name} pre-filled from their scout record. Their scout lead will be marked as Signed.
-            </p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">First name:</span> <span className="font-medium">{showConvertModal.first_name}</span></div>
-              <div><span className="text-muted-foreground">Last name:</span> <span className="font-medium">{showConvertModal.last_name}</span></div>
-              <div><span className="text-muted-foreground">Position:</span> <span className="font-medium">{showConvertModal.position || "—"}</span></div>
-              <div><span className="text-muted-foreground">School/Club:</span> <span className="font-medium">{showConvertModal.school_club || "—"}</span></div>
-              <div className="col-span-2"><span className="text-muted-foreground">Assigned agent:</span> <span className="font-medium">{showConvertModal.assigned_agent_name || "Unassigned"}</span></div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setShowConvertModal(null)} disabled={converting}>Cancel</Button>
-              <Button onClick={handleConfirmConvert} disabled={converting} style={{ background: "var(--success)", color: "#fff" }}>
-                {converting && <span className="mr-2"><ArcLoader size={16} /></span>}
-                Create athlete profile
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Convert in-flight indicator */}
+      {convertingId && (
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          <ArcLoader size={14} /> Creating athlete profile…
+        </div>
       )}
+
 
       {/* List */}
       {isLoading ? (
