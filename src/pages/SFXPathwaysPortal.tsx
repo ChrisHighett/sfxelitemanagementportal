@@ -3652,12 +3652,29 @@ function AgentScoutView() {
                     })}
                   </div>
 
-                  {lead.onboarding_stage === "Welcome Sent" && (
-                    <Button size="sm" variant="outline" className="w-full gap-1.5" style={{ borderColor: "var(--success)", color: "var(--success-deep)" }} onClick={() => handleConvert(lead)}>
-                      <UserPlus className="h-3.5 w-3.5" />
-                      Convert to athlete profile →
-                    </Button>
+                  {lead.onboarding_stage === "Signed" && (
+                    lead.converted_athlete_id ? (
+                      <Button size="sm" variant="outline" className="w-full gap-1.5"
+                        style={{ borderColor: "var(--success)", color: "var(--success-deep)" }}
+                        onClick={() => openAthleteProfile(lead.converted_athlete_id)}>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        View athlete on roster
+                      </Button>
+                    ) : lead.assigned_agent_id ? (
+                      <Button size="sm" className="w-full gap-1.5"
+                        style={{ background: "var(--success)", color: "#fff" }}
+                        onClick={() => handleConvert(lead)}>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Add to {lead.assigned_agent_name || "agent"}'s roster
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="w-full gap-1.5" disabled>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Assign an agent first
+                      </Button>
+                    )
                   )}
+
                 </CardContent>
               </Card>
             );
