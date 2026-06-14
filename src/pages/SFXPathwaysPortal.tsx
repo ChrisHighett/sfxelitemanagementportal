@@ -130,7 +130,7 @@ function isValidNavKeyForRole(role: Role | null | undefined, key?: string | null
   return !!role && !!key && (NAV[role] ?? []).some((item) => item.key === key);
 }
 
-function Shell({ role, active, onNav, children, hideBottomNav }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode; hideBottomNav?: boolean }) {
+function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previewAgentName }: { role: Role; active: string; onNav: (k: string) => void; children: React.ReactNode; hideBottomNav?: boolean; isPreview?: boolean; previewAgentName?: string | null }) {
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
