@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
 import FamilyCorrespondence from "@/components/portal/FamilyCorrespondence";
@@ -110,6 +110,8 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "signed", label: "Signed", icon: CheckCircle2 },
+    { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
   ],
 };
@@ -2993,7 +2995,7 @@ async function convertScoutLeadToAthlete(lead: any): Promise<string> {
 }
 
 
-function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
+function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?: boolean; view?: "active" | "signed" | "lost" }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -3098,12 +3100,30 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
     refetch();
   }
 
+  const visibleLeads =
+    view === "signed" ? signed
+    : view === "lost" ? lost
+    : leads.filter((l: any) => !["Signed", "Lost"].includes(l.onboarding_stage));
+
+  const viewTitle =
+    view === "signed" ? "Signed leads"
+    : view === "lost" ? "Lost leads"
+    : "My Scout Leads";
+  const viewSubtitle =
+    view === "signed" ? "Prospects you've converted into signed athletes."
+    : view === "lost" ? "Prospects that didn't progress — kept for reference."
+    : "Active prospects. Signed and Lost leads move to their own folders.";
+  const emptyMessage =
+    view === "signed" ? "No signed leads yet."
+    : view === "lost" ? "No lost leads."
+    : "No active leads. Tap \"Add lead\" to log your first prospect.";
+
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">My Scout Leads</h1>
-          <p className="text-sm text-muted-foreground">Log prospects, update stages, track your pipeline.</p>
+          <h1 className="text-xl font-semibold">{viewTitle}</h1>
+          <p className="text-sm text-muted-foreground">{viewSubtitle}</p>
         </div>
         <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
           <Plus className="h-4 w-4" />Add lead
@@ -3145,11 +3165,11 @@ function ScoutPortal({ autoOpenForm = false }: { autoOpenForm?: boolean }) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading your leads…
         </div>
-      ) : leads.length === 0 ? (
-        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">No leads yet. Tap "Add lead" to log your first prospect.</CardContent></Card>
+      ) : visibleLeads.length === 0 ? (
+        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">{emptyMessage}</CardContent></Card>
       ) : (
         <div className="space-y-3">
-          {leads.map((lead: any) => (
+          {visibleLeads.map((lead: any) => (
             <ScoutLeadCardSimple
               key={lead.id}
               lead={lead}
@@ -4358,7 +4378,7 @@ export default function SFXPathwaysPortal() {
             )}
           </div>
         )}
-        <ScoutPortal autoOpenForm={active === "add"} />
+        <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
       </Shell>
     );
   }
