@@ -812,8 +812,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
               <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
             </div>
             <div>
-              <Tabs defaultValue="reviews">
+              <Tabs defaultValue="contacts">
                 <TabsList className="flex flex-wrap h-auto gap-1">
+                  <TabsTrigger value="contacts" className="text-xs sm:text-sm">Contacts</TabsTrigger>
                   <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
                   <TabsTrigger value="comms" className="text-xs sm:text-sm">Comms</TabsTrigger>
                   <TabsTrigger value="scorecard" className="text-xs sm:text-sm">Scorecard</TabsTrigger>
@@ -822,6 +823,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   <TabsTrigger value="commercial" className="text-xs sm:text-sm">Commercial</TabsTrigger>
                   <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
                 </TabsList>
+                <TabsContent value="contacts" className="space-y-4 mt-4">
+                  <AthleteContactsEditor mode="live" athleteId={athlete.id} athleteAge={athlete.age ?? null} />
+                </TabsContent>
                 <TabsContent value="reviews" className="space-y-4 mt-4">
                   {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
                   {reviews.map((r) => {
