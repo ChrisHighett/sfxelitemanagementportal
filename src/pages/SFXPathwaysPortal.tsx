@@ -36,6 +36,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import PendingInvitesList from "@/components/portal/PendingInvitesList";
 import InviteDialog from "@/components/portal/InviteDialog";
+import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
