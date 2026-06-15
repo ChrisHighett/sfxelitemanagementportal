@@ -324,7 +324,7 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
     email: "",
     management_contract_expiry: athlete.managementContractExpiry || "",
     club_contract_expiry: athlete.clubContractExpiry || "",
-    assigned_agent: athlete.assignedAgent || "",
+    assigned_agent: athlete.assignedAgentUserId || "",
     commercial_potential: athlete.commercialPotential || "Not Scored",
     avatar_url: athlete.photoUrl || "",
   };
