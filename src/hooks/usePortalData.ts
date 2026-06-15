@@ -13,6 +13,7 @@ export interface Athlete {
   position: string;
   stage: "Emerging" | "Elite" | "Pre-Pro";
   assignedAgent: string;
+  assignedAgentUserId: string | null;
   parentName: string;
   parentEmail: string;
   wellbeingScore: number;
