@@ -487,25 +487,27 @@ function ContactList({
 function ParentPortalBadge({ invite }: { invite?: InviteRecord }) {
   if (!invite || invite.status === "declined") {
     return (
-      <Badge variant="outline" className="text-[10px] text-muted-foreground">
-        Parent portal: not invited
-      </Badge>
+      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+        Not invited
+      </span>
     );
   }
   if (invite.status === "activated") {
     return (
       <Badge className="text-[10px] gap-1 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20">
-        <CheckCircle2 className="h-3 w-3" /> Parent portal: active
+        <CheckCircle2 className="h-3 w-3" /> Portal active
       </Badge>
     );
   }
   // pending or approved
   return (
-    <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/40 text-amber-600">
-      <Clock className="h-3 w-3" /> Parent portal: invited
-    </Badge>
+    <span className="inline-flex items-center gap-1 text-[10px] text-amber-600">
+      <Clock className="h-3 w-3" /> Invited
+    </span>
   );
 }
+
 
 
 function ContactForm({
