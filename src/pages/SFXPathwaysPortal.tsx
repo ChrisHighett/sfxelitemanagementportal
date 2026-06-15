@@ -785,6 +785,53 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const { data: comms = [] } = useCommsLog(athlete.id);
   const [editing, setEditing] = useState(false);
   const [invitingParent, setInvitingParent] = useState(false);
+  const [invitingAthlete, setInvitingAthlete] = useState(false);
+
+  const { data: athleteInvite, refetch: refetchInvite } = useQuery({
+    queryKey: ["athlete-invite", athlete.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_invites")
+        .select("status, created_at, activated_at")
+        .eq("athlete_id", athlete.id)
+        .eq("role", "athlete")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: guardianCount = 0 } = useQuery({
+    queryKey: ["guardian-count", athlete.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("guardians")
+        .select("id", { count: "exact", head: true })
+        .eq("athlete_id", athlete.id);
+      return count || 0;
+    },
+  });
+
+  const isMinor = (athlete.age ?? 18) < 18;
+  const hasGuardian = guardianCount > 0;
+  const noEmail = !athlete.email;
+
+  const inviteStatusLabel =
+    athleteInvite?.status === "activated"
+      ? "Active"
+      : athleteInvite
+      ? `Invited ${new Date(athleteInvite.created_at as any).toLocaleDateString()}`
+      : "Not invited";
+
+  function handleAthleteInviteClick() {
+    if (noEmail) { toast.error("Add an athlete email first."); return; }
+    if (isMinor && !hasGuardian) {
+      toast.error("Add a parent/guardian contact first");
+      return;
+    }
+    setInvitingAthlete(true);
+  }
 
   if (editing) {
     return (
@@ -810,15 +857,39 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         onOpenChange={setInvitingParent}
         mode={{ kind: "parent", athleteId: athlete.id, athleteName: athlete.name }}
       />
+      <InviteDialog
+        open={invitingAthlete}
+        onOpenChange={(v) => { setInvitingAthlete(v); if (!v) refetchInvite(); }}
+        mode={{
+          kind: "existing-athlete",
+          athleteId: athlete.id,
+          athleteName: athlete.name,
+          email: athlete.email || "",
+          isMinor,
+        }}
+        onCreated={() => refetchInvite()}
+      />
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle>Athlete Profile</CardTitle>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
               <Button variant="outline" size="sm" onClick={() => setInvitingParent(true)}>
                 Invite parent
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAthleteInviteClick}
+                disabled={noEmail}
+                title={noEmail ? "Add an athlete email first." : undefined}
+              >
+                Invite athlete
+              </Button>
+              <Badge variant="secondary" className="text-xs">
+                Athlete login: {inviteStatusLabel}
+              </Badge>
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 ✏️ Edit Athlete
               </Button>
@@ -827,6 +898,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           <div className="grid gap-6 md:grid-cols-[280px_1fr]">
             <div className="space-y-2 text-sm">

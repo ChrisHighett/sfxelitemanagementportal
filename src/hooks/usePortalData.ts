@@ -14,6 +14,7 @@ export interface Athlete {
   stage: "Emerging" | "Elite" | "Pre-Pro";
   assignedAgent: string;
   assignedAgentUserId: string | null;
+  email: string | null;
   parentName: string;
   parentEmail: string;
   wellbeingScore: number;
@@ -135,6 +136,7 @@ export function useAthletes(restrictToIds?: string[]) {
           stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
           assignedAgent: athlete.assigned_agent_name || "Unassigned",
           assignedAgentUserId: (athlete as any).assigned_agent_user_id || null,
+          email: (athlete as any).email || null,
           parentName: guardian?.parent_name || "Guardian",
           parentEmail: guardian?.parent_email || "",
           wellbeingScore,
