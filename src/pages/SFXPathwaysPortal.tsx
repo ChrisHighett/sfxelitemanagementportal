@@ -938,7 +938,8 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                   <TabsTrigger value="reviews" className="text-xs sm:text-sm">Reviews</TabsTrigger>
                   <TabsTrigger value="comms" className="text-xs sm:text-sm">Comms</TabsTrigger>
                   <TabsTrigger value="scorecard" className="text-xs sm:text-sm">Scorecard</TabsTrigger>
-                  <TabsTrigger value="trends" className="text-xs sm:text-sm">Trends</TabsTrigger>
+                  {/* Trends tab hidden for now — re-enable by restoring this trigger */}
+                  {/* <TabsTrigger value="trends" className="text-xs sm:text-sm">Trends</TabsTrigger> */}
                   <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
                   <TabsTrigger value="commercial" className="text-xs sm:text-sm">Commercial</TabsTrigger>
                   <TabsTrigger value="files" className="text-xs sm:text-sm">Files</TabsTrigger>
