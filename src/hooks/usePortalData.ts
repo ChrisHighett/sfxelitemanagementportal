@@ -134,6 +134,7 @@ export function useAthletes(restrictToIds?: string[]) {
           position: athlete.position || "—",
           stage: (athlete.stage as "Emerging" | "Elite" | "Pre-Pro") || "Elite",
           assignedAgent: athlete.assigned_agent_name || "Unassigned",
+          assignedAgentUserId: (athlete as any).assigned_agent_user_id || null,
           parentName: guardian?.parent_name || "Guardian",
           parentEmail: guardian?.parent_email || "",
           wellbeingScore,
