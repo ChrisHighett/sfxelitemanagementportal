@@ -870,53 +870,67 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         onCreated={() => refetchInvite()}
       />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle>Athlete Profile</CardTitle>
-            <div className="flex gap-2 flex-wrap items-center">
-              <Button variant="outline" size="sm" onClick={() => setInvitingParent(true)}>
+      <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-xl">{athlete.name}</CardTitle>
+                <Badge variant="outline" className="text-[10px] h-5 font-normal text-muted-foreground">
+                  {athlete.stage}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] h-5 font-normal text-muted-foreground">
+                  {athlete.status}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Athlete login: {inviteStatusLabel}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="ghost" size="sm" onClick={() => setInvitingParent(true)} className="text-muted-foreground">
                 Invite parent
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={handleAthleteInviteClick}
                 disabled={noEmail}
                 title={noEmail ? "Add an athlete email first." : undefined}
+                className="text-muted-foreground"
               >
                 Invite athlete
               </Button>
-              <Badge variant="secondary" className="text-xs">
-                Athlete login: {inviteStatusLabel}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                ✏️ Edit Athlete
+              <Button size="sm" onClick={() => setEditing(true)}>
+                Edit Athlete
               </Button>
-              <Badge variant="secondary">{athlete.stage}</Badge>
-              {statusBadge(athlete.status)}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-[280px_1fr]">
-            <div className="space-y-2 text-sm">
-              <div className="text-xl font-bold">{athlete.name}</div>
-              <div>Age: {athlete.age || <span className="text-muted-foreground">Not set</span>}</div>
-              <div>Club: {athlete.club}</div>
-              <div>School: {athlete.school}</div>
-              <div>Position: {athlete.position}</div>
-              <Separator className="my-3" />
-              <div className="font-medium">Contract Dates</div>
-              <div>Management Expiry: {athlete.managementContractExpiry || "—"}</div>
-              <div>Club Contract Expiry: {athlete.clubContractExpiry || "—"}</div>
-              <Separator className="my-3" />
-              <div className="font-medium">Primary contact</div>
-              <div>📧 {athlete.parentEmail || <span className="text-muted-foreground">No parent email recorded</span>}</div>
-              <div>Parent: {athlete.parentName}</div>
-              <div>Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : <span className="text-muted-foreground">To be assigned</span>}</div>
+        <CardContent className="pt-2">
+          <div className="grid gap-8 md:grid-cols-[260px_1fr]">
+            <div className="space-y-1.5 text-sm">
+              <div className="space-y-0.5">
+                <div>Age: {athlete.age || <span className="text-muted-foreground">Not set</span>}</div>
+                <div>Club: {athlete.club}</div>
+                <div>School: {athlete.school}</div>
+                <div>Position: {athlete.position}</div>
+              </div>
+              <div className="pt-4 space-y-0.5">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Contract Dates</div>
+                <div>Management: {athlete.managementContractExpiry || "—"}</div>
+                <div>Club: {athlete.clubContractExpiry || "—"}</div>
+              </div>
+              <div className="pt-4 space-y-0.5">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Primary contact</div>
+                <div>{athlete.parentName || <span className="text-muted-foreground">No contact recorded</span>}</div>
+                <div className="text-xs text-muted-foreground">
+                  Agent: {athlete.assignedAgent !== "Unassigned" ? athlete.assignedAgent : "To be assigned"}
+                </div>
+              </div>
             </div>
+
             <div>
               <Tabs defaultValue="contacts">
                 <TabsList className="flex flex-wrap h-auto gap-1">
