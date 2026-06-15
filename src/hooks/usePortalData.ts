@@ -14,6 +14,7 @@ export interface Athlete {
   stage: "Emerging" | "Elite" | "Pre-Pro";
   assignedAgent: string;
   assignedAgentUserId: string | null;
+  email: string | null;
   parentName: string;
   parentEmail: string;
   wellbeingScore: number;
