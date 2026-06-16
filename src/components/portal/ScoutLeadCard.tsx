@@ -131,7 +131,7 @@ export default function ScoutLeadCard({ lead, onEdit, onStageChange, onActionUpd
                     : undefined
                 }
               >
-                {s}
+                {s === "Pack Sent" ? "Mgmt Pack Sent" : s}
               </button>
               {i < STAGES.length - 1 && !isTerminal && (
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
