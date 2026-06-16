@@ -3883,7 +3883,7 @@ function AgentScoutView() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold truncate">{lead.first_name} {lead.last_name}</span>
                       {stage && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full border uppercase tracking-wide" style={stagePillStyle}>{stage}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border uppercase tracking-wide" style={stagePillStyle}>{stage === "Pack Sent" ? "Mgmt Pack Sent" : stage}</span>
                       )}
                       {isContested && (
                         <Badge variant="outline" className="text-[10px]" style={{ borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }}>Contested</Badge>
