@@ -3607,6 +3607,22 @@ function AgentScoutView() {
     return next;
   });
 
+  // Apply a "pipe" URL param (from dashboard tile click) to pre-filter the pipeline.
+  const [scoutSearchParams, setScoutSearchParams] = useSearchParams();
+  useEffect(() => {
+    const pipe = scoutSearchParams.get("pipe");
+    if (!pipe) return;
+    if (pipe === "watching") { setFilter("Watch"); setStageFilter("All"); }
+    else if (pipe === "pursuing") { setFilter("Pursue"); setStageFilter("All"); }
+    else if (pipe === "signed") { setFilter("All"); setStageFilter("Signed"); setSignedOpen(true); }
+    else if (pipe === "lost") { setFilter("All"); setStageFilter("Lost"); }
+    // Clear the param so subsequent in-page filter changes aren't overridden.
+    const next = new URLSearchParams(scoutSearchParams);
+    next.delete("pipe");
+    setScoutSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoutSearchParams.get("pipe")]);
+
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
     queryFn: async () => {
@@ -4074,25 +4090,28 @@ type CommandFilter = "all" | "calls_due_7" | "wellbeing_low" | "parent_followup"
 function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile?: (id: string) => void }) {
   const [activeFilter, setActiveFilter] = useState<CommandFilter>("all");
   const { data: allComms = [] } = useCommsLog();
+  const navigate = useNavigate();
 
   const { data: scoutLeads = [] } = useQuery({
     queryKey: ["scout_leads_summary"],
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("scout_leads")
-        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at")
-        .neq("onboarding_stage", "Lost");
+        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at");
       return data || [];
     },
   });
 
-  const pursuePipeline = scoutLeads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
-  const highCompetition = scoutLeads.filter((l: any) => l.competitor_interest && l.competitor_interest.trim() !== "" && !["Signed", "Lost"].includes(l.onboarding_stage));
+  // Funnel counts — must match the Scout pipeline scoreboard exactly.
+  const watchingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Watch" && !["Signed", "Lost"].includes(l.onboarding_stage));
+  const pursuingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
-  const stalledLeads = pursuePipeline.filter((l: any) => {
-    const days = Math.floor((Date.now() - new Date(l.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
-    return days >= 7 && l.onboarding_stage !== "Signed";
-  });
+  const lostLeads = scoutLeads.filter((l: any) => l.onboarding_stage === "Lost");
+
+  function gotoPipeline(pipe?: string) {
+    const qs = pipe ? `&pipe=${pipe}` : "";
+    navigate(`/portal?view=agent&tab=scout${qs}`);
+  }
 
 
   const thriving = athletes.filter((a) => a.status === "Thriving").length;
@@ -4249,56 +4268,35 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Binoculars className="h-4 w-4 text-primary" /> Scout pipeline
+            <button
+              type="button"
+              onClick={() => gotoPipeline()}
+              className="inline-flex items-center gap-2 hover:text-primary transition-colors"
+            >
+              <Binoculars className="h-4 w-4 text-primary" /> Scout pipeline
+            </button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-lg border border-primary/30 p-3">
-              <div className="text-2xl font-semibold">{pursuePipeline.length}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Pursue</div>
-            </div>
-            <div className="rounded-lg border border-destructive/30 p-3">
-              <div className="text-2xl font-semibold">{highCompetition.length}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Competition active</div>
-            </div>
-            <div className="rounded-lg border p-3" style={{ borderColor: "var(--win)" }}>
-              <div className="text-2xl font-semibold num">{stalledLeads.length}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Stalled</div>
-            </div>
-            <div className="rounded-lg border p-3" style={{ borderColor: "var(--success)" }}>
-              <div className="text-2xl font-semibold num">{signedThisYear.length}</div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Signed {new Date().getFullYear()}</div>
-            </div>
+            {[
+              { key: "watching", label: "Watching", value: watchingLeads.length, border: "border-border" },
+              { key: "pursuing", label: "Pursuing", value: pursuingLeads.length, border: "border-primary/30" },
+              { key: "signed", label: `Signed ${new Date().getFullYear()}`, value: signedThisYear.length, border: "" },
+              { key: "lost", label: "Lost", value: lostLeads.length, border: "border-border" },
+            ].map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => gotoPipeline(t.key)}
+                className={`text-left rounded-lg border ${t.border} p-3 cursor-pointer hover:bg-muted/40 hover:border-primary/50 transition-colors`}
+                style={t.key === "signed" ? { borderColor: "var(--success)" } : undefined}
+              >
+                <div className="text-2xl font-semibold num">{t.value}</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{t.label}</div>
+              </button>
+            ))}
           </div>
-          {stalledLeads.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-xs font-semibold" style={{ color: "var(--win-deep)" }}>Stalled — action needed</div>
-              {stalledLeads.slice(0, 3).map((lead: any) => {
-                const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at).getTime()) / (1000 * 60 * 60 * 24));
-                return (
-                  <div key={lead.id} className="flex items-center justify-between text-xs rounded-md border border-border px-2 py-1.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-medium truncate">{lead.first_name} {lead.last_name}</span>
-                      <span className="text-muted-foreground">{lead.onboarding_stage} · {days}d</span>
-                    </div>
-                    {lead.scout_rating && <Badge variant="secondary" className="text-[10px]">{lead.scout_rating}</Badge>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {highCompetition.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-xs font-semibold text-destructive">Competition active</div>
-              {highCompetition.slice(0, 3).map((lead: any) => (
-                <div key={lead.id} className="text-xs rounded-md border border-border px-2 py-1.5">
-                  <span className="font-medium">{lead.first_name} {lead.last_name}</span>
-                  <span className="text-muted-foreground"> — {lead.competitor_interest}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
       <div className="grid gap-4 md:grid-cols-4">
