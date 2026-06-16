@@ -3625,7 +3625,12 @@ function AgentScoutView() {
     if (filter === "Watch" && l.triage_decision !== "Watch") return false;
     if (filter === "Mine" && l.assigned_agent_id !== user?.id) return false;
     if (filter === "Stalled" && !(days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage))) return false;
-    if (stageFilter !== "All" && l.onboarding_stage !== stageFilter) return false;
+    if (stageFilter !== "All") {
+      if (l.onboarding_stage !== stageFilter) return false;
+    } else {
+      // Live pipeline excludes closed stages by default
+      if (["Signed", "Lost"].includes(l.onboarding_stage)) return false;
+    }
     return true;
   });
 
