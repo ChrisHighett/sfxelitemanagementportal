@@ -328,7 +328,7 @@ export default function ScoutPipeline() {
                   : "border-transparent text-muted-foreground hover:bg-secondary/50"
               }`}
             >
-              {s}
+              {s === "Pack Sent" ? "Mgmt Pack Sent" : s}
             </button>
           ))}
         </div>
