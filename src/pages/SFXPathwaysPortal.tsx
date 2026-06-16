@@ -3623,6 +3623,7 @@ function AgentScoutView() {
     return true;
   });
 
+  const watching = leads.filter((l: any) => l.triage_decision === "Watch" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const pursue = leads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const stalled = leads.filter((l: any) => {
     const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
@@ -3630,6 +3631,7 @@ function AgentScoutView() {
   });
   const competition = leads.filter((l: any) => l.competitor_interest?.trim() && !["Signed", "Lost"].includes(l.onboarding_stage));
   const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
+  const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
     if (stage === "Lost") {
@@ -3718,10 +3720,10 @@ function AgentScoutView() {
 
       <div className="grid grid-cols-4 gap-2">
         {[
-          { key: "pursue", label: "Pursue", value: pursue.length, color: "hsl(var(--primary))", border: "" },
-          { key: "competition", label: "Competition active", value: competition.length, color: competition.length > 0 ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))", border: competition.length > 0 ? "border-destructive/30" : "" },
-          { key: "stalled", label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "var(--win-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "watching", label: "Watching", value: watching.length, color: watching.length > 0 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "pursuing", label: "Pursuing", value: pursue.length, color: "hsl(var(--primary))", border: "" },
           { key: "signed", label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "var(--success-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "lost", label: "Lost", value: lost.length, color: "hsl(var(--muted-foreground))", border: "" },
         ].map(({ key, label, value, color, border }) => {
           const isSigned = key === "signed";
           const expandable = isSigned && signed.length > 0;
@@ -3818,7 +3820,10 @@ function AgentScoutView() {
                         {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
                         <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
                         <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
-                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Stalled {days}d</Badge>}
+                        {lead.competitor_interest?.trim() && !["Signed", "Lost"].includes(lead.onboarding_stage) && (
+                          <Badge variant="outline" className="text-xs" style={{ borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }}>Contested</Badge>
+                        )}
+                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Going cold · {days}d</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
