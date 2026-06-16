@@ -3607,6 +3607,22 @@ function AgentScoutView() {
     return next;
   });
 
+  // Apply a "pipe" URL param (from dashboard tile click) to pre-filter the pipeline.
+  const [scoutSearchParams, setScoutSearchParams] = useSearchParams();
+  useEffect(() => {
+    const pipe = scoutSearchParams.get("pipe");
+    if (!pipe) return;
+    if (pipe === "watching") { setFilter("Watch"); setStageFilter("All"); }
+    else if (pipe === "pursuing") { setFilter("Pursue"); setStageFilter("All"); }
+    else if (pipe === "signed") { setFilter("All"); setStageFilter("Signed"); setSignedOpen(true); }
+    else if (pipe === "lost") { setFilter("All"); setStageFilter("Lost"); }
+    // Clear the param so subsequent in-page filter changes aren't overridden.
+    const next = new URLSearchParams(scoutSearchParams);
+    next.delete("pipe");
+    setScoutSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoutSearchParams.get("pipe")]);
+
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
     queryFn: async () => {
