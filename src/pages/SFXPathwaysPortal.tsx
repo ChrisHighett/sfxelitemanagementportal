@@ -4442,6 +4442,17 @@ export default function SFXPathwaysPortal() {
     }
   }, [effectiveRole, active, roleLoading]);
 
+  // Sync `active` to the URL `tab` param so in-app navigations (e.g. dashboard
+  // tile click → ?tab=scout) highlight the matching sidebar item.
+  useEffect(() => {
+    if (!effectiveRole) return;
+    const tabParam = searchParams.get("tab");
+    if (!tabParam || tabParam === active) return;
+    if (isValidNavKeyForRole(effectiveRole, tabParam)) {
+      setActive(tabParam);
+    }
+  }, [searchParams, effectiveRole, active]);
+
   // Honor ?athleteId=… deep link (used after Scout → Signed conversion)
   useEffect(() => {
     const aId = searchParams.get("athleteId");
