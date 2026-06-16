@@ -3720,10 +3720,10 @@ function AgentScoutView() {
 
       <div className="grid grid-cols-4 gap-2">
         {[
-          { key: "pursue", label: "Pursue", value: pursue.length, color: "hsl(var(--primary))", border: "" },
-          { key: "competition", label: "Competition active", value: competition.length, color: competition.length > 0 ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))", border: competition.length > 0 ? "border-destructive/30" : "" },
-          { key: "stalled", label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "var(--win-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "watching", label: "Watching", value: watching.length, color: watching.length > 0 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "pursuing", label: "Pursuing", value: pursue.length, color: "hsl(var(--primary))", border: "" },
           { key: "signed", label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "var(--success-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "lost", label: "Lost", value: lost.length, color: "hsl(var(--muted-foreground))", border: "" },
         ].map(({ key, label, value, color, border }) => {
           const isSigned = key === "signed";
           const expandable = isSigned && signed.length > 0;
