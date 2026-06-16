@@ -3600,6 +3600,12 @@ function AgentScoutView() {
   const [filter, setFilter] = useState<"All" | "Pursue" | "Watch" | "Stalled" | "Mine">("All");
   const [stageFilter, setStageFilter] = useState("All");
   const [signedOpen, setSignedOpen] = useState(false);
+  const [expandedLeads, setExpandedLeads] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => setExpandedLeads((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
 
   const { data: leads = [], refetch, isLoading } = useQuery({
     queryKey: ["agent_scout_leads", user?.id],
