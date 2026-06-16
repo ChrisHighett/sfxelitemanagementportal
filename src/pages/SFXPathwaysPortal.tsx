@@ -3932,7 +3932,7 @@ function AgentScoutView() {
                           <button key={s} onClick={(e) => { e.stopPropagation(); handleStageChange(lead.id, s); }}
                             className="text-xs px-2.5 py-1 rounded-full border transition-colors"
                             style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
-                            {s}
+                            {s === "Pack Sent" ? "Mgmt Pack Sent" : s}
                           </button>
                         );
                       })}
