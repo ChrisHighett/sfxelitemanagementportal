@@ -3718,31 +3718,51 @@ function AgentScoutView() {
 
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: "Pursue", value: pursue.length, color: "hsl(var(--primary))", border: "" },
-          { label: "Competition active", value: competition.length, color: competition.length > 0 ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))", border: competition.length > 0 ? "border-destructive/30" : "" },
-          { label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "var(--win-deep)" : "hsl(var(--muted-foreground))", border: "" },
-          { label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "var(--success-deep)" : "hsl(var(--muted-foreground))", border: "" },
-        ].map(({ label, value, color, border }) => (
-          <div key={label} className={`rounded-lg border bg-card p-3 text-center ${border}`}>
-            <div className="text-2xl font-semibold num" style={{ color }}>{value}</div>
-            <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{label}</div>
-          </div>
-        ))}
+          { key: "pursue", label: "Pursue", value: pursue.length, color: "hsl(var(--primary))", border: "" },
+          { key: "competition", label: "Competition active", value: competition.length, color: competition.length > 0 ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))", border: competition.length > 0 ? "border-destructive/30" : "" },
+          { key: "stalled", label: "Stalled", value: stalled.length, color: stalled.length > 0 ? "var(--win-deep)" : "hsl(var(--muted-foreground))", border: "" },
+          { key: "signed", label: `Signed ${new Date().getFullYear()}`, value: signed.length, color: signed.length > 0 ? "var(--success-deep)" : "hsl(var(--muted-foreground))", border: "" },
+        ].map(({ key, label, value, color, border }) => {
+          const isSigned = key === "signed";
+          const expandable = isSigned && signed.length > 0;
+          return (
+            <div
+              key={label}
+              className={`rounded-lg border bg-card p-3 text-center ${border} ${expandable ? "cursor-pointer hover:bg-muted/40 transition-colors" : ""}`}
+              onClick={expandable ? () => setSignedOpen((v) => !v) : undefined}
+              role={expandable ? "button" : undefined}
+              aria-expanded={expandable ? signedOpen : undefined}
+            >
+              <div className="text-2xl font-semibold num" style={{ color }}>{value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5 leading-tight inline-flex items-center gap-1 justify-center">
+                {label}
+                {expandable && (
+                  <ChevronDown className={`h-3 w-3 transition-transform ${signedOpen ? "rotate-180" : ""}`} />
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {signed.length > 0 && (
-        <div className="rounded-lg border p-3 space-y-2" style={{ background: "var(--success-soft)", borderColor: "var(--success-soft)" }}>
-          <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--success-deep)" }}>Signed this year</div>
+      {signedOpen && signed.length > 0 && (
+        <div className="rounded-lg border bg-card p-3 space-y-1.5">
           {signed.map((lead: any) => (
-            <div key={lead.id} className="flex items-center justify-between text-sm">
-              <span className="font-medium" style={{ color: "var(--success-deep)" }}>{lead.first_name} {lead.last_name}</span>
-              <span className="text-xs" style={{ color: "var(--success-deep)", opacity: 0.75 }}>
-                {lead.date_signed ? new Date(lead.date_signed).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : 'Signed'}
+            <button
+              key={lead.id}
+              onClick={() => lead.converted_athlete_id && openAthleteProfile(lead.converted_athlete_id)}
+              disabled={!lead.converted_athlete_id}
+              className="w-full flex items-center justify-between text-sm py-1 px-1 rounded hover:bg-muted/40 transition-colors disabled:cursor-default disabled:hover:bg-transparent text-left"
+            >
+              <span className="font-medium">{lead.first_name} {lead.last_name}</span>
+              <span className="text-xs text-muted-foreground">
+                {lead.date_signed ? new Date(lead.date_signed).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Signed'}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}
+
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
