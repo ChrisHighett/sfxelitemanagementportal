@@ -3816,90 +3816,114 @@ function AgentScoutView() {
           {filtered.map((lead: any) => {
             const days = Math.floor((Date.now() - new Date(lead.last_stage_change_at || lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
             const isStalled = days >= 7 && lead.triage_decision === "Pursue" && !["Signed", "Lost"].includes(lead.onboarding_stage);
+            const isContested = lead.competitor_interest?.trim() && !["Signed", "Lost"].includes(lead.onboarding_stage);
+            const expanded = expandedLeads.has(lead.id);
+            const stage = lead.onboarding_stage as string | null;
+            const stagePillStyle: React.CSSProperties =
+              stage === "Signed" ? { background: "var(--success-soft)", color: "var(--success-deep)", borderColor: "var(--success-soft)" }
+              : stage === "Lost" ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
+              : { background: "hsl(var(--secondary))", color: "hsl(var(--secondary-foreground))", borderColor: "hsl(var(--border))" };
+
+            const primaryAction = stage === "Signed" ? (
+              lead.converted_athlete_id ? (
+                <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1 text-xs font-medium"
+                  style={{ borderColor: "var(--success)", color: "var(--success-deep)" }}
+                  onClick={(e) => { e.stopPropagation(); openAthleteProfile(lead.converted_athlete_id); }}>
+                  <UserPlus className="h-3.5 w-3.5" /> View on roster
+                </Button>
+              ) : lead.assigned_agent_id ? (
+                <Button size="sm" className="h-7 shrink-0 gap-1 text-xs font-medium"
+                  style={{ background: "var(--success)", color: "#fff" }}
+                  onClick={(e) => { e.stopPropagation(); handleConvert(lead); }}>
+                  <UserPlus className="h-3.5 w-3.5" /> Add to roster
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="h-7 shrink-0 gap-1 text-xs font-medium" disabled
+                  onClick={(e) => e.stopPropagation()}>
+                  <UserPlus className="h-3.5 w-3.5" /> Assign agent
+                </Button>
+              )
+            ) : (
+              <Button variant="outline" size="sm" className="h-7 shrink-0 gap-1 text-xs font-medium"
+                onClick={(e) => { e.stopPropagation(); setReviewingLead(lead); }}>
+                <ClipboardList className="h-3.5 w-3.5" /> Review
+              </Button>
+            );
+
             return (
               <Card key={lead.id} style={isStalled ? { borderColor: "var(--win)" } : undefined}>
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold">{lead.first_name} {lead.last_name}</span>
-                        {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
-                        <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
-                        <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
-                        {lead.competitor_interest?.trim() && !["Signed", "Lost"].includes(lead.onboarding_stage) && (
-                          <Badge variant="outline" className="text-xs" style={{ borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }}>Contested</Badge>
-                        )}
-                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Going cold · {days}d</Badge>}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
-                        {lead.assigned_agent_name && ` · Agent: ${lead.assigned_agent_name}`}
-                        {lead.scout_name && ` · Scout: ${lead.scout_name}`}
-                      </div>
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(lead.id)}
+                  aria-expanded={expanded}
+                  className="w-full text-left p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors rounded-lg"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold truncate">{lead.first_name} {lead.last_name}</span>
+                      {stage && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border uppercase tracking-wide" style={stagePillStyle}>{stage}</span>
+                      )}
+                      {isContested && (
+                        <Badge variant="outline" className="text-[10px]" style={{ borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }}>Contested</Badge>
+                      )}
+                      {isStalled && (
+                        <Badge variant="outline" className="text-[10px]" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Going cold</Badge>
+                      )}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 shrink-0 gap-1 text-xs font-medium"
-                      onClick={() => setReviewingLead(lead)}
-                    >
-                      <ClipboardList className="h-3.5 w-3.5" />
-                      Review
-                    </Button>
+                    <div className="text-xs text-muted-foreground mt-1 truncate">
+                      {[lead.position, lead.region].filter(Boolean).join(" · ") || "—"}
+                    </div>
                   </div>
-
-                  {lead.competitor_interest && (
-                    <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
-                  )}
-                  {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((stage) => {
-                      const active = lead.onboarding_stage === stage;
-                      const activeStyle: React.CSSProperties = stage === "Signed"
-                        ? { background: "var(--success)", color: "#fff", borderColor: "var(--success)" }
-                        : stage === "Lost"
-                        ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
-                        : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" };
-                      return (
-                        <button key={stage} onClick={() => handleStageChange(lead.id, stage)}
-                          className="text-xs px-2.5 py-1 rounded-full border transition-colors"
-                          style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
-                          {stage}
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {primaryAction}
+                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </div>
+                </button>
 
-                  {lead.onboarding_stage === "Signed" && (
-                    lead.converted_athlete_id ? (
-                      <Button size="sm" variant="outline" className="w-full gap-1.5"
-                        style={{ borderColor: "var(--success)", color: "var(--success-deep)" }}
-                        onClick={() => openAthleteProfile(lead.converted_athlete_id)}>
-                        <UserPlus className="h-3.5 w-3.5" />
-                        View athlete on roster
-                      </Button>
-                    ) : lead.assigned_agent_id ? (
-                      <Button size="sm" className="w-full gap-1.5"
-                        style={{ background: "var(--success)", color: "#fff" }}
-                        onClick={() => handleConvert(lead)}>
-                        <UserPlus className="h-3.5 w-3.5" />
-                        Add to {lead.assigned_agent_name || "agent"}'s roster
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" className="w-full gap-1.5" disabled>
-                        <UserPlus className="h-3.5 w-3.5" />
-                        Assign an agent first
-                      </Button>
-                    )
-                  )}
+                {expanded && (
+                  <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border/60">
+                    <div className="flex items-center gap-2 flex-wrap pt-3">
+                      {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
+                      <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">Rating {lead.scout_rating}</Badge>
+                      <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
+                      {isStalled && <span className="text-[11px] text-muted-foreground">No movement · {days}d</span>}
+                    </div>
 
-                </CardContent>
+                    <div className="text-xs text-muted-foreground">
+                      {[lead.school_club && `School/Club: ${lead.school_club}`, lead.assigned_agent_name && `Agent: ${lead.assigned_agent_name}`, lead.scout_name && `Scout: ${lead.scout_name}`].filter(Boolean).join(" · ")}
+                    </div>
+
+                    {lead.competitor_interest && (
+                      <div className="text-xs text-destructive bg-destructive/10 rounded px-3 py-1.5">⚠️ Competition: {lead.competitor_interest}</div>
+                    )}
+                    {lead.key_attributes && <p className="text-xs text-muted-foreground">{lead.key_attributes}</p>}
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {["New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((s) => {
+                        const active = lead.onboarding_stage === s;
+                        const activeStyle: React.CSSProperties = s === "Signed"
+                          ? { background: "var(--success)", color: "#fff", borderColor: "var(--success)" }
+                          : s === "Lost"
+                          ? { background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", borderColor: "transparent" }
+                          : { background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", borderColor: "hsl(var(--primary))" };
+                        return (
+                          <button key={s} onClick={(e) => { e.stopPropagation(); handleStageChange(lead.id, s); }}
+                            className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                            style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}>
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </Card>
             );
           })}
         </div>
       )}
+
 
       {reviewingLead && (
         <ScoutLeadReviewPanel
