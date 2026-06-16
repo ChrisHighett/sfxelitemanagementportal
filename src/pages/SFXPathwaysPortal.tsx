@@ -3484,7 +3484,7 @@ function ScoutLeadReviewPanel({ lead, onClose, onEdit, onStageChange, onConvert,
                     className="text-xs px-3 py-1.5 rounded-full border transition-colors"
                     style={active ? activeStyle : { background: "hsl(var(--background))", color: "hsl(var(--muted-foreground))", borderColor: "hsl(var(--border))" }}
                   >
-                    {stage}
+                    {stage === "Pack Sent" ? "Mgmt Pack Sent" : stage}
                   </button>
                 );
               })}
