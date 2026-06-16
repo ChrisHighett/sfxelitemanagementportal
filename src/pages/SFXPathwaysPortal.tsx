@@ -3806,7 +3806,7 @@ function AgentScoutView() {
           {["All", "New", "Contacted", "Pack Sent", "Welcome Sent", "Signed", "Lost"].map((f) => (
             <button key={f} onClick={() => setStageFilter(f)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${stageFilter === f ? "bg-secondary text-secondary-foreground border-secondary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}>
-              {f}
+              {f === "Pack Sent" ? "Mgmt Pack Sent" : f}
             </button>
           ))}
         </div>
