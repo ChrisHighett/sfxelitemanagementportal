@@ -3820,7 +3820,10 @@ function AgentScoutView() {
                         {lead.lead_id && <Badge variant="outline" className="text-xs font-mono">{lead.lead_id}</Badge>}
                         <Badge variant={lead.scout_rating === "A" ? "default" : "secondary"} className="text-xs">{lead.scout_rating}</Badge>
                         <Badge variant="outline" className={`text-xs ${lead.triage_decision === "Pursue" ? "border-primary text-primary" : ""}`}>{lead.triage_decision}</Badge>
-                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Stalled {days}d</Badge>}
+                        {lead.competitor_interest?.trim() && !["Signed", "Lost"].includes(lead.onboarding_stage) && (
+                          <Badge variant="outline" className="text-xs" style={{ borderColor: "hsl(var(--destructive))", color: "hsl(var(--destructive))" }}>Contested</Badge>
+                        )}
+                        {isStalled && <Badge variant="outline" className="text-xs" style={{ borderColor: "var(--win)", color: "var(--win-deep)" }}>Going cold · {days}d</Badge>}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         {[lead.position, lead.school_club, lead.region].filter(Boolean).join(" · ")}
