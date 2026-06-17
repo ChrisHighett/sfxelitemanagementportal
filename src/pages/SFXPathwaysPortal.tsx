@@ -419,9 +419,49 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
     `Managed by ${athlete.assignedAgent}`,
   ].filter(Boolean).join(" · ");
 
+  // Positive progress highlight feed for the hero line.
+  // 1) Most recent standout stat from athlete_scorecards (season-high or strong recent score).
+  // 2) Agent's most recent "Development Read" (short positive summary).
+  // 3) Encouraging fallback. Never raw coaching/training/to-do notes.
+  const { data: scorecards = [] } = useQuery({
+    queryKey: ["parent_hero_scorecards", athlete.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("athlete_scorecards")
+        .select("review_month, performance_score, overall_score")
+        .eq("athlete_id", athlete.id)
+        .order("review_month", { ascending: false })
+        .limit(12);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const standoutStat = (() => {
+    if (!scorecards.length) return null;
+    const latest = scorecards[0];
+    const monthLabel = new Date(latest.review_month).toLocaleDateString("en-AU", { month: "long" });
+    const perf = Number(latest.performance_score || 0);
+    const overall = Number(latest.overall_score || 0);
+    const restPerf = scorecards.slice(1).map((s: any) => Number(s.performance_score || 0));
+    const restOverall = scorecards.slice(1).map((s: any) => Number(s.overall_score || 0));
+    const isPerfHigh = perf > 0 && (restPerf.length === 0 || perf >= Math.max(...restPerf));
+    const isOverallHigh = overall > 0 && (restOverall.length === 0 || overall >= Math.max(...restOverall));
+    if (isPerfHigh && perf >= 4) {
+      return `Season-high performance score of ${perf}/5 in ${monthLabel} — ${firstName} is producing standout form.`;
+    }
+    if (isOverallHigh && overall >= 4) {
+      return `Best overall scorecard yet (${overall}/5) in ${monthLabel} — every area is trending up.`;
+    }
+    if (perf >= 4) {
+      return `Strong ${perf}/5 performance read in ${monthLabel} — ${firstName} is delivering on the field.`;
+    }
+    return null;
+  })();
+
   const quote =
-    (smart?.focus && smart.focus !== "—" && smart.focus) ||
-    (review?.followUpActions && review.followUpActions) ||
+    standoutStat ||
+    (review?.developmentRead && review.developmentRead.trim()) ||
     `Everything we're doing with ${firstName} right now is about consistency and steady development. We'll keep you in the loop every step of the way.`;
 
   // Latest parent-addressed update from comms_history
