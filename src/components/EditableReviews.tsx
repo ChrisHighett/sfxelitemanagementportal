@@ -81,6 +81,7 @@ function EditableReviewCard({
           school_life_goal: form.schoolLifeGoal || null,
           parent_engagement_notes: form.parentEngagementNotes || null,
           follow_up_actions: form.followUpActions || null,
+          development_read: form.developmentRead || null,
         } as any)
         .eq("id", review.id);
 
