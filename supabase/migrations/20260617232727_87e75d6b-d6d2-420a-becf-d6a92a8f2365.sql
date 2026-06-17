@@ -1,0 +1,1 @@
+ALTER TABLE public.monthly_reviews ADD COLUMN IF NOT EXISTS development_read text;
