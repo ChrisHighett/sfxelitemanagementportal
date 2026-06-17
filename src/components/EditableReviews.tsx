@@ -191,6 +191,7 @@ function EditableReviewCard({
 
         <Separator />
 
+        {field("Development Read (positive progress summary shown to parent)", "developmentRead", true)}
         {field("Focus Next Month", "focus", true)}
         {field("Parent Engagement Notes", "parentEngagementNotes", true)}
         {field("Follow-Up Actions", "followUpActions", true)}
