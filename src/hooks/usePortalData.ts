@@ -49,6 +49,7 @@ export interface MonthlyReview {
   educationTopic: string | null;
   parentEngagementNotes: string | null;
   followUpActions: string | null;
+  developmentRead: string | null;
   createdAt: string | null;
   updatedAt: string | null;
   createdBy: string | null;
@@ -201,6 +202,7 @@ export function useMonthlyReviews(athleteId?: string) {
         educationTopic: review.education_notes || null,
         parentEngagementNotes: review.parent_engagement_notes || null,
         followUpActions: review.follow_up_actions || null,
+        developmentRead: review.development_read || null,
         createdAt: review.created_at || null,
         updatedAt: review.updated_at || null,
         createdBy: review.created_by || null,

@@ -963,6 +963,7 @@ export type Database = {
           completed_by: string | null
           created_at: string
           created_by: string | null
+          development_read: string | null
           education_notes: string | null
           focus_next_month: string | null
           follow_up_actions: string | null
@@ -991,6 +992,7 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           created_by?: string | null
+          development_read?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
           follow_up_actions?: string | null
@@ -1019,6 +1021,7 @@ export type Database = {
           completed_by?: string | null
           created_at?: string
           created_by?: string | null
+          development_read?: string | null
           education_notes?: string | null
           focus_next_month?: string | null
           follow_up_actions?: string | null
