@@ -546,6 +546,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
           title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
           aiSourced: t.source === "conversation_ai",
+          internal: t.source === "manual",
           dueDate: t.due_date ?? null,
           isOverdue,
           daysOverdue: isOverdue && t.due_date ? daysBetween(t.due_date, todayStr) : 0,
