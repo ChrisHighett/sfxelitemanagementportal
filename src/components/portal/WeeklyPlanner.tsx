@@ -906,9 +906,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             {completing.has(item.id) ? (
                               <ArcLoader size={12} />
                             ) : done ? (
-                              <div className="h-3.5 w-3.5 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+                              <button
+                                type="button"
+                                onClick={() => handleUncomplete(item)}
+                                title="Mark as not done"
+                                className="h-3.5 w-3.5 rounded-sm flex items-center justify-center hover:opacity-80 transition"
+                                style={{ background: "var(--success)" }}
+                              >
                                 <Check className="h-2.5 w-2.5" style={{ color: "#fff" }} />
-                              </div>
+                              </button>
                             ) : (
                               <Checkbox onCheckedChange={() => handleComplete(item)} className="h-3.5 w-3.5" />
                             )}
