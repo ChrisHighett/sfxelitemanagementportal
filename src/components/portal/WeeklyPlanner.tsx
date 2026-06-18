@@ -7,13 +7,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle, Plus, ShieldCheck } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
 import { PlannerSkeleton } from "@/components/brand/Skeletons";
 import { EmptyState } from "@/components/brand/States";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AddTaskDialog from "@/components/portal/AddTaskDialog";
 import type { Athlete } from "@/hooks/usePortalData";
 
 interface PlannerItem {
@@ -26,6 +27,7 @@ interface PlannerItem {
   priority: number;
   source: "generated" | "saved";
   aiSourced?: boolean;
+  internal?: boolean;
   dueDate?: string | null;
   isOverdue?: boolean;
   daysOverdue?: number;
@@ -255,6 +257,12 @@ function TaskRow({
               <Sparkles className="h-2.5 w-2.5" />
             </span>
           )}
+          {item.internal && (
+            <span title="Internal reminder — no SMS/email sent" className="inline-flex items-center gap-0.5 rounded-sm bg-muted text-muted-foreground px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide">
+              <ShieldCheck className="h-2.5 w-2.5" />
+              Internal
+            </span>
+          )}
         </div>
         <p className={`text-sm font-medium leading-snug ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {item.title}
@@ -420,6 +428,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
 
   const week = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
   const isCurrentWeek = weekOffset === 0;
@@ -544,6 +553,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           id: t.id, athleteId: t.athlete_id, athleteName: athletes.find((a) => a.id === t.athlete_id)?.name ?? "Unknown",
           title: t.title, reason: t.description || "", suggestedDay: day, priority: t.priority, source: "saved" as const,
           aiSourced: t.source === "conversation_ai",
+          internal: t.source === "manual",
           dueDate: t.due_date ?? null,
           isOverdue,
           daysOverdue: isOverdue && t.due_date ? daysBetween(t.due_date, todayStr) : 0,
@@ -923,6 +933,11 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             <div className="flex items-center gap-1 flex-wrap">
                               <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
                               {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                              {item.internal && (
+                                <span title="Internal reminder" className="inline-flex items-center rounded-sm bg-muted text-muted-foreground px-1 py-px text-[8px] font-semibold uppercase tracking-wide shrink-0">
+                                  Internal
+                                </span>
+                              )}
                               {item.isOverdue && item.daysOverdue ? (
                                 <Badge variant="destructive" className="text-[9px] px-1 py-0 leading-tight">
                                   {item.daysOverdue}d overdue
@@ -956,6 +971,14 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">Weekly Planner</CardTitle>
+            <button
+              onClick={() => setAddTaskOpen(true)}
+              className="ml-1 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-muted transition"
+              title="Add an internal reminder — no SMS/email sent"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add Task
+            </button>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -1105,6 +1128,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           renderDayBands(resolvedDay)
         )}
       </CardContent>
+      <AddTaskDialog
+        open={addTaskOpen}
+        onOpenChange={setAddTaskOpen}
+        athletes={athletes}
+        onCreated={() => setRefreshTick((n) => n + 1)}
+      />
     </Card>
   );
 }
