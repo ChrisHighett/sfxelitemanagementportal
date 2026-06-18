@@ -418,6 +418,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
   const [selectedDay, setSelectedDay] = useState<string>("today"); // "today" | "Monday".. | "all"
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     const refresh = () => setRefreshTick((n) => n + 1);
