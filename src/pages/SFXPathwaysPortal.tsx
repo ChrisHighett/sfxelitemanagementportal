@@ -826,6 +826,7 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const [editing, setEditing] = useState(false);
   const [invitingParent, setInvitingParent] = useState(false);
   const [invitingAthlete, setInvitingAthlete] = useState(false);
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
 
   const { data: athleteInvite, refetch: refetchInvite } = useQuery({
     queryKey: ["athlete-invite", athlete.id],
