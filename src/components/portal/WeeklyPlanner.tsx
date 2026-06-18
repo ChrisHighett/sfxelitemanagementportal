@@ -339,6 +339,7 @@ function PriorityBand({
   completing,
   completedIds,
   onComplete,
+  onUncomplete,
   onReschedule,
   onDismiss,
   cap = 5,
@@ -353,6 +354,7 @@ function PriorityBand({
   completing: Set<string>;
   completedIds: Set<string>;
   onComplete: (item: PlannerItem) => void;
+  onUncomplete?: (item: PlannerItem) => void;
   onReschedule?: (item: PlannerItem, date: Date) => void;
   onDismiss?: (item: PlannerItem) => void;
   cap?: number;
@@ -385,6 +387,7 @@ function PriorityBand({
               completing={completing.has(item.id)}
               completed={completedIds.has(item.id)}
               onComplete={() => onComplete(item)}
+              onUncomplete={onUncomplete ? () => onUncomplete(item) : undefined}
               onReschedule={onReschedule}
               onDismiss={onDismiss}
             />
