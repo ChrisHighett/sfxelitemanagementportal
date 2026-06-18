@@ -198,6 +198,7 @@ function TaskRow({
   completing,
   completed,
   onComplete,
+  onUncomplete,
   onReschedule,
   onDismiss,
 }: {
@@ -205,6 +206,7 @@ function TaskRow({
   completing: boolean;
   completed: boolean;
   onComplete: () => void;
+  onUncomplete?: () => void;
   onReschedule?: (item: PlannerItem, date: Date) => void;
   onDismiss?: (item: PlannerItem) => void;
 }) {
@@ -224,9 +226,16 @@ function TaskRow({
         {completing ? (
           <ArcLoader size={16} />
         ) : completed ? (
-          <div className="h-4 w-4 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+          <button
+            type="button"
+            onClick={onUncomplete}
+            disabled={!onUncomplete}
+            title={onUncomplete ? "Mark as not done" : "Completed"}
+            className="h-4 w-4 rounded-sm flex items-center justify-center hover:opacity-80 transition"
+            style={{ background: "var(--success)" }}
+          >
             <Check className="h-3 w-3" style={{ color: "#fff" }} />
-          </div>
+          </button>
         ) : (
           <Checkbox onCheckedChange={onComplete} className="h-4 w-4" />
         )}
@@ -330,6 +339,7 @@ function PriorityBand({
   completing,
   completedIds,
   onComplete,
+  onUncomplete,
   onReschedule,
   onDismiss,
   cap = 5,
@@ -344,6 +354,7 @@ function PriorityBand({
   completing: Set<string>;
   completedIds: Set<string>;
   onComplete: (item: PlannerItem) => void;
+  onUncomplete?: (item: PlannerItem) => void;
   onReschedule?: (item: PlannerItem, date: Date) => void;
   onDismiss?: (item: PlannerItem) => void;
   cap?: number;
@@ -376,6 +387,7 @@ function PriorityBand({
               completing={completing.has(item.id)}
               completed={completedIds.has(item.id)}
               onComplete={() => onComplete(item)}
+              onUncomplete={onUncomplete ? () => onUncomplete(item) : undefined}
               onReschedule={onReschedule}
               onDismiss={onDismiss}
             />
@@ -418,6 +430,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
 
   const [selectedDay, setSelectedDay] = useState<string>("today"); // "today" | "Monday".. | "all"
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     const refresh = () => setRefreshTick((n) => n + 1);
@@ -545,8 +558,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
-    return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id, isCurrentWeek]);
+    const combined = [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
+    if (showCompleted) return combined;
+    // Hide completed tasks from the active calendar view
+    const doneIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => t.id));
+    return combined.filter((i) => !doneIds.has(i.id) && !sessionCompleted.has(i.id));
+  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id, isCurrentWeek, showCompleted, sessionCompleted]);
 
   // Saved-task completion lookup
   const savedDoneIds = useMemo(
@@ -564,19 +581,18 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       try {
         if (item.source === "saved") {
           await supabase.from("athlete_tasks").update({ status: "done" as any, completed_at: new Date().toISOString(), completed_by: user?.id || null }).eq("id", item.id);
+          setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, status: "done" } : t)));
+          setSessionCompleted((prev) => new Set(prev).add(item.id));
         } else {
-          await supabase.from("athlete_tasks").insert({
+          const { data: inserted } = await supabase.from("athlete_tasks").insert({
             athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority,
             suggested_day: item.suggestedDay, owner_type: "agent" as any, status: "done" as any,
             completed_at: new Date().toISOString(), completed_by: user?.id || null, created_by: user?.id || null,
-          });
+          }).select("id").single();
+          const newId = inserted?.id || crypto.randomUUID();
+          setSavedTasks((prev) => [...prev, { id: newId, athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority, suggested_day: item.suggestedDay, status: "done" }]);
+          setSessionCompleted((prev) => new Set(prev).add(item.id).add(newId));
         }
-
-        setSavedTasks((prev) => {
-          if (item.source === "saved") return prev.map((t) => (t.id === item.id ? { ...t, status: "done" } : t));
-          return [...prev, { id: crypto.randomUUID(), athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority, suggested_day: item.suggestedDay, status: "done" }];
-        });
-        setSessionCompleted((prev) => new Set(prev).add(item.id));
         toast.success(`"${item.title}" completed`);
       } catch {
         toast.error("Failed to complete task");
@@ -585,6 +601,27 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       }
     },
     [user?.id]
+  );
+
+  const handleUncomplete = useCallback(
+    async (item: PlannerItem) => {
+      setCompleting((prev) => new Set(prev).add(item.id));
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({ status: "open" as any, completed_at: null, completed_by: null } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, status: "open" } : t)));
+        setSessionCompleted((prev) => { const next = new Set(prev); next.delete(item.id); return next; });
+        toast.success("Task restored");
+      } catch {
+        toast.error("Failed to restore task");
+      } finally {
+        setCompleting((prev) => { const next = new Set(prev); next.delete(item.id); return next; });
+      }
+    },
+    []
   );
 
   // Reschedule: move task to a new due_date (no auto-rollover; agent decision).
@@ -746,6 +783,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
@@ -760,6 +798,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
@@ -772,6 +811,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
@@ -818,6 +858,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                       completing={completing.has(item.id)}
                       completed={isCompleted(item)}
                       onComplete={() => handleComplete(item)}
+                      onUncomplete={() => handleUncomplete(item)}
                       onReschedule={handleReschedule}
                       onDismiss={handleDismiss}
                     />
@@ -865,9 +906,15 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             {completing.has(item.id) ? (
                               <ArcLoader size={12} />
                             ) : done ? (
-                              <div className="h-3.5 w-3.5 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+                              <button
+                                type="button"
+                                onClick={() => handleUncomplete(item)}
+                                title="Mark as not done"
+                                className="h-3.5 w-3.5 rounded-sm flex items-center justify-center hover:opacity-80 transition"
+                                style={{ background: "var(--success)" }}
+                              >
                                 <Check className="h-2.5 w-2.5" style={{ color: "#fff" }} />
-                              </div>
+                              </button>
                             ) : (
                               <Checkbox onCheckedChange={() => handleComplete(item)} className="h-3.5 w-3.5" />
                             )}
@@ -1030,6 +1077,19 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
               {f}
             </button>
           ))}
+          <div className="ml-auto">
+            <button
+              onClick={() => setShowCompleted((v) => !v)}
+              className={`text-[11px] font-medium px-2 py-0.5 rounded-full border transition ${
+                showCompleted
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground"
+              }`}
+              title={showCompleted ? "Hide completed tasks" : "Show completed tasks"}
+            >
+              {showCompleted ? "Hide completed" : "Show completed"}
+            </button>
+          </div>
         </div>
 
         {totalItems === 0 ? (
