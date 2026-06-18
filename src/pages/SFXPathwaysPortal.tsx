@@ -3698,7 +3698,7 @@ function AgentScoutView() {
     return days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage);
   });
   const competition = leads.filter((l: any) => l.competitor_interest?.trim() && !["Signed", "Lost"].includes(l.onboarding_stage));
-  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
