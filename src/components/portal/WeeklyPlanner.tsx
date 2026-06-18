@@ -1077,6 +1077,19 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
               {f}
             </button>
           ))}
+          <div className="ml-auto">
+            <button
+              onClick={() => setShowCompleted((v) => !v)}
+              className={`text-[11px] font-medium px-2 py-0.5 rounded-full border transition ${
+                showCompleted
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground"
+              }`}
+              title={showCompleted ? "Hide completed tasks" : "Show completed tasks"}
+            >
+              {showCompleted ? "Hiding none" : "Show completed"}
+            </button>
+          </div>
         </div>
 
         {totalItems === 0 ? (
