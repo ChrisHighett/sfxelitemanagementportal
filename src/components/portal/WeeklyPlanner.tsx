@@ -257,6 +257,12 @@ function TaskRow({
               <Sparkles className="h-2.5 w-2.5" />
             </span>
           )}
+          {item.internal && (
+            <span title="Internal reminder — no SMS/email sent" className="inline-flex items-center gap-0.5 rounded-sm bg-muted text-muted-foreground px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide">
+              <ShieldCheck className="h-2.5 w-2.5" />
+              Internal
+            </span>
+          )}
         </div>
         <p className={`text-sm font-medium leading-snug ${completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
           {item.title}
