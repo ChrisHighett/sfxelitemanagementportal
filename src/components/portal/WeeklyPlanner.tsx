@@ -1128,6 +1128,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           renderDayBands(resolvedDay)
         )}
       </CardContent>
+      <AddTaskDialog
+        open={addTaskOpen}
+        onOpenChange={setAddTaskOpen}
+        athletes={athletes}
+        onCreated={() => setRefreshTick((n) => n + 1)}
+      />
     </Card>
   );
 }
