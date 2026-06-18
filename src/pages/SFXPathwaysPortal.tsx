@@ -911,6 +911,13 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         }}
         onCreated={() => refetchInvite()}
       />
+      <AddTaskDialog
+        open={addTaskOpen}
+        onOpenChange={setAddTaskOpen}
+        athletes={[athlete]}
+        athleteId={athlete.id}
+      />
+
 
       <Card className="border-0 shadow-none sm:border sm:shadow-sm">
         <CardHeader className="pb-3">
