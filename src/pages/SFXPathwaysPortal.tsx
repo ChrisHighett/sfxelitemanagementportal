@@ -4146,7 +4146,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   // Funnel counts — must match the Scout pipeline scoreboard exactly.
   const watchingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Watch" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const pursuingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
-  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
+  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
   const lostLeads = scoutLeads.filter((l: any) => l.onboarding_stage === "Lost");
 
   function gotoPipeline(pipe?: string) {
