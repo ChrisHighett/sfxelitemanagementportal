@@ -783,6 +783,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
@@ -797,6 +798,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
@@ -809,6 +811,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
           completing={completing}
           completedIds={sessionCompleted}
           onComplete={handleComplete}
+          onUncomplete={handleUncomplete}
           onReschedule={handleReschedule}
           onDismiss={handleDismiss}
         />
