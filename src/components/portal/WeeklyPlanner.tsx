@@ -198,6 +198,7 @@ function TaskRow({
   completing,
   completed,
   onComplete,
+  onUncomplete,
   onReschedule,
   onDismiss,
 }: {
@@ -205,6 +206,7 @@ function TaskRow({
   completing: boolean;
   completed: boolean;
   onComplete: () => void;
+  onUncomplete?: () => void;
   onReschedule?: (item: PlannerItem, date: Date) => void;
   onDismiss?: (item: PlannerItem) => void;
 }) {
@@ -224,9 +226,16 @@ function TaskRow({
         {completing ? (
           <ArcLoader size={16} />
         ) : completed ? (
-          <div className="h-4 w-4 rounded-sm flex items-center justify-center" style={{ background: "var(--success)" }}>
+          <button
+            type="button"
+            onClick={onUncomplete}
+            disabled={!onUncomplete}
+            title={onUncomplete ? "Mark as not done" : "Completed"}
+            className="h-4 w-4 rounded-sm flex items-center justify-center hover:opacity-80 transition"
+            style={{ background: "var(--success)" }}
+          >
             <Check className="h-3 w-3" style={{ color: "#fff" }} />
-          </div>
+          </button>
         ) : (
           <Checkbox onCheckedChange={onComplete} className="h-4 w-4" />
         )}
