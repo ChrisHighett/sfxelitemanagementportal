@@ -37,7 +37,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import AdminAthleteManager from "@/components/AdminAthleteManager";
 import PendingInvitesList from "@/components/portal/PendingInvitesList";
 import InviteDialog from "@/components/portal/InviteDialog";
-import AddTaskDialog from "@/components/portal/AddTaskDialog";
 import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
@@ -827,7 +826,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
   const [editing, setEditing] = useState(false);
   const [invitingParent, setInvitingParent] = useState(false);
   const [invitingAthlete, setInvitingAthlete] = useState(false);
-  const [addTaskOpen, setAddTaskOpen] = useState(false);
 
   const { data: athleteInvite, refetch: refetchInvite } = useQuery({
     queryKey: ["athlete-invite", athlete.id],
@@ -911,13 +909,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
         }}
         onCreated={() => refetchInvite()}
       />
-      <AddTaskDialog
-        open={addTaskOpen}
-        onOpenChange={setAddTaskOpen}
-        athletes={[athlete]}
-        athleteId={athlete.id}
-      />
-
 
       <Card className="border-0 shadow-none sm:border sm:shadow-sm">
         <CardHeader className="pb-3">
@@ -949,9 +940,6 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
                 className="text-muted-foreground"
               >
                 Invite athlete
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setAddTaskOpen(true)}>
-                + Add Task
               </Button>
               <Button size="sm" onClick={() => setEditing(true)}>
                 Edit Athlete
