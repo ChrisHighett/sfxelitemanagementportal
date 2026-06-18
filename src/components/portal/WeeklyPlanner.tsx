@@ -569,19 +569,18 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       try {
         if (item.source === "saved") {
           await supabase.from("athlete_tasks").update({ status: "done" as any, completed_at: new Date().toISOString(), completed_by: user?.id || null }).eq("id", item.id);
+          setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, status: "done" } : t)));
+          setSessionCompleted((prev) => new Set(prev).add(item.id));
         } else {
-          await supabase.from("athlete_tasks").insert({
+          const { data: inserted } = await supabase.from("athlete_tasks").insert({
             athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority,
             suggested_day: item.suggestedDay, owner_type: "agent" as any, status: "done" as any,
             completed_at: new Date().toISOString(), completed_by: user?.id || null, created_by: user?.id || null,
-          });
+          }).select("id").single();
+          const newId = inserted?.id || crypto.randomUUID();
+          setSavedTasks((prev) => [...prev, { id: newId, athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority, suggested_day: item.suggestedDay, status: "done" }]);
+          setSessionCompleted((prev) => new Set(prev).add(item.id).add(newId));
         }
-
-        setSavedTasks((prev) => {
-          if (item.source === "saved") return prev.map((t) => (t.id === item.id ? { ...t, status: "done" } : t));
-          return [...prev, { id: crypto.randomUUID(), athlete_id: item.athleteId, title: item.title, description: item.reason, priority: item.priority, suggested_day: item.suggestedDay, status: "done" }];
-        });
-        setSessionCompleted((prev) => new Set(prev).add(item.id));
         toast.success(`"${item.title}" completed`);
       } catch {
         toast.error("Failed to complete task");
@@ -590,6 +589,27 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       }
     },
     [user?.id]
+  );
+
+  const handleUncomplete = useCallback(
+    async (item: PlannerItem) => {
+      setCompleting((prev) => new Set(prev).add(item.id));
+      try {
+        const { error } = await supabase
+          .from("athlete_tasks")
+          .update({ status: "open" as any, completed_at: null, completed_by: null } as any)
+          .eq("id", item.id);
+        if (error) throw error;
+        setSavedTasks((prev) => prev.map((t) => (t.id === item.id ? { ...t, status: "open" } : t)));
+        setSessionCompleted((prev) => { const next = new Set(prev); next.delete(item.id); return next; });
+        toast.success("Task restored");
+      } catch {
+        toast.error("Failed to restore task");
+      } finally {
+        setCompleting((prev) => { const next = new Set(prev); next.delete(item.id); return next; });
+      }
+    },
+    []
   );
 
   // Reschedule: move task to a new due_date (no auto-rollover; agent decision).
