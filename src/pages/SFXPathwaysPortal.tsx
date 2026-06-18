@@ -3202,7 +3202,8 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
     l.triage_decision === "Watch" &&
     !["Signed", "Lost"].includes(l.onboarding_stage)
   );
-  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
+  // Source of truth: a lead is only counted as Signed once it's linked to an athlete record
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id);
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
