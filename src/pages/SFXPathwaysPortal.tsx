@@ -942,6 +942,9 @@ function AthleteProfileAgentView({ athlete }: { athlete: Athlete }) {
               >
                 Invite athlete
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setAddTaskOpen(true)}>
+                + Add Task
+              </Button>
               <Button size="sm" onClick={() => setEditing(true)}>
                 Edit Athlete
               </Button>
