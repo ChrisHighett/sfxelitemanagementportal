@@ -932,6 +932,11 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
                             <div className="flex items-center gap-1 flex-wrap">
                               <p className={`text-[11px] font-semibold leading-tight truncate ${done ? "line-through text-muted-foreground" : ""}`}>{item.athleteName}</p>
                               {item.aiSourced && <Sparkles className="h-2.5 w-2.5 text-primary shrink-0" />}
+                              {item.internal && (
+                                <span title="Internal reminder" className="inline-flex items-center rounded-sm bg-muted text-muted-foreground px-1 py-px text-[8px] font-semibold uppercase tracking-wide shrink-0">
+                                  Internal
+                                </span>
+                              )}
                               {item.isOverdue && item.daysOverdue ? (
                                 <Badge variant="destructive" className="text-[9px] px-1 py-0 leading-tight">
                                   {item.daysOverdue}d overdue
