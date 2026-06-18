@@ -27,6 +27,7 @@ interface PlannerItem {
   priority: number;
   source: "generated" | "saved";
   aiSourced?: boolean;
+  internal?: boolean;
   dueDate?: string | null;
   isOverdue?: boolean;
   daysOverdue?: number;
