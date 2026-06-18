@@ -101,8 +101,7 @@ export default function ScoutPipeline() {
   const totalPursue = leads.filter((l) => l.triage_decision === "Pursue").length;
   const atContactOrLater = leads.filter((l) => ["Contacted", "Pack Sent", "Welcome Sent"].includes(l.onboarding_stage || "")).length;
   const signedThisYear = leads.filter((l) => {
-    // Only count Signed leads that have an athlete record on the roster (single source of truth)
-    if (l.onboarding_stage !== "Signed" || !l.converted_athlete_id || !l.date_signed) return false;
+    if (l.onboarding_stage !== "Signed" || !l.date_signed) return false;
     return new Date(l.date_signed).getFullYear() === new Date().getFullYear();
   }).length;
   const stalledCount = leads.filter((l) =>

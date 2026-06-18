@@ -3202,8 +3202,7 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
     l.triage_decision === "Watch" &&
     !["Signed", "Lost"].includes(l.onboarding_stage)
   );
-  // Source of truth: a lead is only counted as Signed once it's linked to an athlete record
-  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id);
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed");
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
@@ -3698,7 +3697,7 @@ function AgentScoutView() {
     return days >= 7 && l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage);
   });
   const competition = leads.filter((l: any) => l.competitor_interest?.trim() && !["Signed", "Lost"].includes(l.onboarding_stage));
-  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
+  const signed = leads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at || l.created_at).getFullYear() === new Date().getFullYear());
   const lost = leads.filter((l: any) => l.onboarding_stage === "Lost");
 
   async function handleStageChange(id: string, stage: string) {
@@ -4138,7 +4137,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("scout_leads")
-        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at, converted_athlete_id");
+        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at");
       return data || [];
     },
   });
@@ -4146,7 +4145,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   // Funnel counts — must match the Scout pipeline scoreboard exactly.
   const watchingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Watch" && !["Signed", "Lost"].includes(l.onboarding_stage));
   const pursuingLeads = scoutLeads.filter((l: any) => l.triage_decision === "Pursue" && !["Signed", "Lost"].includes(l.onboarding_stage));
-  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && l.converted_athlete_id && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
+  const signedThisYear = scoutLeads.filter((l: any) => l.onboarding_stage === "Signed" && new Date(l.last_stage_change_at).getFullYear() === new Date().getFullYear());
   const lostLeads = scoutLeads.filter((l: any) => l.onboarding_stage === "Lost");
 
   function gotoPipeline(pipe?: string) {
