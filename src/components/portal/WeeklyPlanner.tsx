@@ -428,6 +428,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [upcomingCount, setUpcomingCount] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
 
   const week = useMemo(() => getWeekRange(weekOffset), [weekOffset]);
   const isCurrentWeek = weekOffset === 0;
