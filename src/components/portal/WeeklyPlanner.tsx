@@ -546,8 +546,12 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
       .filter((g) => !active.some((a) => a.athleteId === g.athleteId && a.title === g.title))
       .map((g, i) => ({ ...g, id: `gen-${i}`, source: "generated" as const }));
 
-    return [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
-  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id, isCurrentWeek]);
+    const combined = [...active, ...newGenerated].sort((a, b) => a.priority - b.priority);
+    if (showCompleted) return combined;
+    // Hide completed tasks from the active calendar view
+    const doneIds = new Set(savedTasks.filter((t) => t.status === "done").map((t) => t.id));
+    return combined.filter((i) => !doneIds.has(i.id) && !sessionCompleted.has(i.id));
+  }, [savedTasks, athletes, reviews, latestClubCalls, pursueLeads, user?.id, isCurrentWeek, showCompleted, sessionCompleted]);
 
   // Saved-task completion lookup
   const savedDoneIds = useMemo(
