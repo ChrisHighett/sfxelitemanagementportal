@@ -1087,7 +1087,7 @@ export default function WeeklyPlanner({ athletes }: { athletes: Athlete[] }) {
               }`}
               title={showCompleted ? "Hide completed tasks" : "Show completed tasks"}
             >
-              {showCompleted ? "Hiding none" : "Show completed"}
+              {showCompleted ? "Hide completed" : "Show completed"}
             </button>
           </div>
         </div>
