@@ -7,13 +7,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Check, Sparkles, ChevronLeft, MoreVertical, CalendarClock, XCircle, Plus, ShieldCheck } from "lucide-react";
 import { ArcLoader } from "@/components/brand/Brand";
 import { PlannerSkeleton } from "@/components/brand/Skeletons";
 import { EmptyState } from "@/components/brand/States";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AddTaskDialog from "@/components/portal/AddTaskDialog";
 import type { Athlete } from "@/hooks/usePortalData";
 
 interface PlannerItem {
