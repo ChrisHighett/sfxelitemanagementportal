@@ -4138,7 +4138,7 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("scout_leads")
-        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at");
+        .select("id, first_name, last_name, triage_decision, onboarding_stage, scout_rating, assigned_agent_name, competitor_interest, last_stage_change_at, converted_athlete_id");
       return data || [];
     },
   });
