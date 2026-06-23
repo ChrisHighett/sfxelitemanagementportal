@@ -520,6 +520,7 @@ export type Database = {
       }
       athletes: {
         Row: {
+          agency_id: string | null
           assigned_agent_id: string | null
           assigned_agent_name: string | null
           assigned_agent_user_id: string | null
@@ -550,6 +551,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           assigned_agent_user_id?: string | null
@@ -580,6 +582,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           assigned_agent_user_id?: string | null
@@ -610,6 +613,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athletes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athletes_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
@@ -1156,6 +1166,7 @@ export type Database = {
       }
       portal_users: {
         Row: {
+          agency_id: string | null
           approved: boolean
           created_at: string
           display_name: string | null
@@ -1165,6 +1176,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           approved?: boolean
           created_at?: string
           display_name?: string | null
@@ -1174,6 +1186,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           approved?: boolean
           created_at?: string
           display_name?: string | null
@@ -1182,7 +1195,15 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "portal_users_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
