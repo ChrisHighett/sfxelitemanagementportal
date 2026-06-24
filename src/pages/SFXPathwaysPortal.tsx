@@ -58,7 +58,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin" | "scout";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -111,6 +111,15 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "voice", label: "My Voice", icon: Mic2 },
     { key: "admin", label: "Admin", icon: Shield },
   ],
+  eleva_ops: [
+    { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "athlete", label: "Athlete Profile", icon: FileText },
+    { key: "call", label: "Athlete Comms", icon: Phone },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "voice", label: "My Voice", icon: Mic2 },
+    { key: "admin", label: "Admin", icon: Shield },
+  ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
     { key: "signed", label: "Signed", icon: CheckCircle2 },
@@ -119,7 +128,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
 };
 
-const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout"];
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops"];
 
 function isPortalRole(value?: string | null): value is Role {
   return !!value && PORTAL_ROLES.includes(value as Role);
@@ -188,14 +197,14 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
                   />
                   <span className="flex-1 text-left">{it.label}</span>
-                  {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
+                  {it.key === "admin" && (role === "admin" || role === "eleva_ops") && <PendingApprovalsDot />}
                 </button>
               );
             })}
           </nav>
           <div className="mt-6 space-y-2">
             <CommandHint />
-            {role === "admin" && <ThemeSwitcher />}
+            {(role === "admin" || role === "eleva_ops") && <ThemeSwitcher />}
             {(() => {
               // In preview mode (admin previewing another role), never expose the
               // logged-in admin's identity. For parent/athlete, optionally show the
@@ -287,7 +296,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                         )}
                         <Icon className="h-5 w-5" style={{ color: isAct ? "var(--brand-spectrum-from)" : undefined }} />
                         <span className="flex-1 text-left">{it.label}</span>
-                        {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
+                        {it.key === "admin" && (role === "admin" || role === "eleva_ops") && <PendingApprovalsDot />}
                       </button>
                     );
                   })}
@@ -362,7 +371,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes, onAdd
           {athletes.length <= 1 && athletes.length > 0 && (
             <span className="text-sm font-medium">{athletes[0]?.name}</span>
           )}
-          {onAddAthlete && (role === "agent" || role === "admin") && (
+          {onAddAthlete && (role === "agent" || role === "admin" || role === "eleva_ops") && (
             <Button size="sm" className="h-9 gap-1.5" onClick={onAddAthlete}>
               <Plus className="h-4 w-4" />
               Add athlete
@@ -395,6 +404,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
       case "athlete":  return "Athlete";
       case "agent":    return "Agent";
       case "admin":    return "Admin";
+      case "eleva_ops": return "Eleva Ops";
       default:         return "Viewer";
     }
   })();
@@ -1794,7 +1804,7 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
   const [savedTrackerName, setSavedTrackerName] = useState<string | null>(null);
   const trackerInputRef = useRef<HTMLInputElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-  const isAgentOrAdmin = role === "agent" || role === "admin";
+  const isAgentOrAdmin = role === "agent" || role === "admin" || role === "eleva_ops";
   const trackerFilePath = `development-tracker/${athlete.id}/latest.xlsx`;
 
   const refreshSavedTracker = useCallback(async () => {
@@ -2043,7 +2053,7 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const [allCategories, setAllCategories] = useState<string[]>(BASE_CATEGORIES);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const isAgentOrAdmin = role === "agent" || role === "admin";
+  const isAgentOrAdmin = role === "agent" || role === "admin" || role === "eleva_ops";
 
   useEffect(() => {
     fetchResources();
@@ -4448,7 +4458,7 @@ export default function SFXPathwaysPortal() {
   const [callActive, setCallActive] = useState(false);
   const [addAthleteOpen, setAddAthleteOpen] = useState(false);
 
-  const isAdmin = userRoleData?.role === "admin";
+  const isAdmin = userRoleData?.role === "admin" || userRoleData?.role === "eleva_ops";
   const effectiveRole = roleOverride || role;
 
   // For athlete/parent: restrict to allocated athlete only (skip when admin is previewing)
@@ -4567,7 +4577,7 @@ export default function SFXPathwaysPortal() {
       icon: it.icon,
       run: () => handleNav(it.key),
     })),
-    ...((effectiveRole === "agent" || effectiveRole === "admin")
+    ...((effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops")
       ? athletes.slice(0, 50).map((a) => ({
           id: `athlete-${a.id}`,
           label: a.name,
@@ -4704,17 +4714,17 @@ export default function SFXPathwaysPortal() {
       {effectiveRole === "parent" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
 
 
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "dash" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "dash" && (
         <ManagerCommandCentre
           athletes={athletes}
           onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
         />
       )}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <AgentScoutView />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "scout" && <AgentScoutView />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "reviews" && (
         <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
           <HeroBanner
             title={`Development Tracker — ${athlete.name}`}
@@ -4727,10 +4737,10 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "voice" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "voice" && (
         <div className="p-4 md:p-6"><VoiceProfileSettings /></div>
       )}
-      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      {(effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "admin" && <AdminSecurity />}
       <CommandPalette commands={paletteCommands} />
     </Shell>
   );

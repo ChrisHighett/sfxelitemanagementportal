@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Role = "athlete" | "parent" | "agent" | "admin";
+type Role = "athlete" | "parent" | "agent" | "admin" | "eleva_ops";
 
 interface UserRoleData {
   role: Role;
