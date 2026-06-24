@@ -4577,7 +4577,7 @@ export default function SFXPathwaysPortal() {
       icon: it.icon,
       run: () => handleNav(it.key),
     })),
-    ...((effectiveRole === "agent" || effectiveRole === "admin")
+    ...((effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops")
       ? athletes.slice(0, 50).map((a) => ({
           id: `athlete-${a.id}`,
           label: a.name,
