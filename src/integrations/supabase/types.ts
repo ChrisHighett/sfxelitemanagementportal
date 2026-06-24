@@ -1823,6 +1823,7 @@ export type Database = {
         Args: { athlete_uuid: string }
         Returns: boolean
       }
+      is_eleva_ops: { Args: never; Returns: boolean }
       is_guardian_of: { Args: { _athlete_id: string }; Returns: boolean }
       is_portal_admin: { Args: { user_id: string }; Returns: boolean }
       user_has_athlete_access: {
