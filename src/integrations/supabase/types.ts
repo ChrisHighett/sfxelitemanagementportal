@@ -118,6 +118,7 @@ export type Database = {
       }
       athlete_alerts: {
         Row: {
+          agency_id: string | null
           alert_type: Database["public"]["Enums"]["alert_type"]
           assigned_to: string | null
           athlete_id: string
@@ -136,6 +137,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           alert_type: Database["public"]["Enums"]["alert_type"]
           assigned_to?: string | null
           athlete_id: string
@@ -154,6 +156,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           alert_type?: Database["public"]["Enums"]["alert_type"]
           assigned_to?: string | null
           athlete_id?: string
@@ -172,6 +175,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_alerts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_alerts_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -211,6 +221,7 @@ export type Database = {
       }
       athlete_resources: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           category: string
           created_at: string
@@ -224,6 +235,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           category?: string
           created_at?: string
@@ -237,6 +249,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           category?: string
           created_at?: string
@@ -250,6 +263,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_resources_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_resources_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -341,6 +361,7 @@ export type Database = {
       }
       athlete_tasks: {
         Row: {
+          agency_id: string | null
           assigned_to_user_id: string | null
           athlete_id: string
           completed_at: string | null
@@ -366,6 +387,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           assigned_to_user_id?: string | null
           athlete_id: string
           completed_at?: string | null
@@ -391,6 +413,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           assigned_to_user_id?: string | null
           athlete_id?: string
           completed_at?: string | null
@@ -416,6 +439,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_tasks_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_tasks_assigned_to_user_id_fkey"
             columns: ["assigned_to_user_id"]
@@ -645,6 +675,7 @@ export type Database = {
       }
       call_history: {
         Row: {
+          agency_id: string | null
           ai_summary_json: Json | null
           athlete_id: string
           audio_file_url: string | null
@@ -667,6 +698,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           ai_summary_json?: Json | null
           athlete_id: string
           audio_file_url?: string | null
@@ -689,6 +721,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           ai_summary_json?: Json | null
           athlete_id?: string
           audio_file_url?: string | null
@@ -712,6 +745,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "call_history_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "call_history_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
@@ -729,6 +769,7 @@ export type Database = {
       }
       comms_history: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           body: string
           channel: string
@@ -742,6 +783,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           body: string
           channel?: string
@@ -755,6 +797,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           body?: string
           channel?: string
@@ -768,6 +811,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "comms_history_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comms_history_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -786,6 +836,7 @@ export type Database = {
       }
       comms_log: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           body: string
           id: string
@@ -795,6 +846,7 @@ export type Database = {
           subject: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           body: string
           id?: string
@@ -804,6 +856,7 @@ export type Database = {
           subject: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           body?: string
           id?: string
@@ -813,6 +866,13 @@ export type Database = {
           subject?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "comms_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comms_log_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -888,6 +948,7 @@ export type Database = {
       }
       goal_tracker: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           comments: string | null
           created_at: string
@@ -899,6 +960,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           comments?: string | null
           created_at?: string
@@ -910,6 +972,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           comments?: string | null
           created_at?: string
@@ -922,6 +985,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "goal_tracker_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "goal_tracker_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
@@ -932,6 +1002,7 @@ export type Database = {
       }
       guardians: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           created_at: string
           guardian_user_id: string | null
@@ -946,6 +1017,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           created_at?: string
           guardian_user_id?: string | null
@@ -960,6 +1032,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           created_at?: string
           guardian_user_id?: string | null
@@ -975,6 +1048,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "guardians_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "guardians_athlete_id_fkey"
             columns: ["athlete_id"]
             isOneToOne: false
@@ -985,6 +1065,7 @@ export type Database = {
       }
       monthly_reviews: {
         Row: {
+          agency_id: string | null
           areas_for_improvement: string | null
           athlete_id: string
           attention_required: boolean | null
@@ -1014,6 +1095,7 @@ export type Database = {
           wellbeing_score: number | null
         }
         Insert: {
+          agency_id?: string | null
           areas_for_improvement?: string | null
           athlete_id: string
           attention_required?: boolean | null
@@ -1043,6 +1125,7 @@ export type Database = {
           wellbeing_score?: number | null
         }
         Update: {
+          agency_id?: string | null
           areas_for_improvement?: string | null
           athlete_id?: string
           attention_required?: boolean | null
@@ -1072,6 +1155,13 @@ export type Database = {
           wellbeing_score?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "monthly_reviews_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "monthly_reviews_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1319,6 +1409,7 @@ export type Database = {
           action_required: string | null
           action_status: string | null
           age: number | null
+          agency_id: string | null
           assigned_agent_id: string | null
           assigned_agent_name: string | null
           comp_grade: string | null
@@ -1362,6 +1453,7 @@ export type Database = {
           action_required?: string | null
           action_status?: string | null
           age?: number | null
+          agency_id?: string | null
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           comp_grade?: string | null
@@ -1405,6 +1497,7 @@ export type Database = {
           action_required?: string | null
           action_status?: string | null
           age?: number | null
+          agency_id?: string | null
           assigned_agent_id?: string | null
           assigned_agent_name?: string | null
           comp_grade?: string | null
@@ -1443,6 +1536,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scout_leads_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scout_leads_assigned_agent_id_fkey"
             columns: ["assigned_agent_id"]
