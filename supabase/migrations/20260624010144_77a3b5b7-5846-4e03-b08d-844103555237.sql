@@ -1,0 +1,13 @@
+CREATE POLICY "eleva_ops read comms_history all" ON public.comms_history FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read comms_log all" ON public.comms_log FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read call_history all" ON public.call_history FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read guardians all" ON public.guardians FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read monthly_reviews all" ON public.monthly_reviews FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read athlete_tasks all" ON public.athlete_tasks FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read athlete_resources all" ON public.athlete_resources FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read scout_leads all" ON public.scout_leads FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read goal_tracker all" ON public.goal_tracker FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read athlete_alerts all" ON public.athlete_alerts FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read athletes all" ON public.athletes FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read portal_users all" ON public.portal_users FOR SELECT USING (public.is_eleva_ops());
+CREATE POLICY "eleva_ops read agencies all" ON public.agencies FOR SELECT USING (public.is_eleva_ops());
