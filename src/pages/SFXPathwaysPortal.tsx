@@ -287,7 +287,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-4" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
+              <SheetContent side="left" className="w-72 p-4 flex flex-col" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
                 <div className="mb-4">
                   <BrandMark variant="wordmark" height={24} />
                 </div>
