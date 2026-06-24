@@ -120,6 +120,40 @@ export default function VoiceRecordingFlow({
   });
   const [savingTask, setSavingTask] = useState(false);
 
+  // AI-detected follow-up actions (same detector as Quick Update)
+  const [extracting, setExtracting] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
+
+  const runExtraction = useCallback(async (noteText: string, conversationDate: string) => {
+    if (!noteText || !noteText.trim()) {
+      setExtractedItems([]);
+      return;
+    }
+    setExtracting(true);
+    setExtractedItems(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-action-items", {
+        body: {
+          note: noteText.trim(),
+          conversationDate,
+          category: "monthly_review",
+          athleteFirstName: athlete.name.split(" ")[0],
+          counterparty: null,
+        },
+      });
+      if (error) throw error;
+      const items: ExtractedItem[] = Array.isArray((data as any)?.items)
+        ? (data as any).items
+        : [];
+      setExtractedItems(items);
+    } catch (e) {
+      console.warn("extract-action-items error:", e);
+      setExtractedItems([]);
+    } finally {
+      setExtracting(false);
+    }
+  }, [athlete.id, athlete.name]);
+
   // Timer
   useEffect(() => {
     if (!callStart || step !== "recording") return;
