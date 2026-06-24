@@ -146,8 +146,14 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const mobileQuickNav = items.slice(0, 4);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--canvas)" }}>
