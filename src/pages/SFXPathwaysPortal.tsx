@@ -371,7 +371,7 @@ function TopBar({ role, selectedAthleteId, setSelectedAthleteId, athletes, onAdd
           {athletes.length <= 1 && athletes.length > 0 && (
             <span className="text-sm font-medium">{athletes[0]?.name}</span>
           )}
-          {onAddAthlete && (role === "agent" || role === "admin") && (
+          {onAddAthlete && (role === "agent" || role === "admin" || role === "eleva_ops") && (
             <Button size="sm" className="h-9 gap-1.5" onClick={onAddAthlete}>
               <Plus className="h-4 w-4" />
               Add athlete
