@@ -4714,14 +4714,14 @@ export default function SFXPathwaysPortal() {
       {effectiveRole === "parent" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
 
 
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "dash" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "dash" && (
         <ManagerCommandCentre
           athletes={athletes}
           onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
         />
       )}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "scout" && <AgentScoutView />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "scout" && <AgentScoutView />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin") && active === "reviews" && (
