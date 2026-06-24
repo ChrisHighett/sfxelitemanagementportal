@@ -4602,13 +4602,14 @@ export default function SFXPathwaysPortal() {
               <SelectTrigger className="w-36 h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="agent">Agent</SelectItem>
-                <SelectItem value="scout">Scout</SelectItem>
-                <SelectItem value="parent">Parent</SelectItem>
-                <SelectItem value="athlete">Athlete</SelectItem>
-              </SelectContent>
+               <SelectContent>
+                 <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+                 <SelectItem value="admin">Admin</SelectItem>
+                 <SelectItem value="agent">Agent</SelectItem>
+                 <SelectItem value="scout">Scout</SelectItem>
+                 <SelectItem value="parent">Parent</SelectItem>
+                 <SelectItem value="athlete">Athlete</SelectItem>
+               </SelectContent>
             </Select>
             {roleOverride && (
               <Badge variant="secondary" className="text-xs gap-1">
@@ -4674,13 +4675,14 @@ export default function SFXPathwaysPortal() {
             <SelectTrigger className="w-36 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="agent">Agent</SelectItem>
-              <SelectItem value="scout">Scout</SelectItem>
-              <SelectItem value="parent">Parent</SelectItem>
-              <SelectItem value="athlete">Athlete</SelectItem>
-            </SelectContent>
+             <SelectContent>
+               <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+               <SelectItem value="admin">Admin</SelectItem>
+               <SelectItem value="agent">Agent</SelectItem>
+               <SelectItem value="scout">Scout</SelectItem>
+               <SelectItem value="parent">Parent</SelectItem>
+               <SelectItem value="athlete">Athlete</SelectItem>
+             </SelectContent>
           </Select>
           {roleOverride && (
             <Badge variant="secondary" className="text-xs gap-1">
