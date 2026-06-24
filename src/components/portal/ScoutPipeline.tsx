@@ -28,7 +28,7 @@ function daysSince(iso?: string | null) {
 export default function ScoutPipeline() {
   const { user } = useAuth();
   const { data: roleData } = useUserRole();
-  const isAdmin = roleData?.role === "admin";
+  const isAdmin = roleData?.role === "admin" || roleData?.role === "eleva_ops";
   const qc = useQueryClient();
   const navigate = useNavigate();
 

@@ -15,7 +15,7 @@ export async function approvePortalAccess(
     .maybeSingle();
 
   if (meError) throw meError;
-  if (!me || me.role !== "admin" || !me.approved) {
+  if (!me || (me.role !== "admin" && me.role !== "eleva_ops") || !me.approved) {
     throw new Error("Only approved admins can approve access.");
   }
 
