@@ -204,7 +204,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
           </nav>
           <div className="mt-6 space-y-2">
             <CommandHint />
-            {role === "admin" && <ThemeSwitcher />}
+            {(role === "admin" || role === "eleva_ops") && <ThemeSwitcher />}
             {(() => {
               // In preview mode (admin previewing another role), never expose the
               // logged-in admin's identity. For parent/athlete, optionally show the
