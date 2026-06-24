@@ -4458,7 +4458,7 @@ export default function SFXPathwaysPortal() {
   const [callActive, setCallActive] = useState(false);
   const [addAthleteOpen, setAddAthleteOpen] = useState(false);
 
-  const isAdmin = userRoleData?.role === "admin";
+  const isAdmin = userRoleData?.role === "admin" || userRoleData?.role === "eleva_ops";
   const effectiveRole = roleOverride || role;
 
   // For athlete/parent: restrict to allocated athlete only (skip when admin is previewing)
