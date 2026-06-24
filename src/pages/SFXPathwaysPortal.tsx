@@ -1804,7 +1804,7 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
   const [savedTrackerName, setSavedTrackerName] = useState<string | null>(null);
   const trackerInputRef = useRef<HTMLInputElement | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
-  const isAgentOrAdmin = role === "agent" || role === "admin";
+  const isAgentOrAdmin = role === "agent" || role === "admin" || role === "eleva_ops";
   const trackerFilePath = `development-tracker/${athlete.id}/latest.xlsx`;
 
   const refreshSavedTracker = useCallback(async () => {
