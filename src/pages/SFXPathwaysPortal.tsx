@@ -315,6 +315,31 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     );
                   })}
                 </nav>
+                <div className="mt-auto pt-4 space-y-2">
+                  <div
+                    className="rounded-[12px] p-3 text-xs"
+                    style={{
+                      background: "var(--brand-base-soft)",
+                      border: "1px solid var(--brand-base-line)",
+                      color: "rgba(255,255,255,0.78)",
+                    }}
+                  >
+                    <div className="font-medium text-white truncate">
+                      {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+                    </div>
+                    <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      {role}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-xs transition-colors hover:bg-white/10"
+                    style={{ color: "rgba(255,255,255,0.62)" }}
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log out</span>
+                  </button>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
