@@ -58,7 +58,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin" | "scout";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
