@@ -2053,7 +2053,7 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
   const [allCategories, setAllCategories] = useState<string[]>(BASE_CATEGORIES);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const isAgentOrAdmin = role === "agent" || role === "admin";
+  const isAgentOrAdmin = role === "agent" || role === "admin" || role === "eleva_ops";
 
   useEffect(() => {
     fetchResources();
