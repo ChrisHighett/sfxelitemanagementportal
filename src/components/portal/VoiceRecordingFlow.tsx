@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
 import { getVoiceProfileForAthlete } from "@/lib/voice-profile";
+import ActionItemConfirmPanel, { type ExtractedItem } from "@/components/portal/ActionItemConfirmPanel";
+import { ArcLoader } from "@/components/brand/Brand";
 
 type FlowStep = "ready" | "recording" | "processing" | "review" | "done";
 
@@ -117,6 +119,40 @@ export default function VoiceRecordingFlow({
     priority: 3, due_date: "", status: "open" as string,
   });
   const [savingTask, setSavingTask] = useState(false);
+
+  // AI-detected follow-up actions (same detector as Quick Update)
+  const [extracting, setExtracting] = useState(false);
+  const [extractedItems, setExtractedItems] = useState<ExtractedItem[] | null>(null);
+
+  const runExtraction = useCallback(async (noteText: string, conversationDate: string) => {
+    if (!noteText || !noteText.trim()) {
+      setExtractedItems([]);
+      return;
+    }
+    setExtracting(true);
+    setExtractedItems(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-action-items", {
+        body: {
+          note: noteText.trim(),
+          conversationDate,
+          category: "monthly_review",
+          athleteFirstName: athlete.name.split(" ")[0],
+          counterparty: null,
+        },
+      });
+      if (error) throw error;
+      const items: ExtractedItem[] = Array.isArray((data as any)?.items)
+        ? (data as any).items
+        : [];
+      setExtractedItems(items);
+    } catch (e) {
+      console.warn("extract-action-items error:", e);
+      setExtractedItems([]);
+    } finally {
+      setExtracting(false);
+    }
+  }, [athlete.id, athlete.name]);
 
   // Timer
   useEffect(() => {
@@ -510,13 +546,24 @@ export default function VoiceRecordingFlow({
       if (error) throw error;
       setStep("done");
       toast.success("Call record saved successfully");
+
+      // Fire-and-forget AI follow-up detection — same as Quick Update flow.
+      const noteForExtraction =
+        finalTranscriptRef.current?.trim() ||
+        transcript.trim() ||
+        initialTranscript?.trim() ||
+        detailedNotes;
+      const convDate = new Date().toISOString().slice(0, 10);
+      runExtraction(noteForExtraction, convDate).catch((e) => {
+        console.warn("Action-item extraction failed:", e);
+      });
     } catch (e: any) {
       console.error("Save error:", e);
       toast.error(e.message || "Failed to save");
     } finally {
       setIsSaving(false);
     }
-  }, [callHistoryId, editedSummary, editedGoals, wellbeingScore, attentionRequired, followUpRequired, outcome]);
+  }, [callHistoryId, editedSummary, editedGoals, wellbeingScore, attentionRequired, followUpRequired, outcome, transcript, initialTranscript, runExtraction]);
 
   // ── POST-SAVE: Create Monthly Review ──
   const createMonthlyReview = useCallback(async () => {
@@ -972,6 +1019,26 @@ export default function VoiceRecordingFlow({
             <CheckSquare className="h-5 w-5" /> Create Task
           </Button>
         </div>
+
+        {/* AI-detected follow-up actions (same detector as Quick Update) */}
+        {extracting && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <ArcLoader size={14} />
+            Scanning conversation for follow-ups…
+          </div>
+        )}
+        {!extracting && extractedItems !== null && extractedItems.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-2.5 text-[11px] text-muted-foreground">
+            ✨ No follow-ups detected in this conversation.
+          </div>
+        )}
+        {!extracting && extractedItems && extractedItems.length > 0 && (
+          <ActionItemConfirmPanel
+            athleteId={athlete.id}
+            conversationId={callHistoryId}
+            items={extractedItems}
+          />
+        )}
 
         {/* Task form */}
         {showTaskForm && (
