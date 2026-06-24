@@ -197,7 +197,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
                   />
                   <span className="flex-1 text-left">{it.label}</span>
-                  {it.key === "admin" && role === "admin" && <PendingApprovalsDot />}
+                  {it.key === "admin" && (role === "admin" || role === "eleva_ops") && <PendingApprovalsDot />}
                 </button>
               );
             })}
