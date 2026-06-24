@@ -255,6 +255,14 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                 </div>
               );
             })()}
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-xs transition-colors hover:bg-white/10"
+              style={{ color: "rgba(255,255,255,0.62)" }}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Log out</span>
+            </button>
           </div>
         </div>
       </aside>
