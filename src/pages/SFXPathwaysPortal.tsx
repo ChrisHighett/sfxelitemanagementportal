@@ -111,6 +111,15 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "voice", label: "My Voice", icon: Mic2 },
     { key: "admin", label: "Admin", icon: Shield },
   ],
+  eleva_ops: [
+    { key: "roster", label: "Roster", icon: Users },
+    { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "athlete", label: "Athlete Profile", icon: FileText },
+    { key: "call", label: "Athlete Comms", icon: Phone },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "voice", label: "My Voice", icon: Mic2 },
+    { key: "admin", label: "Admin", icon: Shield },
+  ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
     { key: "signed", label: "Signed", icon: CheckCircle2 },
