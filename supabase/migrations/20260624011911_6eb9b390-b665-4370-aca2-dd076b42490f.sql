@@ -1,0 +1,2 @@
+ALTER TABLE public.portal_users DROP CONSTRAINT portal_users_role_check;
+ALTER TABLE public.portal_users ADD CONSTRAINT portal_users_role_check CHECK (role = ANY (ARRAY['admin'::text, 'agent'::text, 'parent'::text, 'athlete'::text, 'eleva_ops'::text]));
