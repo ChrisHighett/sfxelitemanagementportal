@@ -4737,7 +4737,7 @@ export default function SFXPathwaysPortal() {
       )}
 
       {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin") && active === "voice" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "voice" && (
         <div className="p-4 md:p-6"><VoiceProfileSettings /></div>
       )}
       {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
