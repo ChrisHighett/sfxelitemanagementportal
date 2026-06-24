@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { type Athlete } from "@/hooks/usePortalData";
 import { getVoiceProfileForAthlete } from "@/lib/voice-profile";
 import ActionItemConfirmPanel, { type ExtractedItem } from "@/components/portal/ActionItemConfirmPanel";
-import ArcLoader from "@/components/portal/ArcLoader";
+import { ArcLoader } from "@/components/brand/Brand";
 
 type FlowStep = "ready" | "recording" | "processing" | "review" | "done";
 
