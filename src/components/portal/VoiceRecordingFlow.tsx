@@ -546,13 +546,24 @@ export default function VoiceRecordingFlow({
       if (error) throw error;
       setStep("done");
       toast.success("Call record saved successfully");
+
+      // Fire-and-forget AI follow-up detection — same as Quick Update flow.
+      const noteForExtraction =
+        finalTranscriptRef.current?.trim() ||
+        transcript.trim() ||
+        initialTranscript?.trim() ||
+        detailedNotes;
+      const convDate = new Date().toISOString().slice(0, 10);
+      runExtraction(noteForExtraction, convDate).catch((e) => {
+        console.warn("Action-item extraction failed:", e);
+      });
     } catch (e: any) {
       console.error("Save error:", e);
       toast.error(e.message || "Failed to save");
     } finally {
       setIsSaving(false);
     }
-  }, [callHistoryId, editedSummary, editedGoals, wellbeingScore, attentionRequired, followUpRequired, outcome]);
+  }, [callHistoryId, editedSummary, editedGoals, wellbeingScore, attentionRequired, followUpRequired, outcome, transcript, initialTranscript, runExtraction]);
 
   // ── POST-SAVE: Create Monthly Review ──
   const createMonthlyReview = useCallback(async () => {
