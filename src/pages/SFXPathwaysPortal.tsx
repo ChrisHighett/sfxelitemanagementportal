@@ -404,6 +404,7 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
       case "athlete":  return "Athlete";
       case "agent":    return "Agent";
       case "admin":    return "Admin";
+      case "eleva_ops": return "Eleva Ops";
       default:         return "Viewer";
     }
   })();
