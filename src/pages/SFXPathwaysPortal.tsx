@@ -4740,7 +4740,7 @@ export default function SFXPathwaysPortal() {
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "voice" && (
         <div className="p-4 md:p-6"><VoiceProfileSettings /></div>
       )}
-      {effectiveRole === "admin" && active === "admin" && <AdminSecurity />}
+      {(effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "admin" && <AdminSecurity />}
       <CommandPalette commands={paletteCommands} />
     </Shell>
   );
