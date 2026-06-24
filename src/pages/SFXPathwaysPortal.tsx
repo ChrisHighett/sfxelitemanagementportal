@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle, LogOut } from "lucide-react";
 import VoiceProfileSettings from "@/components/portal/VoiceProfileSettings";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
@@ -146,8 +146,14 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
   const items = NAV[role] ?? [];
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isOnline, pendingCount } = useOfflineQueue();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const mobileQuickNav = items.slice(0, 4);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--canvas)" }}>
@@ -249,6 +255,14 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                 </div>
               );
             })()}
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-xs transition-colors hover:bg-white/10"
+              style={{ color: "rgba(255,255,255,0.62)" }}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Log out</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -273,7 +287,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-4" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
+              <SheetContent side="left" className="w-72 p-4 flex flex-col" style={{ background: "var(--brand-base)", color: "#fff", borderRight: "1px solid var(--brand-base-line)" }}>
                 <div className="mb-4">
                   <BrandMark variant="wordmark" height={24} />
                 </div>
@@ -301,6 +315,31 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     );
                   })}
                 </nav>
+                <div className="mt-auto pt-4 space-y-2">
+                  <div
+                    className="rounded-[12px] p-3 text-xs"
+                    style={{
+                      background: "var(--brand-base-soft)",
+                      border: "1px solid var(--brand-base-line)",
+                      color: "rgba(255,255,255,0.78)",
+                    }}
+                  >
+                    <div className="font-medium text-white truncate">
+                      {user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Agent"}
+                    </div>
+                    <div className="font-mono mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      {role}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-xs transition-colors hover:bg-white/10"
+                    style={{ color: "rgba(255,255,255,0.62)" }}
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log out</span>
+                  </button>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
