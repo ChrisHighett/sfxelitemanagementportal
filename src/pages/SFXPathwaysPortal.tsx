@@ -128,7 +128,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
 };
 
-const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout"];
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops"];
 
 function isPortalRole(value?: string | null): value is Role {
   return !!value && PORTAL_ROLES.includes(value as Role);
