@@ -1020,6 +1020,26 @@ export default function VoiceRecordingFlow({
           </Button>
         </div>
 
+        {/* AI-detected follow-up actions (same detector as Quick Update) */}
+        {extracting && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <ArcLoader size={14} />
+            Scanning conversation for follow-ups…
+          </div>
+        )}
+        {!extracting && extractedItems !== null && extractedItems.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-2.5 text-[11px] text-muted-foreground">
+            ✨ No follow-ups detected in this conversation.
+          </div>
+        )}
+        {!extracting && extractedItems && extractedItems.length > 0 && (
+          <ActionItemConfirmPanel
+            athleteId={athlete.id}
+            conversationId={callHistoryId}
+            items={extractedItems}
+          />
+        )}
+
         {/* Task form */}
         {showTaskForm && (
           <Card>
