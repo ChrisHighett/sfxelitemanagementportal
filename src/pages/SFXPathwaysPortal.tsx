@@ -25,6 +25,7 @@ import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { User } from "lucide-react";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import RecruitmentNotesPanel from "@/components/portal/RecruitmentNotesPanel";
+import PendingRecruitmentTagsBadge from "@/components/portal/PendingRecruitmentTagsBadge";
 import LostReasonModal from "@/components/portal/LostReasonModal";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
@@ -3344,9 +3345,12 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
           <h1 className="text-xl font-semibold">{viewTitle}</h1>
           <p className="text-sm text-muted-foreground">{viewSubtitle}</p>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4" />Add lead
-        </Button>
+        <div className="flex items-center gap-2">
+          <PendingRecruitmentTagsBadge view="scout" />
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4" />Add lead
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
@@ -3841,9 +3845,12 @@ function AgentScoutView() {
           <h1 className="text-xl font-semibold">Scout pipeline</h1>
           <p className="text-sm text-muted-foreground">Prospects logged by your scouts — triage, track, and convert.</p>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4" />Add lead
-        </Button>
+        <div className="flex items-center gap-2">
+          <PendingRecruitmentTagsBadge view="agent" />
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4" />Add lead
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-2">

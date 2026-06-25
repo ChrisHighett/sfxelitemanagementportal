@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Mic, Square, Loader2, Sparkles, Save, NotebookPen, UserPlus, Check, Clock } from "lucide-react";
+import { Mic, Square, Loader2, Sparkles, Save, NotebookPen, UserPlus, Check, Clock, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
@@ -301,6 +302,68 @@ export default function RecruitmentNotesPanel() {
     },
   });
 
+  // Pending tags addressed to the current user — used to surface notes and
+  // drive auto-acknowledge on open.
+  const { data: myPendingTags = [] } = useQuery({
+    queryKey: ["my_pending_recruitment_tags", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .select("id, note_id")
+        .eq("tagged_user_id", user!.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+  const myPendingNoteIds = useMemo(
+    () => new Set(myPendingTags.map((t: any) => t.note_id)),
+    [myPendingTags]
+  );
+
+  // URL params for focus / pendingOnly surfacing
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get("focus");
+  const pendingOnly = searchParams.get("pendingOnly") === "1";
+
+  // Sort: focused note first, then pending-for-me, then by date desc (already).
+  const orderedNotes = useMemo(() => {
+    const arr = [...notes];
+    arr.sort((a: any, b: any) => {
+      const aFocus = a.id === focusId ? 1 : 0;
+      const bFocus = b.id === focusId ? 1 : 0;
+      if (aFocus !== bFocus) return bFocus - aFocus;
+      const aPending = myPendingNoteIds.has(a.id) ? 1 : 0;
+      const bPending = myPendingNoteIds.has(b.id) ? 1 : 0;
+      if (aPending !== bPending) return bPending - aPending;
+      return 0;
+    });
+    return arr;
+  }, [notes, focusId, myPendingNoteIds]);
+
+  // Scroll focused note into view once it renders.
+  const focusRef = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (!focusId) return;
+    const t = setTimeout(() => {
+      focusRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [focusId, orderedNotes.length]);
+
+  // Clear focus/pendingOnly params after first render so refreshes don't re-trigger.
+  useEffect(() => {
+    if (!focusId && !pendingOnly) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has("focus")) { next.delete("focus"); changed = true; }
+    if (next.has("pendingOnly")) { next.delete("pendingOnly"); changed = true; }
+    if (changed) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
 
   return (
@@ -414,11 +477,21 @@ export default function RecruitmentNotesPanel() {
           </Card>
         ) : (
           <ul className="space-y-3">
-            {notes.map((n: any) => (
-              <li key={n.id}>
-                <NoteCard note={n} currentUserId={user?.id} />
-              </li>
-            ))}
+            {(pendingOnly
+              ? orderedNotes.filter((n: any) => myPendingNoteIds.has(n.id))
+              : orderedNotes
+            ).map((n: any) => {
+              const isFocus = n.id === focusId;
+              return (
+                <li key={n.id} ref={isFocus ? focusRef : undefined}>
+                  <NoteCard
+                    note={n}
+                    currentUserId={user?.id}
+                    highlight={isFocus}
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -430,7 +503,7 @@ export default function RecruitmentNotesPanel() {
 /* Note card with tags                                                */
 /* ------------------------------------------------------------------ */
 
-function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }) {
+function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId?: string; highlight?: boolean }) {
   const qc = useQueryClient();
   const isAuthor = !!currentUserId && note.author_id === currentUserId;
 
@@ -467,12 +540,55 @@ function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }
     return m;
   }, [taggedUsers]);
 
+  // Auto-acknowledge: if the current user is tagged on this note with status
+  // 'pending', flip it to 'acknowledged' the moment they see this card.
+  const myPendingTag = useMemo(
+    () => tags.find((t: any) => t.tagged_user_id === currentUserId && t.status === "pending"),
+    [tags, currentUserId]
+  );
+  const ackedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!myPendingTag || ackedRef.current === myPendingTag.id) return;
+    ackedRef.current = myPendingTag.id;
+    (async () => {
+      const { error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .update({ status: "acknowledged", acknowledged_at: new Date().toISOString() })
+        .eq("id", myPendingTag.id);
+      if (!error) {
+        qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
+        qc.invalidateQueries({ queryKey: ["my_pending_recruitment_tags", currentUserId] });
+      }
+    })();
+  }, [myPendingTag, qc, note.id, currentUserId]);
+
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card
+      className="shadow-sm transition-all"
+      style={{
+        borderColor: highlight
+          ? "var(--brand-spectrum-from, hsl(var(--primary)))"
+          : undefined,
+        boxShadow: highlight
+          ? "0 0 0 2px var(--brand-base-soft, hsl(var(--muted)))"
+          : undefined,
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex items-baseline justify-between gap-3 mb-2">
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
             {note.title || "Untitled note"}
+            {myPendingTag && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--brand-base-soft, hsl(var(--muted)))",
+                  color: "var(--brand-spectrum-from, hsl(var(--primary)))",
+                }}
+              >
+                <Bell className="h-3 w-3" /> Tagged for you
+              </span>
+            )}
           </h3>
           <div className="text-[11px] font-mono text-muted-foreground shrink-0">
             {new Date(note.created_at).toLocaleDateString("en-AU", {
