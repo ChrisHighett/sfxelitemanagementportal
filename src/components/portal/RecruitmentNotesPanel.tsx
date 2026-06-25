@@ -503,7 +503,7 @@ export default function RecruitmentNotesPanel() {
 /* Note card with tags                                                */
 /* ------------------------------------------------------------------ */
 
-function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }) {
+function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId?: string; highlight?: boolean }) {
   const qc = useQueryClient();
   const isAuthor = !!currentUserId && note.author_id === currentUserId;
 
@@ -540,12 +540,55 @@ function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }
     return m;
   }, [taggedUsers]);
 
+  // Auto-acknowledge: if the current user is tagged on this note with status
+  // 'pending', flip it to 'acknowledged' the moment they see this card.
+  const myPendingTag = useMemo(
+    () => tags.find((t: any) => t.tagged_user_id === currentUserId && t.status === "pending"),
+    [tags, currentUserId]
+  );
+  const ackedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!myPendingTag || ackedRef.current === myPendingTag.id) return;
+    ackedRef.current = myPendingTag.id;
+    (async () => {
+      const { error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .update({ status: "acknowledged", acknowledged_at: new Date().toISOString() })
+        .eq("id", myPendingTag.id);
+      if (!error) {
+        qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
+        qc.invalidateQueries({ queryKey: ["my_pending_recruitment_tags", currentUserId] });
+      }
+    })();
+  }, [myPendingTag, qc, note.id, currentUserId]);
+
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card
+      className="shadow-sm transition-all"
+      style={{
+        borderColor: highlight
+          ? "var(--brand-spectrum-from, hsl(var(--primary)))"
+          : undefined,
+        boxShadow: highlight
+          ? "0 0 0 2px var(--brand-base-soft, hsl(var(--muted)))"
+          : undefined,
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex items-baseline justify-between gap-3 mb-2">
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
             {note.title || "Untitled note"}
+            {myPendingTag && (
+              <span
+                className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--brand-base-soft, hsl(var(--muted)))",
+                  color: "var(--brand-spectrum-from, hsl(var(--primary)))",
+                }}
+              >
+                <Bell className="h-3 w-3" /> Tagged for you
+              </span>
+            )}
           </h3>
           <div className="text-[11px] font-mono text-muted-foreground shrink-0">
             {new Date(note.created_at).toLocaleDateString("en-AU", {
