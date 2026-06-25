@@ -1325,6 +1325,47 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_note_tags: {
+        Row: {
+          acknowledged_at: string | null
+          agency_id: string
+          created_at: string
+          id: string
+          note_id: string
+          status: string
+          tagged_by: string
+          tagged_user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          agency_id: string
+          created_at?: string
+          id?: string
+          note_id: string
+          status?: string
+          tagged_by: string
+          tagged_user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          agency_id?: string
+          created_at?: string
+          id?: string
+          note_id?: string
+          status?: string
+          tagged_by?: string
+          tagged_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_note_tags_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_notes: {
         Row: {
           agency_id: string
