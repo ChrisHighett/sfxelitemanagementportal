@@ -3899,6 +3899,7 @@ function AgentScoutView() {
               {f === "Pack Sent" ? "Mgmt Pack Sent" : f}
             </button>
           ))}
+        </div>
       </div>
 
       <RecruitmentNotesPanel />
