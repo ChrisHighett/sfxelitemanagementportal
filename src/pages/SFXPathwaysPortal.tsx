@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle, LogOut } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle, LogOut, NotebookPen } from "lucide-react";
 import VoiceProfileSettings from "@/components/portal/VoiceProfileSettings";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
@@ -82,7 +82,7 @@ function scorePill(score: number) {
   );
 }
 
-const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[]> = {
+const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; indent?: boolean }[]> = {
   athlete: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "reviews", label: "My Reviews", icon: ClipboardList },
@@ -101,11 +101,13 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "voice", label: "My Voice", icon: Mic2 },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
@@ -115,6 +117,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   eleva_ops: [
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
@@ -123,6 +126,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "signed", label: "Signed", icon: CheckCircle2 },
     { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
@@ -180,10 +184,13 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                 <button
                   key={it.key}
                   onClick={() => onNav(it.key)}
-                  className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors"
+                  className="relative flex w-full items-center gap-3 rounded-[10px] py-2.5 text-sm transition-colors"
                   style={{
                     color: isActive ? "#fff" : "rgba(255,255,255,0.62)",
                     background: isActive ? "var(--brand-base-soft)" : "transparent",
+                    paddingLeft: it.indent ? 32 : 12,
+                    paddingRight: 12,
+                    fontSize: it.indent ? 12.5 : undefined,
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) e.currentTarget.style.background = "var(--brand-base-soft)";
@@ -200,7 +207,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     />
                   )}
                   <Icon
-                    className="h-4 w-4"
+                    className={it.indent ? "h-3.5 w-3.5" : "h-4 w-4"}
                     style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
                   />
                   <span className="flex-1 text-left">{it.label}</span>
@@ -300,16 +307,19 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                       <button
                         key={it.key}
                         onClick={() => { onNav(it.key); setMobileOpen(false); }}
-                        className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-sm transition-colors"
+                        className="relative flex w-full items-center gap-3 rounded-[10px] py-3 text-sm transition-colors"
                         style={{
                           color: isAct ? "#fff" : "rgba(255,255,255,0.62)",
                           background: isAct ? "var(--brand-base-soft)" : "transparent",
+                          paddingLeft: it.indent ? 32 : 12,
+                          paddingRight: 12,
+                          fontSize: it.indent ? 12.5 : undefined,
                         }}
                       >
                         {isAct && (
                           <span aria-hidden className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full" style={{ background: "var(--brand-gradient)" }} />
                         )}
-                        <Icon className="h-5 w-5" style={{ color: isAct ? "var(--brand-spectrum-from)" : undefined }} />
+                        <Icon className={it.indent ? "h-4 w-4" : "h-5 w-5"} style={{ color: isAct ? "var(--brand-spectrum-from)" : undefined }} />
                         <span className="flex-1 text-left">{it.label}</span>
                         {it.key === "admin" && (role === "admin" || role === "eleva_ops") && <PendingApprovalsDot />}
                       </button>
@@ -3353,7 +3363,6 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
         ))}
       </div>
 
-      <RecruitmentNotesPanel />
 
       {showForm && (
         <Card className="border-dashed border-primary/40 bg-primary/5">
@@ -3884,7 +3893,6 @@ function AgentScoutView() {
         </div>
       )}
 
-      <RecruitmentNotesPanel />
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
@@ -4661,7 +4669,17 @@ export default function SFXPathwaysPortal() {
             )}
           </div>
         )}
-        <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
+        {active === "recruitment-notes" ? (
+          <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+            <div>
+              <h1 className="text-xl font-semibold">Recruitment & Retention Notes</h1>
+              <p className="text-sm text-muted-foreground">Voice-captured, AI-structured notes shared across your agency.</p>
+            </div>
+            <RecruitmentNotesPanel />
+          </div>
+        ) : (
+          <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
+        )}
       </Shell>
     );
   }
@@ -4767,6 +4785,15 @@ export default function SFXPathwaysPortal() {
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "scout" && <AgentScoutView />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "recruitment-notes" && (
+        <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+          <div>
+            <h1 className="text-xl font-semibold">Recruitment & Retention Notes</h1>
+            <p className="text-sm text-muted-foreground">Voice-captured, AI-structured notes shared across your agency.</p>
+          </div>
+          <RecruitmentNotesPanel />
+        </div>
+      )}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "reviews" && (
