@@ -1325,6 +1325,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_notes: {
+        Row: {
+          agency_id: string
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          raw_transcript: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: string
+          raw_transcript?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          raw_transcript?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       resources: {
         Row: {
           category: string
