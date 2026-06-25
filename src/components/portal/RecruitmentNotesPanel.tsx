@@ -302,6 +302,68 @@ export default function RecruitmentNotesPanel() {
     },
   });
 
+  // Pending tags addressed to the current user — used to surface notes and
+  // drive auto-acknowledge on open.
+  const { data: myPendingTags = [] } = useQuery({
+    queryKey: ["my_pending_recruitment_tags", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .select("id, note_id")
+        .eq("tagged_user_id", user!.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+  const myPendingNoteIds = useMemo(
+    () => new Set(myPendingTags.map((t: any) => t.note_id)),
+    [myPendingTags]
+  );
+
+  // URL params for focus / pendingOnly surfacing
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get("focus");
+  const pendingOnly = searchParams.get("pendingOnly") === "1";
+
+  // Sort: focused note first, then pending-for-me, then by date desc (already).
+  const orderedNotes = useMemo(() => {
+    const arr = [...notes];
+    arr.sort((a: any, b: any) => {
+      const aFocus = a.id === focusId ? 1 : 0;
+      const bFocus = b.id === focusId ? 1 : 0;
+      if (aFocus !== bFocus) return bFocus - aFocus;
+      const aPending = myPendingNoteIds.has(a.id) ? 1 : 0;
+      const bPending = myPendingNoteIds.has(b.id) ? 1 : 0;
+      if (aPending !== bPending) return bPending - aPending;
+      return 0;
+    });
+    return arr;
+  }, [notes, focusId, myPendingNoteIds]);
+
+  // Scroll focused note into view once it renders.
+  const focusRef = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (!focusId) return;
+    const t = setTimeout(() => {
+      focusRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [focusId, orderedNotes.length]);
+
+  // Clear focus/pendingOnly params after first render so refreshes don't re-trigger.
+  useEffect(() => {
+    if (!focusId && !pendingOnly) return;
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (next.has("focus")) { next.delete("focus"); changed = true; }
+    if (next.has("pendingOnly")) { next.delete("pendingOnly"); changed = true; }
+    if (changed) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
 
   return (
