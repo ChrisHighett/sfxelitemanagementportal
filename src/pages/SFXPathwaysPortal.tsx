@@ -4671,7 +4671,17 @@ export default function SFXPathwaysPortal() {
             )}
           </div>
         )}
-        <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
+        {active === "recruitment-notes" ? (
+          <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+            <div>
+              <h1 className="text-xl font-semibold">Recruitment & Retention Notes</h1>
+              <p className="text-sm text-muted-foreground">Voice-captured, AI-structured notes shared across your agency.</p>
+            </div>
+            <RecruitmentNotesPanel />
+          </div>
+        ) : (
+          <ScoutPortal autoOpenForm={active === "add"} view={active === "signed" ? "signed" : active === "lost" ? "lost" : "active"} />
+        )}
       </Shell>
     );
   }
