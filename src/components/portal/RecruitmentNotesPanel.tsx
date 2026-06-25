@@ -477,11 +477,21 @@ export default function RecruitmentNotesPanel() {
           </Card>
         ) : (
           <ul className="space-y-3">
-            {notes.map((n: any) => (
-              <li key={n.id}>
-                <NoteCard note={n} currentUserId={user?.id} />
-              </li>
-            ))}
+            {(pendingOnly
+              ? orderedNotes.filter((n: any) => myPendingNoteIds.has(n.id))
+              : orderedNotes
+            ).map((n: any) => {
+              const isFocus = n.id === focusId;
+              return (
+                <li key={n.id} ref={isFocus ? focusRef : undefined}>
+                  <NoteCard
+                    note={n}
+                    currentUserId={user?.id}
+                    highlight={isFocus}
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
