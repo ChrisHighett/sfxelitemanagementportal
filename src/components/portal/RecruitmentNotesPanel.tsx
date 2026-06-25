@@ -33,6 +33,24 @@ function renderInline(s: string) {
   return out;
 }
 
+function stripTitleFromBody(title: string, body: string): string {
+  if (!title.trim() || !body.trim()) return body;
+  const normalizedTitle = title.trim().toLowerCase();
+  const lines = body.replace(/\r\n/g, "\n").split("\n");
+  const firstLine = lines[0].trim();
+  const headingMatch = /^(#{1,6})\s+(.*)$/.exec(firstLine);
+  if (headingMatch) {
+    const headingText = headingMatch[2].trim().toLowerCase();
+    if (headingText === normalizedTitle) {
+      return lines.slice(1).join("\n").trimStart();
+    }
+  }
+  if (firstLine.toLowerCase() === normalizedTitle) {
+    return lines.slice(1).join("\n").trimStart();
+  }
+  return body;
+}
+
 function Markdown({ source }: { source: string }) {
   const html = useMemo(() => {
     const lines = source.replace(/\r\n/g, "\n").split("\n");
