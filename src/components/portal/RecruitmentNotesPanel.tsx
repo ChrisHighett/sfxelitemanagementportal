@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Mic, Square, Loader2, Sparkles, Save, NotebookPen } from "lucide-react";
+import { Mic, Square, Loader2, Sparkles, Save, NotebookPen, UserPlus, Check, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 type Step = "idle" | "recording" | "structuring" | "review";
 
@@ -414,26 +416,237 @@ export default function RecruitmentNotesPanel() {
           <ul className="space-y-3">
             {notes.map((n: any) => (
               <li key={n.id}>
-                <Card className="border-border/60 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-baseline justify-between gap-3 mb-2">
-                      <h3 className="text-sm font-semibold tracking-tight text-foreground">
-                        {n.title || "Untitled note"}
-                      </h3>
-                      <div className="text-[11px] font-mono text-muted-foreground shrink-0">
-                        {new Date(n.created_at).toLocaleDateString("en-AU", {
-                          day: "numeric", month: "short", year: "numeric",
-                        })}
-                      </div>
-                    </div>
-                    <Markdown source={stripTitleFromBody(n.title || "", n.body || "")} />
-                  </CardContent>
-                </Card>
+                <NoteCard note={n} currentUserId={user?.id} />
               </li>
             ))}
           </ul>
         )}
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Note card with tags                                                */
+/* ------------------------------------------------------------------ */
+
+function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }) {
+  const qc = useQueryClient();
+  const isAuthor = !!currentUserId && note.author_id === currentUserId;
+
+  const { data: tags = [] } = useQuery({
+    queryKey: ["recruitment_note_tags", note.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .select("id, tagged_user_id, status")
+        .eq("note_id", note.id);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const taggedUserIds = useMemo(() => tags.map((t: any) => t.tagged_user_id), [tags]);
+
+  const { data: taggedUsers = [] } = useQuery({
+    queryKey: ["portal_users_by_ids", taggedUserIds],
+    enabled: taggedUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portal_users")
+        .select("id, full_name, role")
+        .in("id", taggedUserIds);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const userMap = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const u of taggedUsers) m[u.id] = u;
+    return m;
+  }, [taggedUsers]);
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardContent className="p-4">
+        <div className="flex items-baseline justify-between gap-3 mb-2">
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+            {note.title || "Untitled note"}
+          </h3>
+          <div className="text-[11px] font-mono text-muted-foreground shrink-0">
+            {new Date(note.created_at).toLocaleDateString("en-AU", {
+              day: "numeric", month: "short", year: "numeric",
+            })}
+          </div>
+        </div>
+        <Markdown source={stripTitleFromBody(note.title || "", note.body || "")} />
+
+        {(tags.length > 0 || isAuthor) && (
+          <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
+            {tags.map((t: any) => {
+              const u = userMap[t.tagged_user_id];
+              const name = u?.full_name || "Unknown";
+              const acknowledged = t.status === "acknowledged";
+              return (
+                <Badge
+                  key={t.id}
+                  variant="outline"
+                  className="gap-1 text-[11px] font-normal border-border/60"
+                  style={{
+                    background: acknowledged
+                      ? "var(--brand-base-soft, hsl(var(--muted)))"
+                      : "transparent",
+                  }}
+                >
+                  {acknowledged ? (
+                    <Check className="h-3 w-3" style={{ color: "var(--brand-spectrum-from, hsl(var(--primary)))" }} />
+                  ) : (
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                  )}
+                  <span className="text-foreground">{name}</span>
+                  <span className="text-muted-foreground">· {acknowledged ? "acknowledged" : "pending"}</span>
+                </Badge>
+              );
+            })}
+            {isAuthor && (
+              <TagPicker
+                noteId={note.id}
+                currentUserId={currentUserId!}
+                existingTaggedIds={taggedUserIds}
+                onTagged={() => {
+                  qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
+                }}
+              />
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Tag picker                                                         */
+/* ------------------------------------------------------------------ */
+
+function TagPicker({
+  noteId,
+  currentUserId,
+  existingTaggedIds,
+  onTagged,
+}: {
+  noteId: string;
+  currentUserId: string;
+  existingTaggedIds: string[];
+  onTagged: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const { data: agencyUsers = [], isLoading } = useQuery({
+    queryKey: ["portal_users_agency_for_tag"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portal_users")
+        .select("id, full_name, role")
+        .eq("approved", true)
+        .order("full_name", { ascending: true });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+
+  const selectable = useMemo(
+    () => agencyUsers.filter((u: any) => u.id !== currentUserId),
+    [agencyUsers, currentUserId]
+  );
+
+  const handleTag = async (userId: string, name: string) => {
+    if (existingTaggedIds.includes(userId)) {
+      toast.info(`${name} is already tagged`);
+      return;
+    }
+    setBusyId(userId);
+    try {
+      const { error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .insert({ note_id: noteId, tagged_user_id: userId });
+      if (error) {
+        if ((error as any).code === "23505") {
+          toast.info(`${name} is already tagged`);
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(`Tagged ${name}`);
+      }
+      onTagged();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "Failed to tag");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[11px] gap-1 border-dashed border-border/60"
+        >
+          <UserPlus className="h-3 w-3" /> Tag
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <div className="px-3 py-2 border-b border-border/60">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Tag a teammate
+          </div>
+        </div>
+        <div className="max-h-64 overflow-y-auto py-1">
+          {isLoading ? (
+            <div className="px-3 py-3 text-xs text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+            </div>
+          ) : selectable.length === 0 ? (
+            <div className="px-3 py-3 text-xs text-muted-foreground">
+              No teammates available.
+            </div>
+          ) : (
+            selectable.map((u: any) => {
+              const already = existingTaggedIds.includes(u.id);
+              const busy = busyId === u.id;
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => handleTag(u.id, u.full_name || "User")}
+                  disabled={busy || already}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-muted/60 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium text-foreground truncate">
+                      {u.full_name || "Unnamed"}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {u.role}
+                    </div>
+                  </div>
+                  {busy ? (
+                    <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                  ) : already ? (
+                    <Check className="h-3 w-3 shrink-0" style={{ color: "var(--brand-spectrum-from, hsl(var(--primary)))" }} />
+                  ) : null}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
