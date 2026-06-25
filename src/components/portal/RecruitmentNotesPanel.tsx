@@ -35,18 +35,28 @@ function renderInline(s: string) {
 
 function stripTitleFromBody(title: string, body: string): string {
   if (!title.trim() || !body.trim()) return body;
-  const normalizedTitle = title.trim().toLowerCase();
+
+  const clean = (s: string) =>
+    s
+      .trim()
+      .replace(/^#{1,6}\s+/, "")          // heading markers
+      .replace(/^\*\*|\*\*$/g, "")       // bold **
+      .replace(/^\*|\*$/g, "")           // italics *
+      .replace(/^_|_$/g, "")              // underline _
+      .replace(/^`|`$/g, "")              // inline code `
+      .trim();
+
+  const normalizedTitle = clean(title).toLowerCase();
   const lines = body.replace(/\r\n/g, "\n").split("\n");
-  const firstLine = lines[0].trim();
-  const headingMatch = /^(#{1,6})\s+(.*)$/.exec(firstLine);
-  if (headingMatch) {
-    const headingText = headingMatch[2].trim().toLowerCase();
-    if (headingText === normalizedTitle) {
-      return lines.slice(1).join("\n").trimStart();
-    }
-  }
+
+  // skip leading blank lines
+  let firstIdx = 0;
+  while (firstIdx < lines.length && !lines[firstIdx].trim()) firstIdx++;
+  if (firstIdx >= lines.length) return body;
+
+  const firstLine = clean(lines[firstIdx]);
   if (firstLine.toLowerCase() === normalizedTitle) {
-    return lines.slice(1).join("\n").trimStart();
+    return lines.slice(firstIdx + 1).join("\n").trimStart();
   }
   return body;
 }
