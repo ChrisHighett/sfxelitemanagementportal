@@ -4785,6 +4785,15 @@ export default function SFXPathwaysPortal() {
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "scout" && <AgentScoutView />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "recruitment-notes" && (
+        <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+          <div>
+            <h1 className="text-xl font-semibold">Recruitment & Retention Notes</h1>
+            <p className="text-sm text-muted-foreground">Voice-captured, AI-structured notes shared across your agency.</p>
+          </div>
+          <RecruitmentNotesPanel />
+        </div>
+      )}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "reviews" && (
