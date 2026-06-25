@@ -3899,8 +3899,11 @@ function AgentScoutView() {
               {f === "Pack Sent" ? "Mgmt Pack Sent" : f}
             </button>
           ))}
-        </div>
       </div>
+
+      <RecruitmentNotesPanel />
+
+
 
       {showForm && (
         <Card className="border-dashed border-primary/40 bg-primary/5">
