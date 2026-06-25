@@ -25,6 +25,7 @@ import { DashboardSkeleton } from "@/components/brand/Skeletons";
 import { User } from "lucide-react";
 import ScoutPipeline from "@/components/portal/ScoutPipeline";
 import RecruitmentNotesPanel from "@/components/portal/RecruitmentNotesPanel";
+import PendingRecruitmentTagsBadge from "@/components/portal/PendingRecruitmentTagsBadge";
 import LostReasonModal from "@/components/portal/LostReasonModal";
 import { useOfflineQueue } from "@/hooks/useOfflineQueue";
 import { supabase } from "@/integrations/supabase/client";
