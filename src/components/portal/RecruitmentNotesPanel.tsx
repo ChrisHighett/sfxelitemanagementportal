@@ -454,7 +454,7 @@ function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }
     queryFn: async () => {
       const { data, error } = await supabase
         .from("portal_users")
-        .select("id, full_name, role")
+        .select("id, display_name, email, role")
         .in("id", taggedUserIds);
       if (error) throw error;
       return (data || []) as any[];
@@ -486,7 +486,7 @@ function NoteCard({ note, currentUserId }: { note: any; currentUserId?: string }
           <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
             {tags.map((t: any) => {
               const u = userMap[t.tagged_user_id];
-              const name = u?.full_name || "Unknown";
+              const name = u?.display_name || u?.email || "Unknown";
               const acknowledged = t.status === "acknowledged";
               return (
                 <Badge
@@ -550,9 +550,9 @@ function TagPicker({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("portal_users")
-        .select("id, full_name, role")
+        .select("id, display_name, email, role")
         .eq("approved", true)
-        .order("full_name", { ascending: true });
+        .order("display_name", { ascending: true });
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -624,13 +624,13 @@ function TagPicker({
               return (
                 <button
                   key={u.id}
-                  onClick={() => handleTag(u.id, u.full_name || "User")}
+                  onClick={() => handleTag(u.id, u.display_name || u.email || "User")}
                   disabled={busy || already}
                   className="w-full text-left px-3 py-2 text-xs hover:bg-muted/60 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
                     <div className="font-medium text-foreground truncate">
-                      {u.full_name || "Unnamed"}
+                      {u.display_name || u.email || "Unnamed"}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       {u.role}
