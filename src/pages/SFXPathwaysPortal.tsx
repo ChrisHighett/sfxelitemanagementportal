@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle, LogOut } from "lucide-react";
+import { Loader2, CalendarDays, ClipboardList, FileText, LayoutDashboard, Library, Mail, Phone, Plus, Shield, Sparkles, Users, AlertTriangle, Mic, Mic2, Upload, Menu, WifiOff, Pencil, UserPlus, Check, X, Binoculars, ChevronDown, BookOpen, MessageSquarePlus, CheckCircle2, XCircle, LogOut, NotebookPen } from "lucide-react";
 import VoiceProfileSettings from "@/components/portal/VoiceProfileSettings";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WeeklyPlanner from "@/components/portal/WeeklyPlanner";
@@ -82,7 +82,7 @@ function scorePill(score: number) {
   );
 }
 
-const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[]> = {
+const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; indent?: boolean }[]> = {
   athlete: [
     { key: "dash", label: "Dashboard", icon: LayoutDashboard },
     { key: "reviews", label: "My Reviews", icon: ClipboardList },
@@ -101,11 +101,13 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "voice", label: "My Voice", icon: Mic2 },
   ],
   admin: [
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
@@ -115,6 +117,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   eleva_ops: [
     { key: "roster", label: "Roster", icon: Users },
     { key: "scout", label: "Scout", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
@@ -123,6 +126,7 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType }[
   ],
   scout: [
     { key: "leads", label: "My Leads", icon: Binoculars },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen, indent: true },
     { key: "signed", label: "Signed", icon: CheckCircle2 },
     { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
