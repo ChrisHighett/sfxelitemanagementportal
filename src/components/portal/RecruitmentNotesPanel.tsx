@@ -613,15 +613,16 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
                     background: acknowledged
                       ? "var(--brand-base-soft, hsl(var(--muted)))"
                       : "transparent",
+                    color: acknowledged ? "var(--bone)" : undefined,
                   }}
                 >
                   {acknowledged ? (
-                    <Check className="h-3 w-3" style={{ color: "var(--brand-spectrum-from, hsl(var(--primary)))" }} />
+                    <Check className="h-3 w-3" style={{ color: "var(--bone)" }} />
                   ) : (
                     <Clock className="h-3 w-3 text-muted-foreground" />
                   )}
-                  <span className="text-foreground">{name}</span>
-                  <span className="text-muted-foreground">· {acknowledged ? "acknowledged" : "pending"}</span>
+                  <span className={acknowledged ? "" : "text-foreground"}>{name}</span>
+                  <span className={acknowledged ? "opacity-80" : "text-muted-foreground"}>· {acknowledged ? "acknowledged" : "pending"}</span>
                 </Badge>
               );
             })}
