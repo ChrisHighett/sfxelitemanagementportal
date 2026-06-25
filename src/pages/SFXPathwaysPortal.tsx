@@ -3353,6 +3353,8 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
         ))}
       </div>
 
+      <RecruitmentNotesPanel />
+
       {showForm && (
         <Card className="border-dashed border-primary/40 bg-primary/5">
           <CardHeader className="pb-2">
@@ -3882,6 +3884,7 @@ function AgentScoutView() {
         </div>
       )}
 
+      <RecruitmentNotesPanel />
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
@@ -3901,10 +3904,6 @@ function AgentScoutView() {
           ))}
         </div>
       </div>
-
-      <RecruitmentNotesPanel />
-
-
 
       {showForm && (
         <Card className="border-dashed border-primary/40 bg-primary/5">
