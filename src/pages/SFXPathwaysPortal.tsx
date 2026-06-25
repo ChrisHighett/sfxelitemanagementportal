@@ -3882,6 +3882,7 @@ function AgentScoutView() {
         </div>
       )}
 
+      <RecruitmentNotesPanel />
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
