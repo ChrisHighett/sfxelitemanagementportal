@@ -364,7 +364,7 @@ export default function RecruitmentNotesPanel() {
               />
               <div className="rounded-md border border-border/60 bg-muted/20 p-3">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Preview</div>
-                <Markdown source={body} />
+                <Markdown source={stripTitleFromBody(title, body)} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button size="sm" variant="ghost" onClick={cancel} disabled={saving}>Discard</Button>
