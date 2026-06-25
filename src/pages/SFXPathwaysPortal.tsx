@@ -3345,9 +3345,12 @@ function ScoutPortal({ autoOpenForm = false, view = "active" }: { autoOpenForm?:
           <h1 className="text-xl font-semibold">{viewTitle}</h1>
           <p className="text-sm text-muted-foreground">{viewSubtitle}</p>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4" />Add lead
-        </Button>
+        <div className="flex items-center gap-2">
+          <PendingRecruitmentTagsBadge view="scout" />
+          <Button size="sm" className="gap-1.5" onClick={() => { setEditingLead(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4" />Add lead
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
