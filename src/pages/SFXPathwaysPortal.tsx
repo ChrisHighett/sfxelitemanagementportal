@@ -3902,10 +3902,6 @@ function AgentScoutView() {
         </div>
       </div>
 
-      <RecruitmentNotesPanel />
-
-
-
       {showForm && (
         <Card className="border-dashed border-primary/40 bg-primary/5">
           <CardHeader className="pb-2">
