@@ -33,6 +33,24 @@ function renderInline(s: string) {
   return out;
 }
 
+function stripTitleFromBody(title: string, body: string): string {
+  if (!title.trim() || !body.trim()) return body;
+  const normalizedTitle = title.trim().toLowerCase();
+  const lines = body.replace(/\r\n/g, "\n").split("\n");
+  const firstLine = lines[0].trim();
+  const headingMatch = /^(#{1,6})\s+(.*)$/.exec(firstLine);
+  if (headingMatch) {
+    const headingText = headingMatch[2].trim().toLowerCase();
+    if (headingText === normalizedTitle) {
+      return lines.slice(1).join("\n").trimStart();
+    }
+  }
+  if (firstLine.toLowerCase() === normalizedTitle) {
+    return lines.slice(1).join("\n").trimStart();
+  }
+  return body;
+}
+
 function Markdown({ source }: { source: string }) {
   const html = useMemo(() => {
     const lines = source.replace(/\r\n/g, "\n").split("\n");
@@ -346,7 +364,7 @@ export default function RecruitmentNotesPanel() {
               />
               <div className="rounded-md border border-border/60 bg-muted/20 p-3">
                 <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Preview</div>
-                <Markdown source={body} />
+                <Markdown source={stripTitleFromBody(title, body)} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button size="sm" variant="ghost" onClick={cancel} disabled={saving}>Discard</Button>
@@ -398,7 +416,7 @@ export default function RecruitmentNotesPanel() {
                         })}
                       </div>
                     </div>
-                    <Markdown source={n.body || ""} />
+                    <Markdown source={stripTitleFromBody(n.title || "", n.body || "")} />
                   </CardContent>
                 </Card>
               </li>
