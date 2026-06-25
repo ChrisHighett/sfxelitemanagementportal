@@ -184,10 +184,13 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                 <button
                   key={it.key}
                   onClick={() => onNav(it.key)}
-                  className="relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm transition-colors"
+                  className="relative flex w-full items-center gap-3 rounded-[10px] py-2.5 text-sm transition-colors"
                   style={{
                     color: isActive ? "#fff" : "rgba(255,255,255,0.62)",
                     background: isActive ? "var(--brand-base-soft)" : "transparent",
+                    paddingLeft: it.indent ? 32 : 12,
+                    paddingRight: 12,
+                    fontSize: it.indent ? 12.5 : undefined,
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) e.currentTarget.style.background = "var(--brand-base-soft)";
@@ -204,7 +207,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
                     />
                   )}
                   <Icon
-                    className="h-4 w-4"
+                    className={it.indent ? "h-3.5 w-3.5" : "h-4 w-4"}
                     style={{ color: isActive ? "var(--brand-spectrum-from)" : undefined }}
                   />
                   <span className="flex-1 text-left">{it.label}</span>
