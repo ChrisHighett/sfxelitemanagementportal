@@ -416,7 +416,7 @@ export default function RecruitmentNotesPanel() {
                         })}
                       </div>
                     </div>
-                    <Markdown source={n.body || ""} />
+                    <Markdown source={stripTitleFromBody(n.title || "", n.body || "")} />
                   </CardContent>
                 </Card>
               </li>
