@@ -3833,6 +3833,16 @@ function AgentScoutView() {
 
 
   const navigate = useNavigate();
+
+  function gotoRecruitmentNotes() {
+    const params = new URLSearchParams();
+    params.set("view", "agent");
+    params.set("tab", "recruitment-notes");
+    if (pendingTags.length === 1) params.set("focus", pendingTags[0].note_id);
+    else if (pendingTags.length > 1) params.set("pendingOnly", "1");
+    navigate(`/portal?${params.toString()}`);
+  }
+
   const qc = useQueryClient();
 
   function openAthleteProfile(athleteId: string) {
