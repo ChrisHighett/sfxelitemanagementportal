@@ -3740,6 +3740,22 @@ function AgentScoutView() {
     },
   });
 
+  const { data: pendingTags = [] } = useQuery({
+    queryKey: ["my_pending_recruitment_tags", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .select("id, note_id, created_at")
+        .eq("tagged_user_id", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    refetchInterval: 60_000,
+  });
+
   const filtered = leads.filter((l: any) => {
     const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
     if (filter === "Pursue" && l.triage_decision !== "Pursue") return false;
@@ -3817,6 +3833,16 @@ function AgentScoutView() {
 
 
   const navigate = useNavigate();
+
+  function gotoRecruitmentNotes() {
+    const params = new URLSearchParams();
+    params.set("view", "agent");
+    params.set("tab", "recruitment-notes");
+    if (pendingTags.length === 1) params.set("focus", pendingTags[0].note_id);
+    else if (pendingTags.length > 1) params.set("pendingOnly", "1");
+    navigate(`/portal?${params.toString()}`);
+  }
+
   const qc = useQueryClient();
 
   function openAthleteProfile(athleteId: string) {
@@ -3853,7 +3879,7 @@ function AgentScoutView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {[
           { key: "watching", label: "Watching", value: watching.length, color: watching.length > 0 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))", border: "" },
           { key: "pursuing", label: "Pursuing", value: pursue.length, color: "hsl(var(--primary))", border: "" },
@@ -3880,6 +3906,23 @@ function AgentScoutView() {
             </div>
           );
         })}
+        <div
+          className="rounded-lg border bg-card p-3 text-center cursor-pointer hover:bg-muted/40 transition-colors"
+          onClick={gotoRecruitmentNotes}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") gotoRecruitmentNotes(); }}
+        >
+          <div
+            className="text-2xl font-semibold num"
+            style={{ color: pendingTags.length > 0 ? "var(--brand-spectrum-from, hsl(var(--primary)))" : "hsl(var(--muted-foreground))" }}
+          >
+            {pendingTags.length}
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5 leading-tight inline-flex items-center gap-1 justify-center">
+            Recruitment Notes
+          </div>
+        </div>
       </div>
 
       {signedOpen && signed.length > 0 && (
