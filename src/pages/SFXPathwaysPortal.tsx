@@ -3879,7 +3879,7 @@ function AgentScoutView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         {[
           { key: "watching", label: "Watching", value: watching.length, color: watching.length > 0 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))", border: "" },
           { key: "pursuing", label: "Pursuing", value: pursue.length, color: "hsl(var(--primary))", border: "" },
@@ -3906,24 +3906,8 @@ function AgentScoutView() {
             </div>
           );
         })}
-        <div
-          className="rounded-lg border bg-card p-3 text-center cursor-pointer hover:bg-muted/40 transition-colors"
-          onClick={gotoRecruitmentNotes}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") gotoRecruitmentNotes(); }}
-        >
-          <div
-            className="text-2xl font-semibold num"
-            style={{ color: pendingTags.length > 0 ? "var(--brand-spectrum-from, hsl(var(--primary)))" : "hsl(var(--muted-foreground))" }}
-          >
-            {pendingTags.length}
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5 leading-tight inline-flex items-center gap-1 justify-center">
-            Recruitment Notes
-          </div>
-        </div>
       </div>
+
 
       {signedOpen && signed.length > 0 && (
         <div className="rounded-lg border bg-card p-3 space-y-1.5">
