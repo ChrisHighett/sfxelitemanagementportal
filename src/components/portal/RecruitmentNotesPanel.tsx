@@ -508,9 +508,20 @@ export default function RecruitmentNotesPanel() {
 /* Note card with tags                                                */
 /* ------------------------------------------------------------------ */
 
-function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId?: string; highlight?: boolean }) {
+function NoteCard({
+  note,
+  currentUserId,
+  highlight,
+  defaultExpanded,
+}: {
+  note: any;
+  currentUserId?: string;
+  highlight?: boolean;
+  defaultExpanded?: boolean;
+}) {
   const qc = useQueryClient();
   const isAuthor = !!currentUserId && note.author_id === currentUserId;
+  const [expanded, setExpanded] = useState(!!defaultExpanded);
 
   const { data: tags = [] } = useQuery({
     queryKey: ["recruitment_note_tags", note.id],
@@ -552,7 +563,8 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
     [tags, currentUserId]
   );
   const [acking, setAcking] = useState(false);
-  const acknowledgeMine = useCallback(async () => {
+  const acknowledgeMine = useCallback(async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!myPendingTag || acking) return;
     setAcking(true);
     const { error } = await supabase
@@ -570,85 +582,106 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
 
   const accent = highlight || !!myPendingTag;
 
+  const tagChips = (
+    <>
+      {tags.map((t: any) => {
+        const u = userMap[t.tagged_user_id];
+        const name = u?.display_name || u?.email || "Unknown";
+        const acknowledged = t.status === "acknowledged";
+        return (
+          <Badge
+            key={t.id}
+            variant="outline"
+            className="gap-1 text-[10px] font-normal border-border/60 px-1.5 py-0"
+            style={{
+              background: acknowledged
+                ? "var(--brand-base-soft, hsl(var(--muted)))"
+                : "transparent",
+              color: acknowledged ? "var(--bone)" : undefined,
+            }}
+          >
+            {acknowledged ? (
+              <Check className="h-2.5 w-2.5" style={{ color: "var(--bone)" }} />
+            ) : (
+              <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+            )}
+            <span className={acknowledged ? "" : "text-foreground"}>{name}</span>
+          </Badge>
+        );
+      })}
+    </>
+  );
+
   return (
-    <Card
-      className="shadow-sm transition-all"
+    <div
+      className="rounded-md border bg-card shadow-sm transition-all"
       style={{
         borderColor: accent
           ? "var(--brand-spectrum-from, hsl(var(--primary)))"
-          : undefined,
+          : "hsl(var(--border) / 0.6)",
         boxShadow: accent
-          ? "0 0 0 2px var(--brand-base-soft, hsl(var(--muted)))"
+          ? "0 0 0 1px var(--brand-base-soft, hsl(var(--muted)))"
           : undefined,
       }}
     >
-
-      <CardContent className="p-4">
-        <div className="flex items-baseline justify-between gap-3 mb-2">
-          <h3 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
+      {/* Summary row — click to toggle */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/30 rounded-md"
+        aria-expanded={expanded}
+      >
+        <ChevronRight
+          className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
+        />
+        <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-semibold tracking-tight text-foreground truncate">
             {note.title || "Untitled note"}
-            {myPendingTag && (
-              <span
-                className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded"
-                style={{
-                  background: "var(--brand-base-soft, hsl(var(--muted)))",
-                  color: "var(--brand-spectrum-from, hsl(var(--primary)))",
-                }}
-              >
-                <Bell className="h-3 w-3" /> Tagged for you
-              </span>
-            )}
-          </h3>
-          <div className="text-[11px] font-mono text-muted-foreground shrink-0">
-            {new Date(note.created_at).toLocaleDateString("en-AU", {
-              day: "numeric", month: "short", year: "numeric",
-            })}
-          </div>
+          </span>
+          {myPendingTag && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{
+                background: "var(--brand-base-soft, hsl(var(--muted)))",
+                color: "var(--brand-spectrum-from, hsl(var(--primary)))",
+              }}
+            >
+              <Bell className="h-3 w-3" /> Tagged for you
+            </span>
+          )}
+          <span className="flex flex-wrap items-center gap-1">{tagChips}</span>
         </div>
-        <Markdown source={stripTitleFromBody(note.title || "", note.body || "")} />
+        {myPendingTag && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={acknowledgeMine}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") acknowledgeMine(e as any);
+            }}
+            className="inline-flex items-center gap-1 h-6 px-2 text-[11px] rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60 shrink-0"
+            aria-disabled={acking}
+          >
+            <Check className="h-3 w-3" />
+            {acking ? "…" : "Acknowledge"}
+          </span>
+        )}
+        <span className="text-[11px] font-mono text-muted-foreground shrink-0">
+          {new Date(note.created_at).toLocaleDateString("en-AU", {
+            day: "numeric", month: "short", year: "numeric",
+          })}
+        </span>
+      </button>
 
-        {(tags.length > 0 || isAuthor || myPendingTag) && (
-          <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
-            {myPendingTag && (
-              <Button
-                size="sm"
-                variant="default"
-                className="h-7 px-2.5 text-[11px] gap-1"
-                disabled={acking}
-                onClick={acknowledgeMine}
-              >
-                <Check className="h-3 w-3" />
-                {acking ? "Acknowledging…" : "Acknowledge"}
-              </Button>
-            )}
-
-            {tags.map((t: any) => {
-              const u = userMap[t.tagged_user_id];
-              const name = u?.display_name || u?.email || "Unknown";
-              const acknowledged = t.status === "acknowledged";
-              return (
-                <Badge
-                  key={t.id}
-                  variant="outline"
-                  className="gap-1 text-[11px] font-normal border-border/60"
-                  style={{
-                    background: acknowledged
-                      ? "var(--brand-base-soft, hsl(var(--muted)))"
-                      : "transparent",
-                    color: acknowledged ? "var(--bone)" : undefined,
-                  }}
-                >
-                  {acknowledged ? (
-                    <Check className="h-3 w-3" style={{ color: "var(--bone)" }} />
-                  ) : (
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                  )}
-                  <span className={acknowledged ? "" : "text-foreground"}>{name}</span>
-                  <span className={acknowledged ? "opacity-80" : "text-muted-foreground"}>· {acknowledged ? "acknowledged" : "pending"}</span>
-                </Badge>
-              );
-            })}
-            {isAuthor && (
+      {/* Expanded body */}
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 border-t border-border/60">
+          <Markdown source={stripTitleFromBody(note.title || "", note.body || "")} />
+          {isAuthor && (
+            <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+                Tag teammates
+              </span>
               <TagPicker
                 noteId={note.id}
                 currentUserId={currentUserId!}
@@ -657,11 +690,11 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
                   qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
                 }}
               />
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
