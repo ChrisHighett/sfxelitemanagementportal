@@ -3740,6 +3740,22 @@ function AgentScoutView() {
     },
   });
 
+  const { data: pendingTags = [] } = useQuery({
+    queryKey: ["my_pending_recruitment_tags", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("recruitment_note_tags" as any)
+        .select("id, note_id, created_at")
+        .eq("tagged_user_id", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    refetchInterval: 60_000,
+  });
+
   const filtered = leads.filter((l: any) => {
     const days = Math.floor((Date.now() - new Date(l.last_stage_change_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24));
     if (filter === "Pursue" && l.triage_decision !== "Pursue") return false;
