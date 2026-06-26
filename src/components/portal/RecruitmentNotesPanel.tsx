@@ -540,40 +540,44 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
     return m;
   }, [taggedUsers]);
 
-  // Auto-acknowledge: if the current user is tagged on this note with status
-  // 'pending', flip it to 'acknowledged' the moment they see this card.
+  // Find current user's pending tag on this note (if any). Acknowledgement is
+  // manual via the "Acknowledge" button below — do NOT auto-flip on view.
   const myPendingTag = useMemo(
     () => tags.find((t: any) => t.tagged_user_id === currentUserId && t.status === "pending"),
     [tags, currentUserId]
   );
-  const ackedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!myPendingTag || ackedRef.current === myPendingTag.id) return;
-    ackedRef.current = myPendingTag.id;
-    (async () => {
-      const { error } = await supabase
-        .from("recruitment_note_tags" as any)
-        .update({ status: "acknowledged", acknowledged_at: new Date().toISOString() })
-        .eq("id", myPendingTag.id);
-      if (!error) {
-        qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
-        qc.invalidateQueries({ queryKey: ["my_pending_recruitment_tags", currentUserId] });
-      }
-    })();
-  }, [myPendingTag, qc, note.id, currentUserId]);
+  const [acking, setAcking] = useState(false);
+  const acknowledgeMine = useCallback(async () => {
+    if (!myPendingTag || acking) return;
+    setAcking(true);
+    const { error } = await supabase
+      .from("recruitment_note_tags" as any)
+      .update({ status: "acknowledged", acknowledged_at: new Date().toISOString() })
+      .eq("id", myPendingTag.id);
+    setAcking(false);
+    if (error) {
+      toast.error("Could not acknowledge");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["recruitment_note_tags", note.id] });
+    qc.invalidateQueries({ queryKey: ["my_pending_recruitment_tags", currentUserId] });
+  }, [myPendingTag, acking, qc, note.id, currentUserId]);
+
+  const accent = highlight || !!myPendingTag;
 
   return (
     <Card
       className="shadow-sm transition-all"
       style={{
-        borderColor: highlight
+        borderColor: accent
           ? "var(--brand-spectrum-from, hsl(var(--primary)))"
           : undefined,
-        boxShadow: highlight
+        boxShadow: accent
           ? "0 0 0 2px var(--brand-base-soft, hsl(var(--muted)))"
           : undefined,
       }}
     >
+
       <CardContent className="p-4">
         <div className="flex items-baseline justify-between gap-3 mb-2">
           <h3 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
@@ -598,8 +602,21 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
         </div>
         <Markdown source={stripTitleFromBody(note.title || "", note.body || "")} />
 
-        {(tags.length > 0 || isAuthor) && (
+        {(tags.length > 0 || isAuthor || myPendingTag) && (
           <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
+            {myPendingTag && (
+              <Button
+                size="sm"
+                variant="default"
+                className="h-7 px-2.5 text-[11px] gap-1"
+                disabled={acking}
+                onClick={acknowledgeMine}
+              >
+                <Check className="h-3 w-3" />
+                {acking ? "Acknowledging…" : "Acknowledge"}
+              </Button>
+            )}
+
             {tags.map((t: any) => {
               const u = userMap[t.tagged_user_id];
               const name = u?.display_name || u?.email || "Unknown";
