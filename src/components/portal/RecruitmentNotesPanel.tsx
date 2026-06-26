@@ -327,7 +327,8 @@ export default function RecruitmentNotesPanel() {
   const focusId = searchParams.get("focus");
   const pendingOnly = searchParams.get("pendingOnly") === "1";
 
-  // Sort: focused note first, then pending-for-me, then by date desc (already).
+  // Sort: focused note first, then notes where the current user has a pending
+  // tag, then by created_at desc.
   const orderedNotes = useMemo(() => {
     const arr = [...notes];
     arr.sort((a: any, b: any) => {
@@ -337,7 +338,9 @@ export default function RecruitmentNotesPanel() {
       const aPending = myPendingNoteIds.has(a.id) ? 1 : 0;
       const bPending = myPendingNoteIds.has(b.id) ? 1 : 0;
       if (aPending !== bPending) return bPending - aPending;
-      return 0;
+      const at = new Date(a.created_at).getTime();
+      const bt = new Date(b.created_at).getTime();
+      return bt - at;
     });
     return arr;
   }, [notes, focusId, myPendingNoteIds]);
