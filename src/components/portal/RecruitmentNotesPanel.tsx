@@ -602,8 +602,21 @@ function NoteCard({ note, currentUserId, highlight }: { note: any; currentUserId
         </div>
         <Markdown source={stripTitleFromBody(note.title || "", note.body || "")} />
 
-        {(tags.length > 0 || isAuthor) && (
+        {(tags.length > 0 || isAuthor || myPendingTag) && (
           <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center gap-1.5">
+            {myPendingTag && (
+              <Button
+                size="sm"
+                variant="default"
+                className="h-7 px-2.5 text-[11px] gap-1"
+                disabled={acking}
+                onClick={acknowledgeMine}
+              >
+                <Check className="h-3 w-3" />
+                {acking ? "Acknowledging…" : "Acknowledge"}
+              </Button>
+            )}
+
             {tags.map((t: any) => {
               const u = userMap[t.tagged_user_id];
               const name = u?.display_name || u?.email || "Unknown";
