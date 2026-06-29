@@ -805,8 +805,17 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                           : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                       }`}
                     >
-                      {m.approved ? "Active" : "Pending"}
+                      {m.approved ? "Active" : "Inactive"}
                     </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      disabled={savingId === m.id}
+                      onClick={() => toggleActive(m.id, !!m.approved)}
+                    >
+                      {m.approved ? "Deactivate" : "Reactivate"}
+                    </Button>
                   </div>
                 </div>
               );
