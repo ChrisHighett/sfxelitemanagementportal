@@ -717,16 +717,45 @@ function TagPicker({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data: agencyUsers = [], isLoading } = useQuery({
-    queryKey: ["portal_users_agency_for_tag"],
+    queryKey: ["portal_users_agency_for_tag", currentUserId],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1) Load caller's own scoping fields
+      const { data: me, error: meErr } = await supabase
         .from("portal_users")
-        .select("id, display_name, email, role")
+        .select("id, agency_id, division_id, role")
+        .eq("id", currentUserId)
+        .maybeSingle();
+      if (meErr) throw meErr;
+      if (!me?.agency_id) return [];
+
+      const isCrossDivision =
+        me.role === "admin" || me.role === "gm" || me.role === "eleva_ops";
+
+      // 2) Pull approved teammates in the same agency
+      const { data: peers, error: peersErr } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email, role, division_id, agency_id")
         .eq("approved", true)
+        .eq("agency_id", me.agency_id)
         .order("display_name", { ascending: true });
-      if (error) throw error;
-      return (data || []) as any[];
+      if (peersErr) throw peersErr;
+
+      // 3) If cross-division roles, return everyone in agency
+      if (isCrossDivision) return (peers || []) as any[];
+
+      // 4) Otherwise: division-scope only if agency has >1 division
+      const { count, error: cErr } = await supabase
+        .from("agency_divisions" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("agency_id", me.agency_id);
+      if (cErr) throw cErr;
+
+      if ((count ?? 0) <= 1) return (peers || []) as any[];
+
+      return (peers || []).filter(
+        (u: any) => u.division_id && u.division_id === me.division_id
+      ) as any[];
     },
   });
 
@@ -734,6 +763,7 @@ function TagPicker({
     () => agencyUsers.filter((u: any) => u.id !== currentUserId),
     [agencyUsers, currentUserId]
   );
+
 
   const handleTag = async (userId: string, name: string) => {
     if (existingTaggedIds.includes(userId)) {

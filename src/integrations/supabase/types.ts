@@ -1911,6 +1911,10 @@ export type Database = {
           expires_at: string
         }[]
       }
+      can_tag_user_in_agency: {
+        Args: { _target_user_id: string }
+        Returns: boolean
+      }
       create_agency: {
         Args: {
           _legal_name: string
