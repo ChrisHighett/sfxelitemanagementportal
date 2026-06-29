@@ -95,6 +95,35 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_divisions: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_divisions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_activity: {
         Row: {
           action_type: string

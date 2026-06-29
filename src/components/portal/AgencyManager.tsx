@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Building2, ChevronRight, ArrowLeft, Pencil } from "lucide-react";
+import { Loader2, Plus, Building2, ChevronRight, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 interface Agency {
   id: string;
@@ -391,6 +391,10 @@ function AgencyDetail({ agency, onBack, onSaved }: AgencyDetailProps) {
 
       <MembersCard agencyId={current.id} />
 
+      <DivisionsCard agencyId={current.id} />
+
+
+
 
 
       <Card className="border-dashed">
@@ -725,4 +729,111 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     </Card>
   );
 }
+
+interface Division {
+  id: string;
+  agency_id: string;
+  name: string;
+  created_at: string;
+}
+
+function DivisionsCard({ agencyId }: { agencyId: string }) {
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("agency_divisions" as any)
+      .select("*")
+      .eq("agency_id", agencyId)
+      .order("name", { ascending: true });
+    if (error) {
+      toast({ title: "Failed to load divisions", description: error.message, variant: "destructive" });
+    } else {
+      setDivisions(((data as unknown) ?? []) as Division[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agencyId]);
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setAdding(true);
+    const { error } = await supabase
+      .from("agency_divisions" as any)
+      .insert({ agency_id: agencyId, name: trimmed } as any);
+    setAdding(false);
+    if (error) {
+      toast({ title: "Could not add division", description: error.message, variant: "destructive" });
+      return;
+    }
+    setName("");
+    toast({ title: "Division added" });
+    load();
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("agency_divisions" as any).delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not remove", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Division removed" });
+    load();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Divisions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={add} className="flex gap-2">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Add a division (e.g. AFL, Cricket)"
+          />
+          <Button type="submit" size="sm" disabled={adding || !name.trim()}>
+            {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          </Button>
+        </form>
+
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : divisions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No divisions yet.</p>
+        ) : (
+          <div className="divide-y">
+            {divisions.map((d) => (
+              <div key={d.id} className="py-2 flex items-center justify-between gap-2">
+                <span className="font-medium">{d.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => remove(d.id)}
+                  aria-label={`Remove ${d.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
