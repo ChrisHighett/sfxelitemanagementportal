@@ -2879,6 +2879,20 @@ function AgentManager() {
                     </Select>
                   </div>
                 </div>
+                {divisions.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Division (optional)</Label>
+                    <Select value={inviteDivision} onValueChange={setInviteDivision}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="No division" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No division</SelectItem>
+                        {divisions.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
                   No email is sent. The app generates a secure invite link — you copy it and send it from your own email. The recipient sets their password and joins as {inviteRole === "scout" ? "a scout" : "an agent"}.
                 </p>
