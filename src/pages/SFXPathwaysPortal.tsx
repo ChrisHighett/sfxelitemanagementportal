@@ -2311,14 +2311,12 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
                               {res.file_name}
                             </button>
                           ) : (
-                            <a
-                              href={getPublicUrl(res.file_path, res.source) || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="truncate text-primary hover:underline flex-1"
+                            <button
+                              onClick={() => handleDownloadGlobal(res.file_path, res.file_name)}
+                              className="truncate text-primary hover:underline flex-1 text-left"
                             >
                               {res.file_name}
-                            </a>
+                            </button>
                           )}
                           {isAgentOrAdmin && (
                             <Button
