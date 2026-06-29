@@ -377,6 +377,7 @@ export type Database = {
       }
       athlete_scorecards: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           brand_score: number
           created_at: string
@@ -393,6 +394,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           brand_score: number
           created_at?: string
@@ -409,6 +411,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           brand_score?: number
           created_at?: string
@@ -425,6 +428,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_scorecards_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_scorecards_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -588,6 +598,7 @@ export type Database = {
       }
       athlete_timeline_events: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           created_at: string
           created_by: string | null
@@ -599,6 +610,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           created_at?: string
           created_by?: string | null
@@ -610,6 +622,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           created_at?: string
           created_by?: string | null
@@ -621,6 +634,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "athlete_timeline_events_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "athlete_timeline_events_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -980,6 +1000,7 @@ export type Database = {
       }
       follow_up_tasks: {
         Row: {
+          agency_id: string | null
           assigned_to: string
           athlete_id: string
           completed_at: string | null
@@ -993,6 +1014,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           assigned_to: string
           athlete_id: string
           completed_at?: string | null
@@ -1006,6 +1028,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           assigned_to?: string
           athlete_id?: string
           completed_at?: string | null
@@ -1019,6 +1042,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "follow_up_tasks_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "follow_up_tasks_athlete_id_fkey"
             columns: ["athlete_id"]
@@ -1269,6 +1299,7 @@ export type Database = {
       }
       parent_engagement_scores: {
         Row: {
+          agency_id: string | null
           athlete_id: string
           created_at: string
           created_by: string | null
@@ -1286,6 +1317,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           athlete_id: string
           created_at?: string
           created_by?: string | null
@@ -1303,6 +1335,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           athlete_id?: string
           created_at?: string
           created_by?: string | null
@@ -1320,6 +1353,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "parent_engagement_scores_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "parent_engagement_scores_athlete_id_fkey"
             columns: ["athlete_id"]
