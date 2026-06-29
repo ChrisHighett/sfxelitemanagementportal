@@ -753,7 +753,7 @@ function DivisionsCard({ agencyId }: { agencyId: string }) {
     if (error) {
       toast({ title: "Failed to load divisions", description: error.message, variant: "destructive" });
     } else {
-      setDivisions((data ?? []) as Division[]);
+      setDivisions(((data as unknown) ?? []) as Division[]);
     }
     setLoading(false);
   };
