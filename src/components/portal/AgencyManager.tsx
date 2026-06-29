@@ -658,32 +658,75 @@ interface Member {
   email: string | null;
   role: string | null;
   approved: boolean | null;
+  division_id: string | null;
+}
+
+interface DivisionLite {
+  id: string;
+  name: string;
 }
 
 function MembersCard({ agencyId }: { agencyId: string }) {
   const [members, setMembers] = useState<Member[]>([]);
+  const [divisions, setDivisions] = useState<DivisionLite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const [{ data: mData, error: mErr }, { data: dData, error: dErr }] = await Promise.all([
+      supabase
+        .from("portal_users")
+        .select("id, display_name, email, role, approved, division_id" as any)
+        .eq("agency_id", agencyId)
+        .order("role", { ascending: true }),
+      supabase
+        .from("agency_divisions" as any)
+        .select("id, name")
+        .eq("agency_id", agencyId)
+        .order("name", { ascending: true }),
+    ]);
+    if (mErr) {
+      toast({ title: "Failed to load members", description: mErr.message, variant: "destructive" });
+      setMembers([]);
+    } else {
+      setMembers(((mData as unknown) ?? []) as Member[]);
+    }
+    if (dErr) {
+      toast({ title: "Failed to load divisions", description: dErr.message, variant: "destructive" });
+      setDivisions([]);
+    } else {
+      setDivisions(((dData as unknown) ?? []) as DivisionLite[]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("portal_users")
-        .select("id, display_name, email, role, approved")
-        .eq("agency_id", agencyId)
-        .order("role", { ascending: true });
-      if (cancelled) return;
-      if (error) {
-        toast({ title: "Failed to load members", description: error.message, variant: "destructive" });
-        setMembers([]);
-      } else {
-        setMembers((data ?? []) as Member[]);
-      }
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agencyId]);
+
+  const setDivision = async (userId: string, divisionId: string | null) => {
+    setSavingId(userId);
+    const { data, error } = await supabase.rpc("set_member_division" as any, {
+      _user_id: userId,
+      _division_id: divisionId,
+    });
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Could not update division", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = (Array.isArray(data) ? data[0] : data) as { division_id: string | null } | null;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === userId ? { ...m, division_id: updated?.division_id ?? divisionId } : m,
+      ),
+    );
+    toast({ title: "Division updated" });
+  };
+
+  const NONE_VALUE = "__none__";
 
   return (
     <Card>
@@ -699,36 +742,65 @@ function MembersCard({ agencyId }: { agencyId: string }) {
           <p className="text-sm text-muted-foreground">No members yet.</p>
         ) : (
           <div className="divide-y">
-            {members.map((m) => (
-              <div key={m.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {m.email ?? "no email"}
+            {members.map((m) => {
+              const current = divisions.find((d) => d.id === m.division_id);
+              return (
+                <div key={m.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {m.email ?? "no email"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
+                    {divisions.length === 0 ? (
+                      <span className="text-muted-foreground">Division: —</span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Division:</span>
+                        <Select
+                          value={m.division_id ?? NONE_VALUE}
+                          onValueChange={(v) =>
+                            setDivision(m.id, v === NONE_VALUE ? null : v)
+                          }
+                          disabled={savingId === m.id}
+                        >
+                          <SelectTrigger className="h-7 w-[140px] text-xs">
+                            <SelectValue placeholder={current?.name ?? "—"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NONE_VALUE}>—</SelectItem>
+                            {divisions.map((d) => (
+                              <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {savingId === m.id && <Loader2 className="h-3 w-3 animate-spin" />}
+                      </div>
+                    )}
+                    <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground capitalize">
+                      {m.role ?? "—"}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded ${
+                        m.approved
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {m.approved ? "Active" : "Pending"}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground capitalize">
-                    {m.role ?? "—"}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded ${
-                      m.approved
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    }`}
-                  >
-                    {m.approved ? "Active" : "Pending"}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
+
 
 interface Division {
   id: string;
