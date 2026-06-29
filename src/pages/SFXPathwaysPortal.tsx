@@ -2717,6 +2717,7 @@ function AgentManager() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("agent");
+  const [inviteDivision, setInviteDivision] = useState<string>("__none__");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<{ url: string; email: string; role: string } | null>(null);
@@ -2732,6 +2733,18 @@ function AgentManager() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
+    },
+  });
+
+  const { data: divisions = [] } = useQuery({
+    queryKey: ["agency_divisions_for_invite"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agency_divisions" as any)
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return (data || []) as { id: string; name: string }[];
     },
   });
 
