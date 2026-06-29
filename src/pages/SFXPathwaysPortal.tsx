@@ -2203,18 +2203,13 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     }
   }
 
-  function getPublicUrl(filePath: string, source?: "global" | "athlete") {
-    if (source === "athlete") {
-      // athlete-resources bucket is private, use signed URL
-      return null; // handled via click
-    }
-    const { data } = supabase.storage.from("resources").getPublicUrl(filePath);
-    return data.publicUrl;
-  }
-
-  async function openPrivateResource(filePath: string, fileName: string) {
+  async function openPrivateResource(
+    filePath: string,
+    fileName: string,
+    bucket: "resources" | "athlete-resources" = "athlete-resources",
+  ) {
     const { data, error } = await supabase.storage
-      .from("athlete-resources")
+      .from(bucket)
       .download(filePath);
 
     if (error || !data) {
@@ -2237,7 +2232,11 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   async function handleDownloadAthlete(filePath: string) {
     const fileName = filePath.split("/").pop() || "resource";
-    await openPrivateResource(filePath, fileName);
+    await openPrivateResource(filePath, fileName, "athlete-resources");
+  }
+
+  async function handleDownloadGlobal(filePath: string, fileName: string) {
+    await openPrivateResource(filePath, fileName, "resources");
   }
 
   const showContracts = role === "athlete" || role === "parent" || role === "agent";
