@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Building2, ChevronRight, ArrowLeft, Pencil } from "lucide-react";
+import { Loader2, Plus, Building2, ChevronRight, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
 interface Agency {
   id: string;
