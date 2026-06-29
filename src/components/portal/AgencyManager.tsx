@@ -389,6 +389,10 @@ function AgencyDetail({ agency, onBack, onSaved }: AgencyDetailProps) {
         }}
       />
 
+      <MembersCard agencyId={current.id} />
+
+
+
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle className="text-base text-muted-foreground">Feature toggles</CardTitle>
