@@ -391,6 +391,10 @@ function AgencyDetail({ agency, onBack, onSaved }: AgencyDetailProps) {
 
       <MembersCard agencyId={current.id} />
 
+      <DivisionsCard agencyId={current.id} />
+
+
+
 
 
       <Card className="border-dashed">
