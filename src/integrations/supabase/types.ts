@@ -1944,6 +1944,33 @@ export type Database = {
       is_eleva_ops: { Args: never; Returns: boolean }
       is_guardian_of: { Args: { _athlete_id: string }; Returns: boolean }
       is_portal_admin: { Args: { user_id: string }; Returns: boolean }
+      update_agency: {
+        Args: {
+          _agency_id: string
+          _legal_name: string
+          _region?: string
+          _sport?: string
+          _trading_name: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          id: string
+          legal_name: string | null
+          name: string
+          region: string | null
+          slug: string
+          sport: string | null
+          trading_name: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       user_has_athlete_access: {
         Args: { athlete_uuid: string; user_uuid: string }
         Returns: boolean
