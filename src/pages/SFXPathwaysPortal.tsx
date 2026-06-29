@@ -2759,7 +2759,12 @@ function AgentManager() {
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-agent", {
-        body: { email: inviteEmail.trim(), displayName: inviteName.trim(), role: inviteRole },
+        body: {
+          email: inviteEmail.trim(),
+          displayName: inviteName.trim(),
+          role: inviteRole,
+          divisionId: inviteDivision && inviteDivision !== "__none__" ? inviteDivision : null,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -2788,7 +2793,7 @@ function AgentManager() {
   }
 
   function resetInviteForm() {
-    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent"); setInviteDivision("__none__");
     setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
   }
 
