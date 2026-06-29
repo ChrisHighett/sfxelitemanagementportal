@@ -16,39 +16,81 @@ export type Database = {
     Tables: {
       agencies: {
         Row: {
+          abn: string | null
+          account_status: string | null
+          agreed_price: number | null
+          billing_address: string | null
+          billing_contact_name: string | null
+          billing_cycle: string | null
+          billing_email: string | null
+          contract_start_date: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           id: string
+          included_client_limit: number | null
           legal_name: string | null
+          licensed_seats: number | null
           name: string
+          payment_terms: string | null
+          plan_tier: string | null
           region: string | null
           slug: string
           sport: string | null
           trading_name: string | null
+          trial_period_months: number | null
           updated_at: string
         }
         Insert: {
+          abn?: string | null
+          account_status?: string | null
+          agreed_price?: number | null
+          billing_address?: string | null
+          billing_contact_name?: string | null
+          billing_cycle?: string | null
+          billing_email?: string | null
+          contract_start_date?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           id?: string
+          included_client_limit?: number | null
           legal_name?: string | null
+          licensed_seats?: number | null
           name: string
+          payment_terms?: string | null
+          plan_tier?: string | null
           region?: string | null
           slug: string
           sport?: string | null
           trading_name?: string | null
+          trial_period_months?: number | null
           updated_at?: string
         }
         Update: {
+          abn?: string | null
+          account_status?: string | null
+          agreed_price?: number | null
+          billing_address?: string | null
+          billing_contact_name?: string | null
+          billing_cycle?: string | null
+          billing_email?: string | null
+          contract_start_date?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string | null
           id?: string
+          included_client_limit?: number | null
           legal_name?: string | null
+          licensed_seats?: number | null
           name?: string
+          payment_terms?: string | null
+          plan_tier?: string | null
           region?: string | null
           slug?: string
           sport?: string | null
           trading_name?: string | null
+          trial_period_months?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1838,15 +1880,29 @@ export type Database = {
           _trading_name: string
         }
         Returns: {
+          abn: string | null
+          account_status: string | null
+          agreed_price: number | null
+          billing_address: string | null
+          billing_contact_name: string | null
+          billing_cycle: string | null
+          billing_email: string | null
+          contract_start_date: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           id: string
+          included_client_limit: number | null
           legal_name: string | null
+          licensed_seats: number | null
           name: string
+          payment_terms: string | null
+          plan_tier: string | null
           region: string | null
           slug: string
           sport: string | null
           trading_name: string | null
+          trial_period_months: number | null
           updated_at: string
         }
         SetofOptions: {
@@ -1953,15 +2009,80 @@ export type Database = {
           _trading_name: string
         }
         Returns: {
+          abn: string | null
+          account_status: string | null
+          agreed_price: number | null
+          billing_address: string | null
+          billing_contact_name: string | null
+          billing_cycle: string | null
+          billing_email: string | null
+          contract_start_date: string | null
           created_at: string
           created_by: string | null
+          currency: string | null
           id: string
+          included_client_limit: number | null
           legal_name: string | null
+          licensed_seats: number | null
           name: string
+          payment_terms: string | null
+          plan_tier: string | null
           region: string | null
           slug: string
           sport: string | null
           trading_name: string | null
+          trial_period_months: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_agency_billing: {
+        Args: {
+          _abn?: string
+          _account_status?: string
+          _agency_id: string
+          _agreed_price?: number
+          _billing_address?: string
+          _billing_contact_name?: string
+          _billing_cycle?: string
+          _billing_email?: string
+          _contract_start_date?: string
+          _currency?: string
+          _included_client_limit?: number
+          _licensed_seats?: number
+          _payment_terms?: string
+          _plan_tier?: string
+          _trial_period_months?: number
+        }
+        Returns: {
+          abn: string | null
+          account_status: string | null
+          agreed_price: number | null
+          billing_address: string | null
+          billing_contact_name: string | null
+          billing_cycle: string | null
+          billing_email: string | null
+          contract_start_date: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          id: string
+          included_client_limit: number | null
+          legal_name: string | null
+          licensed_seats: number | null
+          name: string
+          payment_terms: string | null
+          plan_tier: string | null
+          region: string | null
+          slug: string
+          sport: string | null
+          trading_name: string | null
+          trial_period_months: number | null
           updated_at: string
         }
         SetofOptions: {
