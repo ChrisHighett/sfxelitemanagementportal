@@ -1878,9 +1878,11 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
       return;
     }
 
-    const { data: publicData } = supabase.storage.from("resources").getPublicUrl(data.file_path);
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("resources")
+      .createSignedUrl(data.file_path, 60 * 10);
     setSavedTrackerName(data.file_name);
-    setSavedTrackerUrl(publicData.publicUrl);
+    setSavedTrackerUrl(signErr ? null : signed?.signedUrl ?? null);
   }, [trackerFilePath]);
 
   useEffect(() => {
