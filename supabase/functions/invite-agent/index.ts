@@ -49,7 +49,7 @@ serve(async (req) => {
       });
     }
 
-    const { email, displayName, role = "agent" } = await req.json();
+    const { email, displayName, role = "agent", divisionId = null } = await req.json();
     if (!email || !displayName) {
       return new Response(JSON.stringify({ error: "Email and name are required" }), {
         status: 400,
@@ -57,6 +57,38 @@ serve(async (req) => {
       });
     }
     const safeRole = role === "scout" ? "scout" : "agent";
+
+    // Resolve inviter's agency (used to validate division belongs to same agency)
+    const { data: inviter } = await admin
+      .from("portal_users")
+      .select("agency_id")
+      .eq("id", claims.claims.sub)
+      .maybeSingle();
+    const inviterAgencyId = inviter?.agency_id ?? null;
+
+    // Validate divisionId belongs to the inviter's agency (if provided)
+    let validatedDivisionId: string | null = null;
+    if (divisionId) {
+      const { data: div } = await admin
+        .from("agency_divisions")
+        .select("id, agency_id")
+        .eq("id", divisionId)
+        .maybeSingle();
+      if (!div) {
+        return new Response(JSON.stringify({ error: "Division not found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // eleva_ops may invite into any agency; otherwise the division must match inviter's agency
+      if (portalUser.role !== "eleva_ops" && div.agency_id !== inviterAgencyId) {
+        return new Response(JSON.stringify({ error: "Division does not belong to your agency" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      validatedDivisionId = div.id;
+    }
 
     const origin = req.headers.get("origin") || "https://sfxelitemanagementportal.lovable.app";
 
@@ -76,18 +108,18 @@ serve(async (req) => {
     const actionLink: string | undefined = linkData?.properties?.action_link;
     if (!newUser?.id || !actionLink) throw new Error("Failed to generate invite link");
 
+    const upsertRow: Record<string, unknown> = {
+      id: newUser.id,
+      role: safeRole,
+      approved: true,
+      display_name: displayName,
+      email,
+    };
+    if (validatedDivisionId) upsertRow.division_id = validatedDivisionId;
+
     const { error: puError } = await admin
       .from("portal_users")
-      .upsert(
-        {
-          id: newUser.id,
-          role: safeRole,
-          approved: true,
-          display_name: displayName,
-          email,
-        },
-        { onConflict: "id" },
-      );
+      .upsert(upsertRow, { onConflict: "id" });
     if (puError) throw puError;
 
     return new Response(
