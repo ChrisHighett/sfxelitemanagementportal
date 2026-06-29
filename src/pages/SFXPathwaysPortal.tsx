@@ -43,6 +43,7 @@ import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics from "@/components/portal/AdminAnalytics";
+import AgencyManager from "@/components/portal/AgencyManager";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
 import TranscriptImportDialog from "@/components/portal/TranscriptImportDialog";
 
