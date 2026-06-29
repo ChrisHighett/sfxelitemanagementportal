@@ -4110,6 +4110,8 @@ function AgentScoutView() {
 }
 
 function AdminSecurity() {
+  const { data: roleData } = useUserRole();
+  const isElevaOps = roleData?.role === "eleva_ops";
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
       {/* Hero */}
@@ -4127,6 +4129,7 @@ function AdminSecurity() {
             Pending Approvals
             <PendingApprovalsDot className="ml-2" />
           </TabsTrigger>
+          {isElevaOps && <TabsTrigger value="agencies">Agencies</TabsTrigger>}
           <TabsTrigger value="security">Security & Access</TabsTrigger>
         </TabsList>
         <TabsContent value="analytics" className="mt-4">
@@ -4142,6 +4145,11 @@ function AdminSecurity() {
           <PendingInvitesList />
           <PendingApprovals />
         </TabsContent>
+        {isElevaOps && (
+          <TabsContent value="agencies" className="mt-4">
+            <AgencyManager />
+          </TabsContent>
+        )}
         <TabsContent value="security" className="mt-4 space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Access Control Overview</CardTitle></CardHeader>
