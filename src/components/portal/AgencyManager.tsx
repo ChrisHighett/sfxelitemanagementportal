@@ -726,6 +726,23 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     toast({ title: "Division updated" });
   };
 
+  const toggleActive = async (userId: string, currentApproved: boolean) => {
+    setSavingId(userId);
+    const { error } = await supabase.rpc("set_member_active" as any, {
+      _user_id: userId,
+      _active: !currentApproved,
+    });
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Could not update status", description: error.message, variant: "destructive" });
+      return;
+    }
+    setMembers((prev) =>
+      prev.map((m) => (m.id === userId ? { ...m, approved: !currentApproved } : m)),
+    );
+    toast({ title: currentApproved ? "Member deactivated" : "Member reactivated" });
+  };
+
   const NONE_VALUE = "__none__";
 
   return (
@@ -788,8 +805,17 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                           : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                       }`}
                     >
-                      {m.approved ? "Active" : "Pending"}
+                      {m.approved ? "Active" : "Inactive"}
                     </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      disabled={savingId === m.id}
+                      onClick={() => toggleActive(m.id, !!m.approved)}
+                    >
+                      {m.approved ? "Deactivate" : "Reactivate"}
+                    </Button>
                   </div>
                 </div>
               );
