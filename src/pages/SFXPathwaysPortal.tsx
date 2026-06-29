@@ -1878,9 +1878,11 @@ function TrackerDownloadCard({ athlete, role }: { athlete: Athlete; role?: Role 
       return;
     }
 
-    const { data: publicData } = supabase.storage.from("resources").getPublicUrl(data.file_path);
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("resources")
+      .createSignedUrl(data.file_path, 60 * 10);
     setSavedTrackerName(data.file_name);
-    setSavedTrackerUrl(publicData.publicUrl);
+    setSavedTrackerUrl(signErr ? null : signed?.signedUrl ?? null);
   }, [trackerFilePath]);
 
   useEffect(() => {
@@ -2201,18 +2203,13 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
     }
   }
 
-  function getPublicUrl(filePath: string, source?: "global" | "athlete") {
-    if (source === "athlete") {
-      // athlete-resources bucket is private, use signed URL
-      return null; // handled via click
-    }
-    const { data } = supabase.storage.from("resources").getPublicUrl(filePath);
-    return data.publicUrl;
-  }
-
-  async function openPrivateResource(filePath: string, fileName: string) {
+  async function openPrivateResource(
+    filePath: string,
+    fileName: string,
+    bucket: "resources" | "athlete-resources" = "athlete-resources",
+  ) {
     const { data, error } = await supabase.storage
-      .from("athlete-resources")
+      .from(bucket)
       .download(filePath);
 
     if (error || !data) {
@@ -2235,7 +2232,11 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
 
   async function handleDownloadAthlete(filePath: string) {
     const fileName = filePath.split("/").pop() || "resource";
-    await openPrivateResource(filePath, fileName);
+    await openPrivateResource(filePath, fileName, "athlete-resources");
+  }
+
+  async function handleDownloadGlobal(filePath: string, fileName: string) {
+    await openPrivateResource(filePath, fileName, "resources");
   }
 
   const showContracts = role === "athlete" || role === "parent" || role === "agent";
@@ -2310,14 +2311,12 @@ function Resources({ athlete, role }: { athlete?: Athlete; role?: Role }) {
                               {res.file_name}
                             </button>
                           ) : (
-                            <a
-                              href={getPublicUrl(res.file_path, res.source) || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="truncate text-primary hover:underline flex-1"
+                            <button
+                              onClick={() => handleDownloadGlobal(res.file_path, res.file_name)}
+                              className="truncate text-primary hover:underline flex-1 text-left"
                             >
                               {res.file_name}
-                            </a>
+                            </button>
                           )}
                           {isAgentOrAdmin && (
                             <Button
