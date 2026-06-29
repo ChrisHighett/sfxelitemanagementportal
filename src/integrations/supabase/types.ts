@@ -17,21 +17,39 @@ export type Database = {
       agencies: {
         Row: {
           created_at: string
+          created_by: string | null
           id: string
+          legal_name: string | null
           name: string
+          region: string | null
           slug: string
+          sport: string | null
+          trading_name: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           id?: string
+          legal_name?: string | null
           name: string
+          region?: string | null
           slug: string
+          sport?: string | null
+          trading_name?: string | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           id?: string
+          legal_name?: string | null
           name?: string
+          region?: string | null
           slug?: string
+          sport?: string | null
+          trading_name?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1811,6 +1829,32 @@ export type Database = {
           activation_token: string
           expires_at: string
         }[]
+      }
+      create_agency: {
+        Args: {
+          _legal_name: string
+          _region?: string
+          _sport?: string
+          _trading_name: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          id: string
+          legal_name: string | null
+          name: string
+          region: string | null
+          slug: string
+          sport: string | null
+          trading_name: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_conversation_action_task: {
         Args: {
