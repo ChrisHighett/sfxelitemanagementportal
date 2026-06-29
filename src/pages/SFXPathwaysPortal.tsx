@@ -2717,6 +2717,7 @@ function AgentManager() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("agent");
+  const [inviteDivision, setInviteDivision] = useState<string>("__none__");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<{ url: string; email: string; role: string } | null>(null);
@@ -2735,6 +2736,18 @@ function AgentManager() {
     },
   });
 
+  const { data: divisions = [] } = useQuery({
+    queryKey: ["agency_divisions_for_invite"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agency_divisions" as any)
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return ((data || []) as unknown) as { id: string; name: string }[];
+    },
+  });
+
 
 
 
@@ -2746,7 +2759,12 @@ function AgentManager() {
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-agent", {
-        body: { email: inviteEmail.trim(), displayName: inviteName.trim(), role: inviteRole },
+        body: {
+          email: inviteEmail.trim(),
+          displayName: inviteName.trim(),
+          role: inviteRole,
+          divisionId: inviteDivision && inviteDivision !== "__none__" ? inviteDivision : null,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -2775,7 +2793,7 @@ function AgentManager() {
   }
 
   function resetInviteForm() {
-    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent"); setInviteDivision("__none__");
     setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
   }
 
@@ -2861,6 +2879,20 @@ function AgentManager() {
                     </Select>
                   </div>
                 </div>
+                {divisions.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Division (optional)</Label>
+                    <Select value={inviteDivision} onValueChange={setInviteDivision}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="No division" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No division</SelectItem>
+                        {divisions.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">
                   No email is sent. The app generates a secure invite link — you copy it and send it from your own email. The recipient sets their password and joins as {inviteRole === "scout" ? "a scout" : "an agent"}.
                 </p>
