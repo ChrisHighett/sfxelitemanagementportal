@@ -389,6 +389,10 @@ function AgencyDetail({ agency, onBack, onSaved }: AgencyDetailProps) {
         }}
       />
 
+      <MembersCard agencyId={current.id} />
+
+
+
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle className="text-base text-muted-foreground">Feature toggles</CardTitle>
@@ -643,3 +647,82 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+interface Member {
+  id: string;
+  display_name: string | null;
+  email: string | null;
+  role: string | null;
+  approved: boolean | null;
+}
+
+function MembersCard({ agencyId }: { agencyId: string }) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email, role, approved")
+        .eq("agency_id", agencyId)
+        .order("role", { ascending: true });
+      if (cancelled) return;
+      if (error) {
+        toast({ title: "Failed to load members", description: error.message, variant: "destructive" });
+        setMembers([]);
+      } else {
+        setMembers((data ?? []) as Member[]);
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [agencyId]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Users in this agency ({members.length})</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : members.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No members yet.</p>
+        ) : (
+          <div className="divide-y">
+            {members.map((m) => (
+              <div key={m.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {m.email ?? "no email"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground capitalize">
+                    {m.role ?? "—"}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded ${
+                      m.approved
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    }`}
+                  >
+                    {m.approved ? "Active" : "Pending"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
