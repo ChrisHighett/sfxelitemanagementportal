@@ -659,6 +659,7 @@ interface Member {
   role: string | null;
   approved: boolean | null;
   division_id: string | null;
+  phone: string | null;
 }
 
 interface DivisionLite {
