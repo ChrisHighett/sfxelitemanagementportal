@@ -61,7 +61,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops" | "divisional_gm";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -133,9 +133,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
     { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
   ],
+  divisional_gm: [
+    { key: "dash", label: "Division Dashboard", icon: LayoutDashboard },
+    { key: "athlete", label: "Athlete Profile", icon: FileText },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+  ],
 };
 
-const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops"];
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm"];
 
 function isPortalRole(value?: string | null): value is Role {
   return !!value && PORTAL_ROLES.includes(value as Role);
@@ -4572,6 +4577,91 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   );
 }
 
+function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const { user } = useAuth();
+  const { data: gmInfo } = useQuery({
+    queryKey: ["gm_division_info", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: pu } = await supabase
+        .from("portal_users")
+        .select("display_name, division_id, agency_id")
+        .eq("id", user!.id)
+        .maybeSingle();
+      let divisionName: string | null = null;
+      let agencyName: string | null = null;
+      if (pu?.division_id) {
+        const { data: div } = await supabase
+          .from("agency_divisions")
+          .select("name")
+          .eq("id", pu.division_id)
+          .maybeSingle();
+        divisionName = div?.name ?? null;
+      }
+      if (pu?.agency_id) {
+        const { data: ag } = await supabase
+          .from("agencies")
+          .select("name")
+          .eq("id", pu.agency_id)
+          .maybeSingle();
+        agencyName = ag?.name ?? null;
+      }
+      return { displayName: pu?.display_name ?? null, divisionName, agencyName };
+    },
+  });
+
+  const divisionLabel = gmInfo?.divisionName ? `${gmInfo.divisionName} Division` : "Your Division";
+  const subtitle = gmInfo?.agencyName
+    ? `${gmInfo.agencyName} · Divisional GM oversight`
+    : "Divisional GM oversight";
+
+  return (
+    <div className="space-y-5 p-4 md:p-6 max-w-5xl mx-auto">
+      <HeroBanner
+        title={divisionLabel}
+        subtitle={subtitle}
+        size="sm"
+        badge={<Badge variant="secondary" className="text-[10px]">Divisional GM</Badge>}
+      />
+
+      <ContentSection
+        title={`Athletes in ${divisionLabel}`}
+        subtitle={`${athletes.length} athlete${athletes.length === 1 ? "" : "s"} assigned to agents in your division`}
+      >
+        {athletes.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No athletes are currently assigned to agents in your division.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-2">
+            {athletes.map((a) => (
+              <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate">{a.name}</span>
+                      {statusBadge(a.status)}
+                      <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                    Open
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </ContentSection>
+    </div>
+  );
+}
+
 export default function SFXPathwaysPortal() {
   const { data: userRoleData, isLoading: roleLoading } = useUserRole();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -4733,6 +4823,7 @@ export default function SFXPathwaysPortal() {
                <SelectContent>
                  <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                  <SelectItem value="admin">Admin</SelectItem>
+                 <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                  <SelectItem value="agent">Agent</SelectItem>
                  <SelectItem value="scout">Scout</SelectItem>
                  <SelectItem value="parent">Parent</SelectItem>
@@ -4760,6 +4851,53 @@ export default function SFXPathwaysPortal() {
       </Shell>
     );
   }
+
+  // Divisional GM role: dedicated landing dashboard showing division athletes.
+  if (effectiveRole === "divisional_gm") {
+    const handleOpenProfile = (id: string) => {
+      setSelectedAthleteId(id);
+      setActive("athlete");
+    };
+    return (
+      <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
+        {isAdmin && (
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+            <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="scout">Scout</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="athlete">Athlete</SelectItem>
+              </SelectContent>
+            </Select>
+            {roleOverride && (
+              <Badge variant="secondary" className="text-xs gap-1">Previewing {roleOverride}</Badge>
+            )}
+          </div>
+        )}
+        {active === "athlete" && athlete ? (
+          <AthleteProfileAgentView key={athlete.id} athlete={athlete} />
+        ) : active === "reviews" && athlete ? (
+          <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+            <HeroBanner title={`Development Tracker — ${athlete.name}`} subtitle="Read-only oversight" size="sm" />
+            <EditableReviews key={athlete.id} athlete={athlete} />
+          </div>
+        ) : (
+          <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
+        )}
+      </Shell>
+    );
+  }
+
+
 
   // For athlete/parent with no allocated athlete (skip when admin is previewing)
   if (!isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && !allocatedAthleteId) {
@@ -4816,6 +4954,7 @@ export default function SFXPathwaysPortal() {
              <SelectContent>
                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                <SelectItem value="admin">Admin</SelectItem>
+               <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                <SelectItem value="agent">Agent</SelectItem>
                <SelectItem value="scout">Scout</SelectItem>
                <SelectItem value="parent">Parent</SelectItem>
