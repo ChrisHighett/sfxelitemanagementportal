@@ -2725,9 +2725,12 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
 }
 
 function AgentManager() {
+  const { data: roleData } = useUserRole();
+  const isElevaOps = roleData?.role === "eleva_ops";
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("agent");
+  const [inviteAgency, setInviteAgency] = useState<string>("");
   const [inviteDivision, setInviteDivision] = useState<string>("__none__");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -2747,17 +2750,40 @@ function AgentManager() {
     },
   });
 
-  const { data: divisions = [] } = useQuery({
-    queryKey: ["agency_divisions_for_invite"],
+  const { data: agencies = [] } = useQuery({
+    queryKey: ["agencies_for_invite", isElevaOps],
+    enabled: isElevaOps,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("agency_divisions" as any)
+        .from("agencies" as any)
         .select("id, name")
         .order("name");
       if (error) throw error;
       return ((data || []) as unknown) as { id: string; name: string }[];
     },
   });
+
+  // For eleva_ops, divisions are scoped to the chosen agency.
+  // For normal admins, show all divisions visible to them (their own agency via RLS).
+  const divisionAgencyFilter = isElevaOps ? inviteAgency : null;
+  const { data: divisions = [] } = useQuery({
+    queryKey: ["agency_divisions_for_invite", divisionAgencyFilter, isElevaOps],
+    queryFn: async () => {
+      let q = supabase
+        .from("agency_divisions" as any)
+        .select("id, name, agency_id")
+        .order("name");
+      if (isElevaOps) {
+        if (!inviteAgency) return [] as { id: string; name: string }[];
+        q = q.eq("agency_id", inviteAgency);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return ((data || []) as unknown) as { id: string; name: string }[];
+    },
+    enabled: isElevaOps ? !!inviteAgency : true,
+  });
+
 
 
 
@@ -2767,6 +2793,10 @@ function AgentManager() {
       toast.error("Name and email are both required");
       return;
     }
+    if (isElevaOps && !inviteAgency) {
+      toast.error("Please choose an agency");
+      return;
+    }
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-agent", {
@@ -2774,6 +2804,7 @@ function AgentManager() {
           email: inviteEmail.trim(),
           displayName: inviteName.trim(),
           role: inviteRole,
+          agencyId: isElevaOps ? inviteAgency : null,
           divisionId: inviteDivision && inviteDivision !== "__none__" ? inviteDivision : null,
         },
       });
@@ -2804,9 +2835,11 @@ function AgentManager() {
   }
 
   function resetInviteForm() {
-    setInviteEmail(""); setInviteName(""); setInviteRole("agent"); setInviteDivision("__none__");
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setInviteAgency(""); setInviteDivision("__none__");
     setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
   }
+
 
 
   async function handleToggleApproved(agentId: string, currentApproved: boolean) {
@@ -2890,11 +2923,38 @@ function AgentManager() {
                     </Select>
                   </div>
                 </div>
-                {divisions.length > 0 && (
+                {isElevaOps && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Agency *</Label>
+                    <Select
+                      value={inviteAgency}
+                      onValueChange={(v) => { setInviteAgency(v); setInviteDivision("__none__"); }}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Choose an agency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agencies.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      Eleva Ops can invite into any agency. The new member will belong to this tenant.
+                    </p>
+                  </div>
+                )}
+                {(!isElevaOps || inviteAgency) && (
                   <div className="space-y-1.5">
                     <Label className="text-xs">Division (optional)</Label>
-                    <Select value={inviteDivision} onValueChange={setInviteDivision}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="No division" /></SelectTrigger>
+                    <Select
+                      value={inviteDivision}
+                      onValueChange={setInviteDivision}
+                      disabled={isElevaOps && !inviteAgency}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder={isElevaOps && !inviteAgency ? "Choose an agency first" : "No division"} />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">No division</SelectItem>
                         {divisions.map((d) => (
@@ -2904,6 +2964,7 @@ function AgentManager() {
                     </Select>
                   </div>
                 )}
+
                 <p className="text-xs text-muted-foreground">
                   No email is sent. The app generates a secure invite link — you copy it and send it from your own email. The recipient sets their password and joins as {inviteRole === "scout" ? "a scout" : "an agent"}.
                 </p>
