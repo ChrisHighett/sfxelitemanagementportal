@@ -4581,6 +4581,14 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
 }
 
 function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const { user: gmUser } = useAuth();
+  const myAthletes = gmUser?.id
+    ? athletes.filter((a) => a.assignedAgentUserId === gmUser.id)
+    : [];
+  return <DivisionalGMDashboardInner athletes={athletes} myAthletes={myAthletes} onOpenProfile={onOpenProfile} />;
+}
+
+function DivisionalGMDashboardInner({ athletes, myAthletes, onOpenProfile }: { athletes: Athlete[]; myAthletes: Athlete[]; onOpenProfile: (id: string) => void }) {
   const { user } = useAuth();
   const { data: gmInfo } = useQuery({
     queryKey: ["gm_division_info", user?.id],
