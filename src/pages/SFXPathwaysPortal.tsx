@@ -4653,39 +4653,51 @@ function DivisionalGMDashboardInner({ athletes, myAthletes, onOpenProfile }: { a
       </ContentSection>
 
       <ContentSection
-        title={`Athletes in ${divisionLabel}`}
-        subtitle={`${athletes.length} athlete${athletes.length === 1 ? "" : "s"} assigned to agents in your division`}
+        title="Needs attention"
+        subtitle="Top division athletes flagged as attention-required"
       >
-        {athletes.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              No athletes are currently assigned to agents in your division.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-2">
-            {athletes.map((a) => (
-              <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
-                <CardContent className="p-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{a.name}</span>
-                      {statusBadge(a.status)}
-                      <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
-                    </div>
-                  </div>
-                  <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
-                    Open
-                  </Button>
+        {(() => {
+          const attention = athletes
+            .filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving")
+            .sort((a, b) => a.wellbeingScore - b.wellbeingScore)
+            .slice(0, 5);
+          if (attention.length === 0) {
+            return (
+              <Card>
+                <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                  No athletes in your division currently need attention. 🎉
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            );
+          }
+          return (
+            <div className="grid gap-2">
+              {attention.map((a) => (
+                <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium truncate">{a.name}</span>
+                        {statusBadge(a.status)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        Wellbeing {a.wellbeingScore}/5 · Agent: {a.assignedAgent}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                      Open
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="text-xs text-muted-foreground px-1 pt-1">
+                Showing {attention.length} of {athletes.filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving").length} flagged. See full Division Roster for all athletes.
+              </div>
+            </div>
+          );
+        })()}
       </ContentSection>
+
 
       <GMAgentPerformancePanel />
     </div>
