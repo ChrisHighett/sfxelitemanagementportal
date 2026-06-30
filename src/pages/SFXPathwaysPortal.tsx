@@ -43,6 +43,8 @@ import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics, { AgentCard } from "@/components/portal/AdminAnalytics";
+import ScoutResponseTimes from "@/components/portal/ScoutResponseTimes";
+import AgentTaskScorecard from "@/components/portal/AgentTaskScorecard";
 import { useAgentKPIs } from "@/hooks/useAgentKPIs";
 import AgencyManager from "@/components/portal/AgencyManager";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
@@ -4869,6 +4871,16 @@ function GMAgentPerformancePanel() {
               ))}
           </div>
         )}
+
+        {/* Scout lead response times — RLS scopes scout_leads to division agents */}
+        <Card>
+          <CardContent className="p-4">
+            <ScoutResponseTimes />
+          </CardContent>
+        </Card>
+
+        {/* Agent task scorecard — RPC scopes to division for GM callers */}
+        <AgentTaskScorecard />
       </div>
     </ContentSection>
   );
