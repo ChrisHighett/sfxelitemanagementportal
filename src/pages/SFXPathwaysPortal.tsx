@@ -4871,6 +4871,16 @@ function GMAgentPerformancePanel() {
               ))}
           </div>
         )}
+
+        {/* Scout lead response times — RLS scopes scout_leads to division agents */}
+        <Card>
+          <CardContent className="p-4">
+            <ScoutResponseTimes />
+          </CardContent>
+        </Card>
+
+        {/* Agent task scorecard — RPC scopes to division for GM callers */}
+        <AgentTaskScorecard />
       </div>
     </ContentSection>
   );
