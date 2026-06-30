@@ -2725,9 +2725,12 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
 }
 
 function AgentManager() {
+  const { data: roleData } = useUserRole();
+  const isElevaOps = roleData?.role === "eleva_ops";
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("agent");
+  const [inviteAgency, setInviteAgency] = useState<string>("");
   const [inviteDivision, setInviteDivision] = useState<string>("__none__");
   const [inviting, setInviting] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -2747,17 +2750,40 @@ function AgentManager() {
     },
   });
 
-  const { data: divisions = [] } = useQuery({
-    queryKey: ["agency_divisions_for_invite"],
+  const { data: agencies = [] } = useQuery({
+    queryKey: ["agencies_for_invite", isElevaOps],
+    enabled: isElevaOps,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("agency_divisions" as any)
+        .from("agencies" as any)
         .select("id, name")
         .order("name");
       if (error) throw error;
       return ((data || []) as unknown) as { id: string; name: string }[];
     },
   });
+
+  // For eleva_ops, divisions are scoped to the chosen agency.
+  // For normal admins, show all divisions visible to them (their own agency via RLS).
+  const divisionAgencyFilter = isElevaOps ? inviteAgency : null;
+  const { data: divisions = [] } = useQuery({
+    queryKey: ["agency_divisions_for_invite", divisionAgencyFilter, isElevaOps],
+    queryFn: async () => {
+      let q = supabase
+        .from("agency_divisions" as any)
+        .select("id, name, agency_id")
+        .order("name");
+      if (isElevaOps) {
+        if (!inviteAgency) return [] as { id: string; name: string }[];
+        q = q.eq("agency_id", inviteAgency);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return ((data || []) as unknown) as { id: string; name: string }[];
+    },
+    enabled: isElevaOps ? !!inviteAgency : true,
+  });
+
 
 
 
