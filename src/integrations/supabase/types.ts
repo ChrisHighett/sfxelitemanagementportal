@@ -2007,6 +2007,7 @@ export type Database = {
         Returns: string
       }
       current_agency_id: { Args: never; Returns: string }
+      current_division_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
       decline_invite: { Args: { _invite_id: string }; Returns: undefined }
       divisional_gm_can_read_athlete: {
