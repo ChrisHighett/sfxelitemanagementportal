@@ -5050,9 +5050,12 @@ export default function SFXPathwaysPortal() {
             </div>
             <RecruitmentNotesPanel />
           </div>
+        ) : active === "roster" ? (
+          <GMDivisionRoster athletes={athletes} onOpenProfile={handleOpenProfile} />
         ) : (
           <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
         )}
+
       </Shell>
     );
   }
