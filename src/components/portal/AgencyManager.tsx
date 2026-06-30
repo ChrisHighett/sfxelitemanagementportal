@@ -788,6 +788,7 @@ function MembersCard({ agencyId }: { agencyId: string }) {
 
   const ROLE_OPTIONS: { value: string; label: string }[] = [
     { value: "agent", label: "Agent" },
+    { value: "scout", label: "Scout" },
     { value: "admin", label: "Admin" },
     { value: "divisional_gm", label: "Divisional GM" },
     { value: "eleva_ops", label: "Eleva Ops" },
