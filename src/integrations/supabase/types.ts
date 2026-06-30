@@ -2009,6 +2009,10 @@ export type Database = {
       current_agency_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
       decline_invite: { Args: { _invite_id: string }; Returns: undefined }
+      divisional_gm_can_read_athlete: {
+        Args: { _athlete_id: string }
+        Returns: boolean
+      }
       finalize_invite_activation: {
         Args: { _display_name: string; _new_user_id: string; _token: string }
         Returns: undefined
@@ -2080,6 +2084,7 @@ export type Database = {
         Args: { athlete_uuid: string }
         Returns: boolean
       }
+      is_divisional_gm: { Args: never; Returns: boolean }
       is_eleva_ops: { Args: never; Returns: boolean }
       is_guardian_of: { Args: { _athlete_id: string }; Returns: boolean }
       is_portal_admin: { Args: { user_id: string }; Returns: boolean }
