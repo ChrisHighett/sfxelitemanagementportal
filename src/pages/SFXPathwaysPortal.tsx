@@ -4577,6 +4577,91 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   );
 }
 
+function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const { user } = useAuth();
+  const { data: gmInfo } = useQuery({
+    queryKey: ["gm_division_info", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: pu } = await supabase
+        .from("portal_users")
+        .select("display_name, division_id, agency_id")
+        .eq("id", user!.id)
+        .maybeSingle();
+      let divisionName: string | null = null;
+      let agencyName: string | null = null;
+      if (pu?.division_id) {
+        const { data: div } = await supabase
+          .from("agency_divisions")
+          .select("name")
+          .eq("id", pu.division_id)
+          .maybeSingle();
+        divisionName = div?.name ?? null;
+      }
+      if (pu?.agency_id) {
+        const { data: ag } = await supabase
+          .from("agencies")
+          .select("name")
+          .eq("id", pu.agency_id)
+          .maybeSingle();
+        agencyName = ag?.name ?? null;
+      }
+      return { displayName: pu?.display_name ?? null, divisionName, agencyName };
+    },
+  });
+
+  const divisionLabel = gmInfo?.divisionName ? `${gmInfo.divisionName} Division` : "Your Division";
+  const subtitle = gmInfo?.agencyName
+    ? `${gmInfo.agencyName} · Divisional GM oversight`
+    : "Divisional GM oversight";
+
+  return (
+    <div className="space-y-5 p-4 md:p-6 max-w-5xl mx-auto">
+      <HeroBanner
+        title={divisionLabel}
+        subtitle={subtitle}
+        size="sm"
+        badge={<Badge variant="secondary" className="text-[10px]">Divisional GM</Badge>}
+      />
+
+      <ContentSection
+        title={`Athletes in ${divisionLabel}`}
+        subtitle={`${athletes.length} athlete${athletes.length === 1 ? "" : "s"} assigned to agents in your division`}
+      >
+        {athletes.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No athletes are currently assigned to agents in your division.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-2">
+            {athletes.map((a) => (
+              <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+                <CardContent className="p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium truncate">{a.name}</span>
+                      {statusBadge(a.status)}
+                      <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                    Open
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </ContentSection>
+    </div>
+  );
+}
+
 export default function SFXPathwaysPortal() {
   const { data: userRoleData, isLoading: roleLoading } = useUserRole();
   const [searchParams, setSearchParams] = useSearchParams();
