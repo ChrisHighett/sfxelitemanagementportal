@@ -133,9 +133,14 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
     { key: "lost", label: "Lost", icon: XCircle },
     { key: "add", label: "Add Lead", icon: Plus },
   ],
+  divisional_gm: [
+    { key: "dash", label: "Division Dashboard", icon: LayoutDashboard },
+    { key: "athlete", label: "Athlete Profile", icon: FileText },
+    { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+  ],
 };
 
-const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops"];
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm"];
 
 function isPortalRole(value?: string | null): value is Role {
   return !!value && PORTAL_ROLES.includes(value as Role);
