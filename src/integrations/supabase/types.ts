@@ -1392,6 +1392,7 @@ export type Database = {
           division_id: string | null
           email: string | null
           id: string
+          phone: string | null
           role: string
           updated_at: string
         }
@@ -1403,6 +1404,7 @@ export type Database = {
           division_id?: string | null
           email?: string | null
           id: string
+          phone?: string | null
           role: string
           updated_at?: string
         }
@@ -1414,6 +1416,7 @@ export type Database = {
           division_id?: string | null
           email?: string | null
           id?: string
+          phone?: string | null
           role?: string
           updated_at?: string
         }
@@ -2099,6 +2102,7 @@ export type Database = {
           division_id: string | null
           email: string | null
           id: string
+          phone: string | null
           role: string
           updated_at: string
         }
@@ -2119,6 +2123,7 @@ export type Database = {
           division_id: string | null
           email: string | null
           id: string
+          phone: string | null
           role: string
           updated_at: string
         }
@@ -2139,6 +2144,7 @@ export type Database = {
           division_id: string | null
           email: string | null
           id: string
+          phone: string | null
           role: string
           updated_at: string
         }
@@ -2237,6 +2243,27 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "agencies"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_member_profile: {
+        Args: { _display_name?: string; _phone?: string; _user_id: string }
+        Returns: {
+          agency_id: string | null
+          approved: boolean
+          created_at: string
+          display_name: string | null
+          division_id: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "portal_users"
           isOneToOne: true
           isSetofReturn: false
         }
