@@ -4661,7 +4661,83 @@ function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[
           </div>
         )}
       </ContentSection>
+
+      <GMAgentPerformancePanel />
     </div>
+  );
+}
+
+function GMAgentPerformancePanel() {
+  const { user } = useAuth();
+  const { data: kpis = [], isLoading: kpisLoading } = useAgentKPIs();
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
+  const { data: divisionAgentIds } = useQuery({
+    queryKey: ["gm_division_agent_ids", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: gm } = await supabase
+        .from("portal_users")
+        .select("agency_id, division_id")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (!gm?.agency_id || !gm?.division_id) return [] as string[];
+      const { data: agents } = await supabase
+        .from("portal_users")
+        .select("id")
+        .eq("role", "agent")
+        .eq("approved", true)
+        .eq("agency_id", gm.agency_id)
+        .eq("division_id", gm.division_id);
+      return (agents ?? []).map((a: any) => a.id as string);
+    },
+  });
+
+  const divisionKpis = useMemo(() => {
+    if (!divisionAgentIds) return [];
+    const allowed = new Set(divisionAgentIds);
+    return kpis.filter((k) => allowed.has(k.agentId));
+  }, [kpis, divisionAgentIds]);
+
+  const selectedKpi = divisionKpis.find((k) => k.agentId === selectedAgentId) || null;
+
+  return (
+    <ContentSection
+      title="Agent performance"
+      subtitle="Review KPIs for agents in your division"
+    >
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground">Select agent:</span>
+            <Select
+              value={selectedAgentId ?? ""}
+              onValueChange={(v) => setSelectedAgentId(v || null)}
+              disabled={kpisLoading || divisionKpis.length === 0}
+            >
+              <SelectTrigger className="w-64 h-8 text-xs">
+                <SelectValue placeholder={divisionKpis.length === 0 ? "No agents in your division" : "Choose an agent…"} />
+              </SelectTrigger>
+              <SelectContent>
+                {divisionKpis.map((k) => (
+                  <SelectItem key={k.agentId} value={k.agentId}>
+                    {k.agentName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedKpi ? (
+            <AgentCard kpi={selectedKpi} />
+          ) : (
+            <div className="text-sm text-muted-foreground py-6 text-center">
+              Select an agent to view their performance.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </ContentSection>
   );
 }
 
