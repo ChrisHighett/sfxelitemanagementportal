@@ -1839,6 +1839,7 @@ export type Database = {
           activated_at: string | null
           activated_user_id: string | null
           activation_token: string | null
+          agency_id: string | null
           approved_at: string | null
           approved_by: string | null
           athlete_first_name: string | null
@@ -1858,6 +1859,7 @@ export type Database = {
           activated_at?: string | null
           activated_user_id?: string | null
           activation_token?: string | null
+          agency_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           athlete_first_name?: string | null
@@ -1877,6 +1879,7 @@ export type Database = {
           activated_at?: string | null
           activated_user_id?: string | null
           activation_token?: string | null
+          agency_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           athlete_first_name?: string | null
@@ -1893,6 +1896,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_invites_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_invites_athlete_id_fkey"
             columns: ["athlete_id"]
