@@ -4636,6 +4636,21 @@ function DivisionalGMDashboardInner({ athletes, myAthletes, onOpenProfile }: { a
       />
 
       <ContentSection
+        title="My Weekly Planner"
+        subtitle={`Tasks across ${myAthletes.length} athlete${myAthletes.length === 1 ? "" : "s"} assigned to you`}
+      >
+        {myAthletes.length === 0 ? (
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              You have no athletes personally assigned to you yet.
+            </CardContent>
+          </Card>
+        ) : (
+          <WeeklyPlanner athletes={myAthletes} />
+        )}
+      </ContentSection>
+
+      <ContentSection
         title={`Athletes in ${divisionLabel}`}
         subtitle={`${athletes.length} athlete${athletes.length === 1 ? "" : "s"} assigned to agents in your division`}
       >
