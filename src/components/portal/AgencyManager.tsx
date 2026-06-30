@@ -861,7 +861,7 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                   <div className="min-w-0">
                     <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">
-                      {m.email ?? "no email"}
+                      {m.email ?? "no email"}{m.phone ? ` · ${m.phone}` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
