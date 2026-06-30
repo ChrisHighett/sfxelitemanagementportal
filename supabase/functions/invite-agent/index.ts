@@ -138,6 +138,8 @@ serve(async (req) => {
       email,
     };
     if (validatedDivisionId) upsertRow.division_id = validatedDivisionId;
+    if (targetAgencyId) upsertRow.agency_id = targetAgencyId;
+
 
     const { error: puError } = await admin
       .from("portal_users")
