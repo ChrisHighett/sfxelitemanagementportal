@@ -2793,6 +2793,10 @@ function AgentManager() {
       toast.error("Name and email are both required");
       return;
     }
+    if (isElevaOps && !inviteAgency) {
+      toast.error("Please choose an agency");
+      return;
+    }
     setInviting(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-agent", {
@@ -2800,6 +2804,7 @@ function AgentManager() {
           email: inviteEmail.trim(),
           displayName: inviteName.trim(),
           role: inviteRole,
+          agencyId: isElevaOps ? inviteAgency : null,
           divisionId: inviteDivision && inviteDivision !== "__none__" ? inviteDivision : null,
         },
       });
@@ -2830,9 +2835,11 @@ function AgentManager() {
   }
 
   function resetInviteForm() {
-    setInviteEmail(""); setInviteName(""); setInviteRole("agent"); setInviteDivision("__none__");
+    setInviteEmail(""); setInviteName(""); setInviteRole("agent");
+    setInviteAgency(""); setInviteDivision("__none__");
     setGeneratedLink(null); setCopied(false); setShowInviteForm(false);
   }
+
 
 
   async function handleToggleApproved(agentId: string, currentApproved: boolean) {
