@@ -4858,7 +4858,7 @@ export default function SFXPathwaysPortal() {
   if (effectiveRole === "divisional_gm") {
     const handleOpenProfile = (id: string) => {
       setSelectedAthleteId(id);
-      setActive("athlete");
+      handleNav("athlete");
     };
     return (
       <Shell role={effectiveRole} active={active} onNav={handleNav}>
@@ -4891,6 +4891,16 @@ export default function SFXPathwaysPortal() {
           <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
             <HeroBanner title={`Development Tracker — ${athlete.name}`} subtitle="Read-only oversight" size="sm" />
             <EditableReviews key={athlete.id} athlete={athlete} />
+          </div>
+        ) : active === "call" && athlete ? (
+          <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />
+        ) : active === "recruitment-notes" ? (
+          <div className="space-y-4 p-4 md:p-6 max-w-4xl mx-auto">
+            <div>
+              <h1 className="text-xl font-semibold">Recruitment & Retention Notes</h1>
+              <p className="text-sm text-muted-foreground">Voice-captured, AI-structured notes shared across your division.</p>
+            </div>
+            <RecruitmentNotesPanel />
           </div>
         ) : (
           <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
