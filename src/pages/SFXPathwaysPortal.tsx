@@ -4670,9 +4670,8 @@ function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[
 function GMAgentPerformancePanel() {
   const { user } = useAuth();
   const { data: kpis = [], isLoading: kpisLoading } = useAgentKPIs();
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
-  const { data: divisionAgentIds } = useQuery({
+  const { data: divisionAgentIds, isLoading: agentsLoading } = useQuery({
     queryKey: ["gm_division_agent_ids", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -4699,44 +4698,79 @@ function GMAgentPerformancePanel() {
     return kpis.filter((k) => allowed.has(k.agentId));
   }, [kpis, divisionAgentIds]);
 
-  const selectedKpi = divisionKpis.find((k) => k.agentId === selectedAgentId) || null;
+  const totalAthletes = divisionKpis.reduce((s, k) => s + k.athleteCount, 0);
+  const totalCalls = divisionKpis.reduce((s, k) => s + k.callsThisMonth, 0);
+  const totalReviews = divisionKpis.reduce((s, k) => s + k.reviewsThisMonth, 0);
+  const avgScore = divisionKpis.length > 0
+    ? Math.round(divisionKpis.reduce((s, k) => s + k.overallScore, 0) / divisionKpis.length)
+    : 0;
+
+  const loading = kpisLoading || agentsLoading;
 
   return (
     <ContentSection
       title="Agent performance"
-      subtitle="Review KPIs for agents in your division"
+      subtitle="KPIs for agents in your division — this month"
     >
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-muted-foreground">Select agent:</span>
-            <Select
-              value={selectedAgentId ?? ""}
-              onValueChange={(v) => setSelectedAgentId(v || null)}
-              disabled={kpisLoading || divisionKpis.length === 0}
-            >
-              <SelectTrigger className="w-64 h-8 text-xs">
-                <SelectValue placeholder={divisionKpis.length === 0 ? "No agents in your division" : "Choose an agent…"} />
-              </SelectTrigger>
-              <SelectContent>
-                {divisionKpis.map((k) => (
-                  <SelectItem key={k.agentId} value={k.agentId}>
-                    {k.agentName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="space-y-4">
+        {/* Summary tiles — division-scoped */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" /> Total athletes
+              </div>
+              <div className="text-2xl font-bold num mt-1">{totalAthletes}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Phone className="h-3 w-3" /> Calls this month
+              </div>
+              <div className="text-2xl font-bold num mt-1">{totalCalls}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <ClipboardList className="h-3 w-3" /> Reviews this month
+              </div>
+              <div className="text-2xl font-bold num mt-1">{totalReviews}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" /> Avg agent score
+              </div>
+              <div className="text-2xl font-bold num mt-1">{avgScore}%</div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {selectedKpi ? (
-            <AgentCard kpi={selectedKpi} />
-          ) : (
-            <div className="text-sm text-muted-foreground py-6 text-center">
-              Select an agent to view their performance.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Agent cards — division-scoped */}
+        {loading ? (
+          <Card>
+            <CardContent className="p-6 text-sm text-muted-foreground">Loading agents…</CardContent>
+          </Card>
+        ) : divisionKpis.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-sm text-muted-foreground">
+              No agents in your division yet.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {divisionKpis
+              .slice()
+              .sort((a, b) => b.overallScore - a.overallScore)
+              .map((kpi) => (
+                <AgentCard key={kpi.agentId} kpi={kpi} />
+              ))}
+          </div>
+        )}
+      </div>
     </ContentSection>
   );
 }
