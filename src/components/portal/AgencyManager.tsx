@@ -672,6 +672,46 @@ function MembersCard({ agencyId }: { agencyId: string }) {
   const [divisions, setDivisions] = useState<DivisionLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editMember, setEditMember] = useState<Member | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
+  const openEdit = (m: Member) => {
+    setEditMember(m);
+    setEditName(m.display_name ?? "");
+    setEditPhone(m.phone ?? "");
+  };
+
+  const saveEdit = async () => {
+    if (!editMember) return;
+    if (!editName.trim()) {
+      toast({ title: "Display name required", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { data, error } = await supabase.rpc("update_member_profile" as any, {
+      _user_id: editMember.id,
+      _display_name: editName.trim(),
+      _phone: editPhone.trim() || null,
+    });
+    setEditSaving(false);
+    if (error) {
+      toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = (Array.isArray(data) ? data[0] : data) as Member | null;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === editMember.id
+          ? { ...m, display_name: updated?.display_name ?? editName.trim(), phone: updated?.phone ?? (editPhone.trim() || null) }
+          : m,
+      ),
+    );
+    setEditMember(null);
+    toast({ title: "Member updated" });
+  };
+
 
   const load = async () => {
     setLoading(true);
