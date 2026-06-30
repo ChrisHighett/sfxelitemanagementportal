@@ -136,11 +136,13 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
   ],
   divisional_gm: [
     { key: "dash", label: "Division Dashboard", icon: LayoutDashboard },
+    { key: "roster", label: "Division Roster", icon: Users },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen },
   ],
+
 };
 
 const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm"];
@@ -4580,7 +4582,69 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   );
 }
 
+function GMDivisionRoster({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const [q, setQ] = useState("");
+  const [onlyAttention, setOnlyAttention] = useState(false);
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return athletes
+      .filter((a) => {
+        if (!needle) return true;
+        return (
+          a.name.toLowerCase().includes(needle) ||
+          (a.club || "").toLowerCase().includes(needle) ||
+          (a.position || "").toLowerCase().includes(needle) ||
+          (a.assignedAgent || "").toLowerCase().includes(needle)
+        );
+      })
+      .filter((a) => (onlyAttention ? (a.wellbeingScore <= 3 || a.status !== "Thriving") : true));
+  }, [athletes, q, onlyAttention]);
+
+  return (
+    <div className="space-y-4 p-4 md:p-6 max-w-5xl mx-auto">
+      <HeroBanner title="Division Roster" subtitle={`${athletes.length} athletes across your division`} size="sm" />
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <Input placeholder="Search by name, club, position, agent…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-96" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Show attention required only</span>
+            <Switch checked={onlyAttention} onCheckedChange={setOnlyAttention} />
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-2">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">
+            {q.trim().length > 0 ? `No athletes match "${q}"` : "No athletes in your division yet."}
+          </p>
+        ) : (
+          filtered.map((a) => (
+            <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium truncate">{a.name}</span>
+                    {statusBadge(a.status)}
+                    <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                  Open
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+
   const { user: gmUser } = useAuth();
   const myAthletes = gmUser?.id
     ? athletes.filter((a) => a.assignedAgentUserId === gmUser.id)
@@ -4651,39 +4715,51 @@ function DivisionalGMDashboardInner({ athletes, myAthletes, onOpenProfile }: { a
       </ContentSection>
 
       <ContentSection
-        title={`Athletes in ${divisionLabel}`}
-        subtitle={`${athletes.length} athlete${athletes.length === 1 ? "" : "s"} assigned to agents in your division`}
+        title="Needs attention"
+        subtitle="Top division athletes flagged as attention-required"
       >
-        {athletes.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              No athletes are currently assigned to agents in your division.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-2">
-            {athletes.map((a) => (
-              <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
-                <CardContent className="p-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{a.name}</span>
-                      {statusBadge(a.status)}
-                      <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
-                    </div>
-                  </div>
-                  <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
-                    Open
-                  </Button>
+        {(() => {
+          const attention = athletes
+            .filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving")
+            .sort((a, b) => a.wellbeingScore - b.wellbeingScore)
+            .slice(0, 5);
+          if (attention.length === 0) {
+            return (
+              <Card>
+                <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                  No athletes in your division currently need attention. 🎉
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            );
+          }
+          return (
+            <div className="grid gap-2">
+              {attention.map((a) => (
+                <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium truncate">{a.name}</span>
+                        {statusBadge(a.status)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        Wellbeing {a.wellbeingScore}/5 · Agent: {a.assignedAgent}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                      Open
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="text-xs text-muted-foreground px-1 pt-1">
+                Showing {attention.length} of {athletes.filter((a) => a.wellbeingScore <= 3 || a.status !== "Thriving").length} flagged. See full Division Roster for all athletes.
+              </div>
+            </div>
+          );
+        })()}
       </ContentSection>
+
 
       <GMAgentPerformancePanel />
     </div>
@@ -5036,9 +5112,12 @@ export default function SFXPathwaysPortal() {
             </div>
             <RecruitmentNotesPanel />
           </div>
+        ) : active === "roster" ? (
+          <GMDivisionRoster athletes={athletes} onOpenProfile={handleOpenProfile} />
         ) : (
           <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
         )}
+
       </Shell>
     );
   }
