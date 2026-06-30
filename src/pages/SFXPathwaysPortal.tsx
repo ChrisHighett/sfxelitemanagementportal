@@ -4851,6 +4851,53 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Divisional GM role: dedicated landing dashboard showing division athletes.
+  if (effectiveRole === "divisional_gm") {
+    const handleOpenProfile = (id: string) => {
+      setSelectedAthleteId(id);
+      setActive("athlete");
+    };
+    return (
+      <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
+        {isAdmin && (
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+            <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="scout">Scout</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="athlete">Athlete</SelectItem>
+              </SelectContent>
+            </Select>
+            {roleOverride && (
+              <Badge variant="secondary" className="text-xs gap-1">Previewing {roleOverride}</Badge>
+            )}
+          </div>
+        )}
+        {active === "athlete" && athlete ? (
+          <AthleteProfileAgentView key={athlete.id} athlete={athlete} />
+        ) : active === "reviews" && athlete ? (
+          <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
+            <HeroBanner title={`Development Tracker — ${athlete.name}`} subtitle="Read-only oversight" size="sm" />
+            <EditableReviews key={athlete.id} athlete={athlete} />
+          </div>
+        ) : (
+          <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
+        )}
+      </Shell>
+    );
+  }
+
+
+
   // For athlete/parent with no allocated athlete (skip when admin is previewing)
   if (!isPreviewingOtherRole && (effectiveRole === "athlete" || effectiveRole === "parent") && !allocatedAthleteId) {
     return (
