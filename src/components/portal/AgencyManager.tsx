@@ -847,9 +847,23 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                         {savingId === m.id && <Loader2 className="h-3 w-3 animate-spin" />}
                       </div>
                     )}
-                    <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground capitalize">
-                      {m.role ?? "—"}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">Role:</span>
+                      <Select
+                        value={m.role ?? ""}
+                        onValueChange={(v) => setRole(m.id, v, m.division_id)}
+                        disabled={savingId === m.id}
+                      >
+                        <SelectTrigger className="h-7 w-[140px] text-xs capitalize">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <span
                       className={`px-2 py-0.5 rounded ${
                         m.approved
