@@ -921,6 +921,15 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                       variant="outline"
                       className="h-7 text-xs"
                       disabled={savingId === m.id}
+                      onClick={() => openEdit(m)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      disabled={savingId === m.id}
                       onClick={() => toggleActive(m.id, !!m.approved)}
                     >
                       {m.approved ? "Deactivate" : "Reactivate"}
