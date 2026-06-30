@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Building2, ChevronRight, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface Agency {
   id: string;
@@ -659,6 +660,7 @@ interface Member {
   role: string | null;
   approved: boolean | null;
   division_id: string | null;
+  phone: string | null;
 }
 
 interface DivisionLite {
@@ -671,13 +673,53 @@ function MembersCard({ agencyId }: { agencyId: string }) {
   const [divisions, setDivisions] = useState<DivisionLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editMember, setEditMember] = useState<Member | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
+  const openEdit = (m: Member) => {
+    setEditMember(m);
+    setEditName(m.display_name ?? "");
+    setEditPhone(m.phone ?? "");
+  };
+
+  const saveEdit = async () => {
+    if (!editMember) return;
+    if (!editName.trim()) {
+      toast({ title: "Display name required", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { data, error } = await supabase.rpc("update_member_profile" as any, {
+      _user_id: editMember.id,
+      _display_name: editName.trim(),
+      _phone: editPhone.trim() || null,
+    });
+    setEditSaving(false);
+    if (error) {
+      toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = (Array.isArray(data) ? data[0] : data) as Member | null;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === editMember.id
+          ? { ...m, display_name: updated?.display_name ?? editName.trim(), phone: updated?.phone ?? (editPhone.trim() || null) }
+          : m,
+      ),
+    );
+    setEditMember(null);
+    toast({ title: "Member updated" });
+  };
+
 
   const load = async () => {
     setLoading(true);
     const [{ data: mData, error: mErr }, { data: dData, error: dErr }] = await Promise.all([
       supabase
         .from("portal_users")
-        .select("id, display_name, email, role, approved, division_id" as any)
+        .select("id, display_name, email, role, approved, division_id, phone" as any)
         .eq("agency_id", agencyId)
         .order("role", { ascending: true }),
       supabase
@@ -820,7 +862,7 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                   <div className="min-w-0">
                     <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">
-                      {m.email ?? "no email"}
+                      {m.email ?? "no email"}{m.phone ? ` · ${m.phone}` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
@@ -880,6 +922,15 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                       variant="outline"
                       className="h-7 text-xs"
                       disabled={savingId === m.id}
+                      onClick={() => openEdit(m)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      disabled={savingId === m.id}
                       onClick={() => toggleActive(m.id, !!m.approved)}
                     >
                       {m.approved ? "Deactivate" : "Reactivate"}
@@ -891,6 +942,32 @@ function MembersCard({ agencyId }: { agencyId: string }) {
           </div>
         )}
       </CardContent>
+      <Dialog open={!!editMember} onOpenChange={(o) => !o && setEditMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit member</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="edit-name">Display name</Label>
+              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="edit-phone">Phone / mobile</Label>
+              <Input id="edit-phone" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="e.g. 0412 345 678" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Email and password aren't editable here — they're managed via authentication.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditMember(null)} disabled={editSaving}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={editSaving}>
+              {editSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
