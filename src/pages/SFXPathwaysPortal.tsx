@@ -137,6 +137,8 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
     { key: "dash", label: "Division Dashboard", icon: LayoutDashboard },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
+    { key: "call", label: "Athlete Comms", icon: Phone },
+    { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen },
   ],
 };
 
