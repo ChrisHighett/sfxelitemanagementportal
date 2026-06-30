@@ -743,6 +743,58 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     toast({ title: currentApproved ? "Member deactivated" : "Member reactivated" });
   };
 
+  const setRole = async (userId: string, newRole: string, currentDivisionId: string | null) => {
+    if (newRole === "divisional_gm") {
+      if (divisions.length === 0) {
+        toast({
+          title: "No divisions available",
+          description: "Add a division to this agency before assigning a Divisional GM.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!currentDivisionId) {
+        toast({
+          title: "Division required",
+          description: "Set the member's division first, then assign the Divisional GM role.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setSavingId(userId);
+    const { data, error } = await supabase.rpc("set_member_role" as any, {
+      _user_id: userId,
+      _role: newRole,
+      _division_id: newRole === "divisional_gm" ? currentDivisionId : null,
+    });
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Could not update role", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = (Array.isArray(data) ? data[0] : data) as
+      | { role: string | null; division_id: string | null }
+      | null;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === userId
+          ? { ...m, role: updated?.role ?? newRole, division_id: updated?.division_id ?? m.division_id }
+          : m,
+      ),
+    );
+    toast({ title: "Role updated" });
+  };
+
+  const ROLE_OPTIONS: { value: string; label: string }[] = [
+    { value: "admin", label: "Admin" },
+    { value: "agent", label: "Agent" },
+    { value: "divisional_gm", label: "Divisional GM" },
+    { value: "parent", label: "Parent" },
+    { value: "athlete", label: "Athlete" },
+    { value: "eleva_ops", label: "Eleva Ops" },
+  ];
+
   const NONE_VALUE = "__none__";
 
   return (
