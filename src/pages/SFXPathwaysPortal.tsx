@@ -2923,11 +2923,38 @@ function AgentManager() {
                     </Select>
                   </div>
                 </div>
-                {divisions.length > 0 && (
+                {isElevaOps && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Agency *</Label>
+                    <Select
+                      value={inviteAgency}
+                      onValueChange={(v) => { setInviteAgency(v); setInviteDivision("__none__"); }}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Choose an agency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agencies.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      Eleva Ops can invite into any agency. The new member will belong to this tenant.
+                    </p>
+                  </div>
+                )}
+                {(!isElevaOps || inviteAgency) && (
                   <div className="space-y-1.5">
                     <Label className="text-xs">Division (optional)</Label>
-                    <Select value={inviteDivision} onValueChange={setInviteDivision}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="No division" /></SelectTrigger>
+                    <Select
+                      value={inviteDivision}
+                      onValueChange={setInviteDivision}
+                      disabled={isElevaOps && !inviteAgency}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder={isElevaOps && !inviteAgency ? "Choose an agency first" : "No division"} />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">No division</SelectItem>
                         {divisions.map((d) => (
@@ -2937,6 +2964,7 @@ function AgentManager() {
                     </Select>
                   </div>
                 )}
+
                 <p className="text-xs text-muted-foreground">
                   No email is sent. The app generates a secure invite link — you copy it and send it from your own email. The recipient sets their password and joins as {inviteRole === "scout" ? "a scout" : "an agent"}.
                 </p>
