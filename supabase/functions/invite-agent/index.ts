@@ -96,14 +96,23 @@ serve(async (req) => {
       validatedDivisionId = div.id;
     }
 
-    const origin = req.headers.get("origin") || "https://sfxelitemanagementportal.lovable.app";
+    // Always send invitees to our portal's activation page, NEVER to the editor
+    // origin (lovable.dev) or a preview subdomain. Allow override via PORTAL_URL env.
+    const PORTAL_URL =
+      Deno.env.get("PORTAL_URL") || "https://elevamanagement.lovable.app";
+    const requestOrigin = req.headers.get("origin") || "";
+    const isSafeOrigin =
+      requestOrigin === PORTAL_URL ||
+      /^https:\/\/[a-z0-9-]+--[a-z0-9-]+\.lovable\.app$/i.test(requestOrigin) === false &&
+      /elevamanagement\.lovable\.app$/i.test(requestOrigin);
+    const redirectBase = isSafeOrigin && requestOrigin ? requestOrigin : PORTAL_URL;
 
     const { data: linkData, error: linkError } = await (admin.auth.admin as any).generateLink({
       type: "invite",
       email,
       options: {
         data: { display_name: displayName, role: safeRole },
-        redirectTo: `${origin}/reset-password`,
+        redirectTo: `${redirectBase}/reset-password`,
       },
     });
     if (linkError) return json({ error: `Invite link failed: ${linkError.message}` }, 500);
