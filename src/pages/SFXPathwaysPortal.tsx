@@ -43,6 +43,8 @@ import AddAthleteDialog from "@/components/portal/AddAthleteDialog";
 import EditableReviews from "@/components/EditableReviews";
 import MobileCallScreen from "@/components/portal/MobileCallScreen";
 import AdminAnalytics, { AgentCard } from "@/components/portal/AdminAnalytics";
+import ScoutResponseTimes from "@/components/portal/ScoutResponseTimes";
+import AgentTaskScorecard from "@/components/portal/AgentTaskScorecard";
 import { useAgentKPIs } from "@/hooks/useAgentKPIs";
 import AgencyManager from "@/components/portal/AgencyManager";
 import VoiceRecordingFlow from "@/components/portal/VoiceRecordingFlow";
