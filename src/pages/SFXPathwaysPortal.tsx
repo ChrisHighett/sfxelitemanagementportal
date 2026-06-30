@@ -4581,6 +4581,14 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
 }
 
 function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const { user: gmUser } = useAuth();
+  const myAthletes = gmUser?.id
+    ? athletes.filter((a) => a.assignedAgentUserId === gmUser.id)
+    : [];
+  return <DivisionalGMDashboardInner athletes={athletes} myAthletes={myAthletes} onOpenProfile={onOpenProfile} />;
+}
+
+function DivisionalGMDashboardInner({ athletes, myAthletes, onOpenProfile }: { athletes: Athlete[]; myAthletes: Athlete[]; onOpenProfile: (id: string) => void }) {
   const { user } = useAuth();
   const { data: gmInfo } = useQuery({
     queryKey: ["gm_division_info", user?.id],
@@ -4626,6 +4634,21 @@ function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[
         size="sm"
         badge={<Badge variant="secondary" className="text-[10px]">Divisional GM</Badge>}
       />
+
+      <ContentSection
+        title="My Weekly Planner"
+        subtitle={`Tasks across ${myAthletes.length} athlete${myAthletes.length === 1 ? "" : "s"} assigned to you`}
+      >
+        {myAthletes.length === 0 ? (
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              You have no athletes personally assigned to you yet.
+            </CardContent>
+          </Card>
+        ) : (
+          <WeeklyPlanner athletes={myAthletes} />
+        )}
+      </ContentSection>
 
       <ContentSection
         title={`Athletes in ${divisionLabel}`}
