@@ -4582,7 +4582,69 @@ function ManagerCommandCentre({ athletes, onOpenProfile }: { athletes: Athlete[]
   );
 }
 
+function GMDivisionRoster({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+  const [q, setQ] = useState("");
+  const [onlyAttention, setOnlyAttention] = useState(false);
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return athletes
+      .filter((a) => {
+        if (!needle) return true;
+        return (
+          a.name.toLowerCase().includes(needle) ||
+          (a.club || "").toLowerCase().includes(needle) ||
+          (a.position || "").toLowerCase().includes(needle) ||
+          (a.assignedAgent || "").toLowerCase().includes(needle)
+        );
+      })
+      .filter((a) => (onlyAttention ? (a.wellbeingScore <= 3 || a.status !== "Thriving") : true));
+  }, [athletes, q, onlyAttention]);
+
+  return (
+    <div className="space-y-4 p-4 md:p-6 max-w-5xl mx-auto">
+      <HeroBanner title="Division Roster" subtitle={`${athletes.length} athletes across your division`} size="sm" />
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <Input placeholder="Search by name, club, position, agent…" value={q} onChange={(e) => setQ(e.target.value)} className="w-full sm:w-96" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Show attention required only</span>
+            <Switch checked={onlyAttention} onCheckedChange={setOnlyAttention} />
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-2">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1">
+            {q.trim().length > 0 ? `No athletes match "${q}"` : "No athletes in your division yet."}
+          </p>
+        ) : (
+          filtered.map((a) => (
+            <Card key={a.id} className="hover:bg-secondary/30 transition-colors">
+              <CardContent className="p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium truncate">{a.name}</span>
+                    {statusBadge(a.status)}
+                    <Badge variant="outline" className="text-[10px]">{a.stage}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {a.club} · {a.position} · Agent: {a.assignedAgent} · Wellbeing {a.wellbeingScore}/5
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="h-8" onClick={() => onOpenProfile(a.id)}>
+                  Open
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DivisionalGMDashboard({ athletes, onOpenProfile }: { athletes: Athlete[]; onOpenProfile: (id: string) => void }) {
+
   const { user: gmUser } = useAuth();
   const myAthletes = gmUser?.id
     ? athletes.filter((a) => a.assignedAgentUserId === gmUser.id)
