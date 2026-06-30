@@ -51,7 +51,7 @@ function formatLastLogin(iso: string | null) {
   return `${days} days ago`;
 }
 
-function AgentCard({ kpi }: { kpi: AgentKPI }) {
+export function AgentCard({ kpi }: { kpi: AgentKPI }) {
   const callPct = kpi.athleteCount > 0 ? Math.min(100, Math.round((kpi.callsThisMonth / kpi.athleteCount) * 100)) : 0;
   const reviewPct = kpi.athleteCount > 0 ? Math.min(100, Math.round((kpi.reviewsThisMonth / kpi.athleteCount) * 100)) : 0;
   const emailPct = kpi.athleteCount > 0 ? Math.min(100, Math.round((kpi.parentEmailsThisMonth / kpi.athleteCount) * 100)) : 0;
