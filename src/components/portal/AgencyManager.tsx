@@ -787,13 +787,14 @@ function MembersCard({ agencyId }: { agencyId: string }) {
   };
 
   const ROLE_OPTIONS: { value: string; label: string }[] = [
-    { value: "admin", label: "Admin" },
     { value: "agent", label: "Agent" },
+    { value: "admin", label: "Admin" },
     { value: "divisional_gm", label: "Divisional GM" },
-    { value: "parent", label: "Parent" },
-    { value: "athlete", label: "Athlete" },
     { value: "eleva_ops", label: "Eleva Ops" },
   ];
+
+  const isStaffRole = (r: string | null | undefined) =>
+    !!r && ROLE_OPTIONS.some((o) => o.value === r);
 
   const NONE_VALUE = "__none__";
 
@@ -850,12 +851,12 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground">Role:</span>
                       <Select
-                        value={m.role ?? ""}
+                        value={isStaffRole(m.role) ? (m.role as string) : undefined}
                         onValueChange={(v) => setRole(m.id, v, m.division_id)}
                         disabled={savingId === m.id}
                       >
-                        <SelectTrigger className="h-7 w-[140px] text-xs capitalize">
-                          <SelectValue placeholder="—" />
+                        <SelectTrigger className="h-7 w-[150px] text-xs capitalize">
+                          <SelectValue placeholder={m.role ?? "Set role"} />
                         </SelectTrigger>
                         <SelectContent>
                           {ROLE_OPTIONS.map((r) => (
