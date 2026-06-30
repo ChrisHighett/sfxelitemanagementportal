@@ -136,11 +136,13 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
   ],
   divisional_gm: [
     { key: "dash", label: "Division Dashboard", icon: LayoutDashboard },
+    { key: "roster", label: "Division Roster", icon: Users },
     { key: "athlete", label: "Athlete Profile", icon: FileText },
     { key: "reviews", label: "Development Tracker", icon: ClipboardList },
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen },
   ],
+
 };
 
 const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm"];
