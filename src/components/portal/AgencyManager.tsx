@@ -859,12 +859,35 @@ function MembersCard({ agencyId }: { agencyId: string }) {
               const current = divisions.find((d) => d.id === m.division_id);
               return (
                 <div key={m.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium">{m.display_name ?? m.email ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {m.email ?? "no email"}{m.phone ? ` · ${m.phone}` : ""}
+                  <div className="min-w-0 flex items-start gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0 -ml-1"
+                      title="Edit name & phone"
+                      aria-label="Edit member profile"
+                      disabled={savingId === m.id}
+                      onClick={() => openEdit(m)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <div className="min-w-0">
+                      <div className="font-medium flex items-center gap-2">
+                        <span>{m.display_name ?? m.email ?? "—"}</span>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(m)}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {m.email ?? "no email"}{m.phone ? ` · ${m.phone}` : ""}
+                      </div>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
                     {divisions.length === 0 ? (
                       <span className="text-muted-foreground">Division: —</span>
