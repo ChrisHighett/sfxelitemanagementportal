@@ -678,7 +678,7 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     const [{ data: mData, error: mErr }, { data: dData, error: dErr }] = await Promise.all([
       supabase
         .from("portal_users")
-        .select("id, display_name, email, role, approved, division_id" as any)
+        .select("id, display_name, email, role, approved, division_id, phone" as any)
         .eq("agency_id", agencyId)
         .order("role", { ascending: true }),
       supabase
