@@ -743,6 +743,58 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     toast({ title: currentApproved ? "Member deactivated" : "Member reactivated" });
   };
 
+  const setRole = async (userId: string, newRole: string, currentDivisionId: string | null) => {
+    if (newRole === "divisional_gm") {
+      if (divisions.length === 0) {
+        toast({
+          title: "No divisions available",
+          description: "Add a division to this agency before assigning a Divisional GM.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!currentDivisionId) {
+        toast({
+          title: "Division required",
+          description: "Set the member's division first, then assign the Divisional GM role.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setSavingId(userId);
+    const { data, error } = await supabase.rpc("set_member_role" as any, {
+      _user_id: userId,
+      _role: newRole,
+      _division_id: newRole === "divisional_gm" ? currentDivisionId : null,
+    });
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Could not update role", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = (Array.isArray(data) ? data[0] : data) as
+      | { role: string | null; division_id: string | null }
+      | null;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === userId
+          ? { ...m, role: updated?.role ?? newRole, division_id: updated?.division_id ?? m.division_id }
+          : m,
+      ),
+    );
+    toast({ title: "Role updated" });
+  };
+
+  const ROLE_OPTIONS: { value: string; label: string }[] = [
+    { value: "admin", label: "Admin" },
+    { value: "agent", label: "Agent" },
+    { value: "divisional_gm", label: "Divisional GM" },
+    { value: "parent", label: "Parent" },
+    { value: "athlete", label: "Athlete" },
+    { value: "eleva_ops", label: "Eleva Ops" },
+  ];
+
   const NONE_VALUE = "__none__";
 
   return (
@@ -795,9 +847,23 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                         {savingId === m.id && <Loader2 className="h-3 w-3 animate-spin" />}
                       </div>
                     )}
-                    <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground capitalize">
-                      {m.role ?? "—"}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">Role:</span>
+                      <Select
+                        value={m.role ?? ""}
+                        onValueChange={(v) => setRole(m.id, v, m.division_id)}
+                        disabled={savingId === m.id}
+                      >
+                        <SelectTrigger className="h-7 w-[140px] text-xs capitalize">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <span
                       className={`px-2 py-0.5 rounded ${
                         m.approved

@@ -2123,6 +2123,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_member_role: {
+        Args: { _division_id?: string; _role: string; _user_id: string }
+        Returns: {
+          agency_id: string | null
+          approved: boolean
+          created_at: string
+          display_name: string | null
+          division_id: string | null
+          email: string | null
+          id: string
+          role: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "portal_users"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       update_agency: {
         Args: {
           _agency_id: string
