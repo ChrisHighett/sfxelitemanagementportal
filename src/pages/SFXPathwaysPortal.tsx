@@ -464,6 +464,15 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
   const { data: reviews = [] } = useMonthlyReviews(athlete.id);
   const review = reviews[0];
   const smart = review ? resolveSmartFields(review) : null;
+  const { data: agentEmail } = useQuery({
+    queryKey: ["athlete_agent_email", athlete.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_athlete_agent_email", { _athlete_id: athlete.id });
+      if (error) throw error;
+      return (data as string | null) || null;
+    },
+    enabled: !!athlete.id,
+  });
 
   // Derive the viewer's role label from data — never hardcoded.
   const viewerRoleLabel = (() => {
@@ -705,13 +714,18 @@ function ParentDashboard({ athlete }: { athlete: Athlete }) {
           </p>
           <Button
             className="w-full"
+            disabled={!agentEmail}
+            title={!agentEmail ? "Your agent's email isn't on file yet." : undefined}
             onClick={() => {
+              if (!agentEmail) return;
               const subject = encodeURIComponent(`Message re: ${athlete.name}`);
               const body = encodeURIComponent(`Hi ${athlete.assignedAgent.split(" ")[0]},\n\nI wanted to reach out regarding ${firstName}.\n\n`);
-              window.location.href = `mailto:info@tgisport.com.au?subject=${subject}&body=${body}`;
+              window.location.href = `mailto:${agentEmail}?subject=${subject}&body=${body}`;
             }}
           >
-            Message {athlete.assignedAgent.split(" ")[0]}
+            {agentEmail
+              ? `Message ${athlete.assignedAgent.split(" ")[0]}`
+              : "Agent email unavailable"}
           </Button>
         </div>
       </div>
