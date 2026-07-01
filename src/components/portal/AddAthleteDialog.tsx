@@ -102,6 +102,7 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
           scout_notes: notes.trim() || null,
           assigned_agent_name: effectiveAgentName,
           assigned_agent_user_id: effectiveAgentId,
+          assigned_agent_id: effectiveAgentId,
           source: "agent_direct",
         })
         .select("id")
@@ -131,7 +132,7 @@ export default function AddAthleteDialog({ open, onOpenChange, onCreated, agentU
       reset();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e.message || "Could not create athlete");
+      toast.error(e.message || "Could not create athlete", { duration: 10000 });
     } finally {
       setSaving(false);
     }
