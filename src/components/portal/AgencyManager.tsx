@@ -961,7 +961,8 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-xs"
-                      disabled={savingId === m.id}
+                      disabled={savingId === m.id || (m.approved && m.id === currentUserId)}
+                      title={m.approved && m.id === currentUserId ? "You can't deactivate your own account" : undefined}
                       onClick={() => toggleActive(m.id, !!m.approved)}
                     >
                       {m.approved ? "Deactivate" : "Reactivate"}
