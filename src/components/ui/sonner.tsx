@@ -23,10 +23,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
-      // Sonner supports per-type default duration via props.
-      // Errors persist for 10s so users can read the message.
-      // @ts-expect-error - `duration` per-toast overrides still work
-      duration={4000}
       {...props}
     />
   );
