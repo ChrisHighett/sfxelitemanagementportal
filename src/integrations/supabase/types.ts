@@ -2118,6 +2118,7 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      is_agency_gm: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
       is_approved_parent_or_athlete_for: {
         Args: { athlete_uuid: string }
