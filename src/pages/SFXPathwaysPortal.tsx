@@ -2676,6 +2676,8 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
   onToggleApproved: (id: string, current: boolean) => void;
   onUpdateName: (id: string, name: string) => void;
 }) {
+  const { user: currentUser } = useAuth();
+  const isSelf = currentUser?.id === agent.id;
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(agent.display_name || "");
 
