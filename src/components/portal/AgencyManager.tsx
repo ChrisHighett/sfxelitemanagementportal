@@ -670,6 +670,8 @@ interface DivisionLite {
 }
 
 function MembersCard({ agencyId }: { agencyId: string }) {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
   const [members, setMembers] = useState<Member[]>([]);
   const [divisions, setDivisions] = useState<DivisionLite[]>([]);
   const [loading, setLoading] = useState(true);
