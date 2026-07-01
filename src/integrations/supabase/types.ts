@@ -2104,6 +2104,10 @@ export type Database = {
           tasks_dismissed: number
         }[]
       }
+      get_athlete_agent_email: {
+        Args: { _athlete_id: string }
+        Returns: string
+      }
       get_invite_by_token: {
         Args: { _token: string }
         Returns: {
