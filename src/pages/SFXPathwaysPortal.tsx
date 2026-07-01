@@ -5213,20 +5213,10 @@ export default function SFXPathwaysPortal() {
     );
   }
 
-  if (!athlete) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>No Athletes Found</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground">
-            There are no athletes in the system yet. Please add athletes to get started.
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Note: agent/admin/eleva_ops with zero athletes still get the full Shell below.
+  // Athlete/parent with no allocated athlete were handled earlier. Athlete-scoped
+  // sub-views (profile/call/reviews) are guarded individually.
+
 
   return (
     <Shell
