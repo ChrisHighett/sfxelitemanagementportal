@@ -5274,18 +5274,41 @@ export default function SFXPathwaysPortal() {
         }}
       />
 
-      {effectiveRole === "athlete" && active === "dash" && <AthleteDashboard key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "reviews" && <EditableReviews key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "athlete" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="athlete" athleteName={athlete.name} />}
-      {effectiveRole === "parent" && active === "dash" && <ParentDashboard key={athlete.id} athlete={athlete} />}
-      {effectiveRole === "parent" && active === "updates" && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
+      {effectiveRole === "athlete" && active === "dash" && athlete && <AthleteDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "reviews" && athlete && <EditableReviews key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "athlete" && active === "updates" && athlete && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="athlete" athleteName={athlete.name} />}
+      {effectiveRole === "parent" && active === "dash" && athlete && <ParentDashboard key={athlete.id} athlete={athlete} />}
+      {effectiveRole === "parent" && active === "updates" && athlete && <FamilyCorrespondence key={athlete.id} athleteId={athlete.id} audience="parent" athleteName={athlete.name} />}
 
 
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "dash" && (
-        <ManagerCommandCentre
-          athletes={athletes}
-          onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
-        />
+        athletes.length === 0 ? (
+          <div className="p-4 md:p-6 max-w-3xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Welcome to your portal</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  You don't have any athletes on your roster yet. Add your first athlete to get started, or head over to the Scout pipeline to track prospects.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => setAddAthleteOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" /> Add athlete
+                  </Button>
+                  <Button variant="outline" onClick={() => setActive("scout")}>
+                    Open Scout pipeline
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <ManagerCommandCentre
+            athletes={athletes}
+            onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }}
+          />
+        )
       )}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "roster" && <RosterDashboard athletes={athletes} onOpenProfile={(id) => { setSelectedAthleteId(id); setActive("athlete"); }} onAddAthlete={() => setAddAthleteOpen(true)} />}
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "scout" && <AgentScoutView />}
@@ -5298,9 +5321,9 @@ export default function SFXPathwaysPortal() {
           <RecruitmentNotesPanel />
         </div>
       )}
-      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "athlete" && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "call" && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
-      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "reviews" && (
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "athlete" && athlete && <AthleteProfileAgentView key={athlete.id} athlete={athlete} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "call" && athlete && <AthleteComms key={athlete.id} athlete={athlete} onCallActive={setCallActive} />}
+      {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "reviews" && athlete && (
         <div className="space-y-5 p-4 md:p-6 max-w-4xl mx-auto">
           <HeroBanner
             title={`Development Tracker — ${athlete.name}`}
@@ -5312,7 +5335,8 @@ export default function SFXPathwaysPortal() {
         </div>
       )}
 
-      {active === "resources" && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
+      {active === "resources" && athlete && <Resources key={athlete.id} athlete={athlete} role={effectiveRole} />}
+
       {(effectiveRole === "agent" || effectiveRole === "admin" || effectiveRole === "eleva_ops") && active === "voice" && (
         <div className="p-4 md:p-6"><VoiceProfileSettings /></div>
       )}
