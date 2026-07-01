@@ -833,6 +833,7 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     { value: "scout", label: "Scout" },
     { value: "admin", label: "Admin" },
     { value: "divisional_gm", label: "Divisional GM" },
+    { value: "agency_gm", label: "Agency GM" },
     { value: "eleva_ops", label: "Eleva Ops" },
   ];
 
