@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -669,6 +670,8 @@ interface DivisionLite {
 }
 
 function MembersCard({ agencyId }: { agencyId: string }) {
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
   const [members, setMembers] = useState<Member[]>([]);
   const [divisions, setDivisions] = useState<DivisionLite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -958,7 +961,8 @@ function MembersCard({ agencyId }: { agencyId: string }) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-xs"
-                      disabled={savingId === m.id}
+                      disabled={savingId === m.id || (m.approved && m.id === currentUserId)}
+                      title={m.approved && m.id === currentUserId ? "You can't deactivate your own account" : undefined}
                       onClick={() => toggleActive(m.id, !!m.approved)}
                     >
                       {m.approved ? "Deactivate" : "Reactivate"}

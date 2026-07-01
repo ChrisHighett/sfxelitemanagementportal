@@ -2676,6 +2676,8 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
   onToggleApproved: (id: string, current: boolean) => void;
   onUpdateName: (id: string, name: string) => void;
 }) {
+  const { user: currentUser } = useAuth();
+  const isSelf = currentUser?.id === agent.id;
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(agent.display_name || "");
 
@@ -2719,7 +2721,13 @@ function AgentRow({ agent, onToggleApproved, onUpdateName }: {
           <Badge variant={agent.approved ? "default" : "secondary"}>
             {agent.approved ? "Active" : "Inactive"}
           </Badge>
-          <Button size="sm" variant="outline" onClick={() => onToggleApproved(agent.id, agent.approved)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleApproved(agent.id, agent.approved)}
+            disabled={agent.approved && isSelf}
+            title={agent.approved && isSelf ? "You can't deactivate your own account" : undefined}
+          >
             {agent.approved ? "Deactivate" : "Reactivate"}
           </Button>
         </div>
