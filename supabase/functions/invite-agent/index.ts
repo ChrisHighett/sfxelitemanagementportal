@@ -99,12 +99,12 @@ serve(async (req) => {
     // Always send invitees to our portal's activation page, NEVER to the editor
     // origin (lovable.dev) or a preview subdomain. Allow override via PORTAL_URL env.
     const PORTAL_URL =
-      Deno.env.get("PORTAL_URL") || "https://elevamanagement.lovable.app";
+      Deno.env.get("PORTAL_URL") || "https://elevatalent.lovable.app";
     const requestOrigin = req.headers.get("origin") || "";
     const isSafeOrigin =
       requestOrigin === PORTAL_URL ||
       /^https:\/\/[a-z0-9-]+--[a-z0-9-]+\.lovable\.app$/i.test(requestOrigin) === false &&
-      /elevamanagement\.lovable\.app$/i.test(requestOrigin);
+      /elevatalent\.lovable\.app$/i.test(requestOrigin);
     const redirectBase = isSafeOrigin && requestOrigin ? requestOrigin : PORTAL_URL;
 
     const { data: linkData, error: linkError } = await (admin.auth.admin as any).generateLink({
