@@ -5217,7 +5217,6 @@ export default function SFXPathwaysPortal() {
                 <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="agency_gm">Agency GM</SelectItem>
-                <SelectItem value="agency_gm">Agency GM</SelectItem>
                 <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                 <SelectItem value="agent">Agent</SelectItem>
                 <SelectItem value="scout">Scout</SelectItem>
