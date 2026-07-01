@@ -5199,6 +5199,39 @@ export default function SFXPathwaysPortal() {
     );
   }
 
+  // Agency GM role: tenant-wide staff performance dashboard.
+  if (effectiveRole === "agency_gm") {
+    return (
+      <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
+        {isAdmin && (
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+            <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="agency_gm">Agency GM</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="scout">Scout</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="athlete">Athlete</SelectItem>
+              </SelectContent>
+            </Select>
+            {roleOverride && (
+              <Badge variant="secondary" className="text-xs gap-1">Previewing {roleOverride}</Badge>
+            )}
+          </div>
+        )}
+        <AgencyGMDashboard />
+      </Shell>
+    );
+  }
+
 
 
   // For athlete/parent with no allocated athlete (skip when admin is previewing)
