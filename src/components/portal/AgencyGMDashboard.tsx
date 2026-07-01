@@ -138,25 +138,6 @@ export default function AgencyGMDashboard() {
       >
         <LayoutDashboard className="h-4 w-4" /> Overview
       </button>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground mt-4 mb-2 px-2 flex items-center gap-1">
-        <Layers className="h-3 w-3" /> Divisions
-      </div>
-      {divisions.length === 0 ? (
-        <div className="px-2 py-1 text-xs text-muted-foreground">No divisions yet.</div>
-      ) : (
-        divisions.map((d) => {
-          const isActive = view.kind === "division" && view.divisionId === d.id;
-          return (
-            <button
-              key={d.id}
-              onClick={() => setView({ kind: "division", divisionId: d.id })}
-              className={`w-full flex items-center gap-2 rounded-md px-2 py-2 text-sm text-left hover:bg-muted transition ${isActive ? "bg-muted font-medium" : ""}`}
-            >
-              <Building2 className="h-4 w-4" /> {d.name}
-            </button>
-          );
-        })
-      )}
     </aside>
   );
 
