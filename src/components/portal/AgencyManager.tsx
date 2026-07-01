@@ -821,7 +821,11 @@ function MembersCard({ agencyId }: { agencyId: string }) {
     setMembers((prev) =>
       prev.map((m) =>
         m.id === userId
-          ? { ...m, role: updated?.role ?? newRole, division_id: updated?.division_id ?? m.division_id }
+          ? {
+              ...m,
+              role: updated?.role ?? newRole,
+              division_id: updated ? updated.division_id : m.division_id,
+            }
           : m,
       ),
     );
