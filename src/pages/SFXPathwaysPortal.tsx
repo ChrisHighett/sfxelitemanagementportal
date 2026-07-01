@@ -64,6 +64,7 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
+import AgencyGMDashboard from "@/components/portal/AgencyGMDashboard";
 type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops" | "divisional_gm" | "agency_gm";
 
 function statusBadge(status: string) {
