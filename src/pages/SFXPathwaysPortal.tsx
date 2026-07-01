@@ -64,7 +64,8 @@ import HeroBanner from "@/components/portal/ui/HeroBanner";
 import StatCard from "@/components/portal/ui/StatCard";
 import ImageCard from "@/components/portal/ui/ImageCard";
 import ContentSection from "@/components/portal/ui/ContentSection";
-type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops" | "divisional_gm";
+import AgencyGMDashboard from "@/components/portal/AgencyGMDashboard";
+type Role = "athlete" | "parent" | "agent" | "admin" | "scout" | "eleva_ops" | "divisional_gm" | "agency_gm";
 
 function statusBadge(status: string) {
   const map: Record<string, "default" | "secondary" | "destructive"> = {
@@ -144,10 +145,13 @@ const NAV: Record<Role, { key: string; label: string; icon: React.ElementType; i
     { key: "call", label: "Athlete Comms", icon: Phone },
     { key: "recruitment-notes", label: "Recruitment & Retention Notes", icon: NotebookPen },
   ],
+  agency_gm: [
+    { key: "dash", label: "Agency Dashboard", icon: LayoutDashboard },
+  ],
 
 };
 
-const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm"];
+const PORTAL_ROLES: Role[] = ["athlete", "parent", "agent", "admin", "scout", "eleva_ops", "divisional_gm", "agency_gm"];
 
 function isPortalRole(value?: string | null): value is Role {
   return !!value && PORTAL_ROLES.includes(value as Role);
@@ -5108,7 +5112,8 @@ export default function SFXPathwaysPortal() {
                <SelectContent>
                  <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                  <SelectItem value="admin">Admin</SelectItem>
-                 <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+                 <SelectItem value="agency_gm">Agency GM</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                  <SelectItem value="agent">Agent</SelectItem>
                  <SelectItem value="scout">Scout</SelectItem>
                  <SelectItem value="parent">Parent</SelectItem>
@@ -5156,6 +5161,7 @@ export default function SFXPathwaysPortal() {
               <SelectContent>
                 <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="agency_gm">Agency GM</SelectItem>
                 <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                 <SelectItem value="agent">Agent</SelectItem>
                 <SelectItem value="scout">Scout</SelectItem>
@@ -5191,6 +5197,39 @@ export default function SFXPathwaysPortal() {
           <DivisionalGMDashboard athletes={athletes} onOpenProfile={handleOpenProfile} />
         )}
 
+      </Shell>
+    );
+  }
+
+  // Agency GM role: tenant-wide staff performance dashboard.
+  if (effectiveRole === "agency_gm") {
+    return (
+      <Shell role={effectiveRole} active={active} onNav={handleNav}>
+        <CommandPalette commands={paletteCommands} />
+        {isAdmin && (
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Preview as:</span>
+            <Select value={effectiveRole} onValueChange={(v) => handleRoleSwitch(v as Role)}>
+              <SelectTrigger className="w-40 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="agency_gm">Agency GM</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="scout">Scout</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="athlete">Athlete</SelectItem>
+              </SelectContent>
+            </Select>
+            {roleOverride && (
+              <Badge variant="secondary" className="text-xs gap-1">Previewing {roleOverride}</Badge>
+            )}
+          </div>
+        )}
+        <AgencyGMDashboard />
       </Shell>
     );
   }
@@ -5242,7 +5281,8 @@ export default function SFXPathwaysPortal() {
              <SelectContent>
                <SelectItem value="eleva_ops">Eleva Ops</SelectItem>
                <SelectItem value="admin">Admin</SelectItem>
-               <SelectItem value="divisional_gm">Divisional GM</SelectItem>
+               <SelectItem value="agency_gm">Agency GM</SelectItem>
+                <SelectItem value="divisional_gm">Divisional GM</SelectItem>
                <SelectItem value="agent">Agent</SelectItem>
                <SelectItem value="scout">Scout</SelectItem>
                <SelectItem value="parent">Parent</SelectItem>
