@@ -1472,6 +1472,7 @@ export type Database = {
           acknowledged_at: string | null
           agency_id: string
           created_at: string
+          division_id: string | null
           id: string
           note_id: string
           status: string
@@ -1482,6 +1483,7 @@ export type Database = {
           acknowledged_at?: string | null
           agency_id: string
           created_at?: string
+          division_id?: string | null
           id?: string
           note_id: string
           status?: string
@@ -1492,6 +1494,7 @@ export type Database = {
           acknowledged_at?: string | null
           agency_id?: string
           created_at?: string
+          division_id?: string | null
           id?: string
           note_id?: string
           status?: string
@@ -1499,6 +1502,13 @@ export type Database = {
           tagged_user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recruitment_note_tags_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "agency_divisions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recruitment_note_tags_note_id_fkey"
             columns: ["note_id"]
@@ -1514,6 +1524,7 @@ export type Database = {
           author_id: string
           body: string
           created_at: string
+          division_id: string | null
           id: string
           raw_transcript: string | null
           title: string | null
@@ -1524,6 +1535,7 @@ export type Database = {
           author_id?: string
           body: string
           created_at?: string
+          division_id?: string | null
           id?: string
           raw_transcript?: string | null
           title?: string | null
@@ -1534,12 +1546,21 @@ export type Database = {
           author_id?: string
           body?: string
           created_at?: string
+          division_id?: string | null
           id?: string
           raw_transcript?: string | null
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_notes_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "agency_divisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {
@@ -1957,6 +1978,10 @@ export type Database = {
       }
     }
     Functions: {
+      agency_has_multiple_divisions: {
+        Args: { _agency_id: string }
+        Returns: boolean
+      }
       approve_invite: {
         Args: { _invite_id: string }
         Returns: {
