@@ -4267,7 +4267,7 @@ function AdminSecurity() {
           <AdminAnalytics />
         </TabsContent>
         <TabsContent value="athletes" className="mt-4">
-          <AdminAthleteManager />
+          <AdminAthleteManager isElevaOps={isElevaOps} />
         </TabsContent>
         <TabsContent value="agents" className="mt-4">
           <AgentManager />

@@ -465,8 +465,210 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   );
 }
 
-export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName, lockedAgentId }: {
-  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string; lockedAgentId?: string;
+function ElevaOpsDrillDown() {
+  const [agencyId, setAgencyId] = useState<string>("");
+  const [divisionId, setDivisionId] = useState<string>("");
+  const [agentId, setAgentId] = useState<string>("");
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const { data: agencies = [] } = useQuery({
+    queryKey: ["admin-drilldown-agencies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agencies")
+        .select("id, name, trading_name")
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: divisions = [] } = useQuery({
+    queryKey: ["admin-drilldown-divisions", agencyId],
+    enabled: !!agencyId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agency_divisions")
+        .select("id, name")
+        .eq("agency_id", agencyId)
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: agents = [] } = useQuery({
+    queryKey: ["admin-drilldown-agents", agencyId, divisionId],
+    enabled: !!agencyId && !!divisionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portal_users")
+        .select("id, display_name, email")
+        .eq("role", "agent")
+        .eq("approved", true)
+        .eq("agency_id", agencyId)
+        .eq("division_id", divisionId)
+        .order("display_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: agentAthletes = [], isLoading: athletesLoading } = useQuery({
+    queryKey: ["admin-drilldown-athletes", agentId],
+    enabled: !!agentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("athletes")
+        .select("id, first_name, last_name, club, position, stage")
+        .or(`assigned_agent_user_id.eq.${agentId},assigned_agent_id.eq.${agentId}`)
+        .order("last_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  if (selectedAthleteId) {
+    return <AthleteDetail athleteId={selectedAthleteId} onBack={() => setSelectedAthleteId(null)} />;
+  }
+
+  const selectedAgent = agents.find((a) => a.id === agentId);
+  const lockedAgentName = selectedAgent?.display_name || selectedAgent?.email || undefined;
+
+  const filtered = agentAthletes.filter((a) => {
+    const name = `${a.first_name || ""} ${a.last_name || ""}`.toLowerCase();
+    const club = (a.club || "").toLowerCase();
+    const q = search.toLowerCase();
+    return name.includes(q) || club.includes(q);
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Agency</Label>
+          <Select
+            value={agencyId}
+            onValueChange={(v) => { setAgencyId(v); setDivisionId(""); setAgentId(""); }}
+          >
+            <SelectTrigger><SelectValue placeholder="Select agency…" /></SelectTrigger>
+            <SelectContent>
+              {agencies.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.trading_name || a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Division</Label>
+          <Select
+            value={divisionId}
+            onValueChange={(v) => { setDivisionId(v); setAgentId(""); }}
+            disabled={!agencyId}
+          >
+            <SelectTrigger><SelectValue placeholder={agencyId ? "Select division…" : "Pick an agency first"} /></SelectTrigger>
+            <SelectContent>
+              {divisions.map((d: any) => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Agent</Label>
+          <Select
+            value={agentId}
+            onValueChange={(v) => setAgentId(v)}
+            disabled={!divisionId}
+          >
+            <SelectTrigger><SelectValue placeholder={divisionId ? "Select agent…" : "Pick a division first"} /></SelectTrigger>
+            <SelectContent>
+              {agents.map((a: any) => (
+                <SelectItem key={a.id} value={a.id}>{a.display_name || a.email}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {!agentId ? (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            Select an agency, division and agent to view athletes.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-4">
+            <Input
+              placeholder="Search within this agent's athletes…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button onClick={() => setAddingNew(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Add Athlete
+            </Button>
+          </div>
+
+          {addingNew && (
+            <Card className="border-dashed">
+              <CardHeader><CardTitle className="text-base">New Athlete</CardTitle></CardHeader>
+              <CardContent>
+                <AthleteFormDialog
+                  onClose={() => setAddingNew(false)}
+                  lockedAgentName={lockedAgentName}
+                  lockedAgentId={agentId}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {athletesLoading ? (
+            <div className="text-sm text-muted-foreground">Loading athletes…</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              {agentAthletes.length === 0
+                ? "This agent has no directly assigned athletes."
+                : "No athletes match your search."}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filtered.map((a: any) => (
+                <Card
+                  key={a.id}
+                  className="cursor-pointer hover:bg-secondary/50 transition-colors"
+                  onClick={() => setSelectedAthleteId(a.id)}
+                >
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-4">
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">{a.first_name} {a.last_name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.club || "—"} • {a.position || "—"} • {a.stage || "—"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary">{a.stage || "—"}</Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAgentName, lockedAgentId, isElevaOps }: {
+  initialAthleteId?: string; onBack?: () => void; lockedAgentName?: string; lockedAgentId?: string; isElevaOps?: boolean;
 } = {}) {
   const { data: athletes = [], isLoading } = useAthletes();
   const [selectedAthleteId, setSelectedAthleteId] = useState<string | null>(initialAthleteId || null);
@@ -476,6 +678,11 @@ export default function AdminAthleteManager({ initialAthleteId, onBack, lockedAg
   // If opened directly to an athlete (e.g. from agent profile view)
   if (selectedAthleteId) {
     return <AthleteDetail athleteId={selectedAthleteId} onBack={onBack || (() => setSelectedAthleteId(null))} />;
+  }
+
+  // Eleva Ops: progressive drill-down instead of flat roster
+  if (isElevaOps && !initialAthleteId) {
+    return <ElevaOpsDrillDown />;
   }
 
   const filtered = athletes.filter((a) =>
