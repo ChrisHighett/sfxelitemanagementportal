@@ -338,9 +338,25 @@ function AthleteDetail({ athleteId, onBack }: { athleteId: string; onBack: () =>
   }
 
   async function handleDeleteAthlete() {
-    if (!confirm(`Delete ${athlete.name}? This will also remove their guardians, reviews and comms.`)) return;
-    const { error } = await supabase.from("athletes").delete().eq("id", athleteId);
-    if (error) { toast.error(error.message); return; }
+    if (!confirm(
+      `Delete ${athlete.name}?\n\nThis permanently removes the athlete AND all related records:\n` +
+      `• Guardians / parents\n` +
+      `• Monthly reviews & scorecards\n` +
+      `• Comms history, call history & comms log\n` +
+      `• Tasks, alerts, goals & timeline events\n` +
+      `• Athlete resources, follow-ups & engagement scores\n` +
+      `• Parent/athlete portal access & pending invites\n\nThis cannot be undone.`
+    )) return;
+    const { data, error } = await supabase
+      .from("athletes")
+      .delete()
+      .eq("id", athleteId)
+      .select("id");
+    if (error) { toast.error(error.message, { duration: 10000 }); return; }
+    if (!data || data.length === 0) {
+      toast.error("You don't have permission to delete this athlete.", { duration: 10000 });
+      return;
+    }
     toast.success("Athlete deleted");
     qc.invalidateQueries({ queryKey: ["athletes"] });
     onBack();
