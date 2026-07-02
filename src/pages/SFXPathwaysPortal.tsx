@@ -182,7 +182,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
     <div className="flex min-h-screen" style={{ background: "var(--canvas)" }}>
       {/* Desktop command rail — dark, sticky, brand-base */}
       <aside
-        className="hidden md:flex flex-col flex-shrink-0 sticky top-0 self-start h-screen"
+        className="hidden md:flex flex-col flex-shrink-0 sticky top-0 h-screen overflow-hidden"
         style={{
           width: 248,
           background: "var(--brand-base)",
@@ -191,10 +191,10 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
         }}
       >
         <div className="flex flex-col flex-1 p-5">
-          <div className="mb-8 flex items-center gap-3">
+          <div className="mb-8 flex items-center gap-3 flex-shrink-0">
             <BrandMark variant="wordmark" height={26} />
           </div>
-          <nav className="space-y-1 flex-1">
+          <nav className="space-y-1 flex-1 overflow-y-auto min-h-0">
             {items.map((it) => {
               const Icon = it.icon;
               const isActive = active === it.key;
@@ -234,7 +234,7 @@ function Shell({ role, active, onNav, children, hideBottomNav, isPreview, previe
               );
             })}
           </nav>
-          <div className="mt-6 space-y-2">
+          <div className="mt-auto space-y-2 flex-shrink-0">
             <CommandHint />
             {(role === "admin" || role === "eleva_ops") && <ThemeSwitcher />}
             {(() => {
