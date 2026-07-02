@@ -1,0 +1,1 @@
+CREATE POLICY "eleva_ops delete athletes" ON public.athletes FOR DELETE USING (public.is_eleva_ops());
